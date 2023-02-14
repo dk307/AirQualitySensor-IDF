@@ -5,12 +5,12 @@
 
 #include "logging/logging_tags.h"
 #include "hardware/sdcard.h"
+#include "hardware/hardware.h"
 
-#include "esp_log.h"
+#include <esp_log.h>
+#include <esp_chip_info.h>
+#include <esp_flash.h>
 
-#include "esp_chip_info.h"
-#include "esp_flash.h"
-#include "esp_partition.h"
 
 bool log_chip_details()
 {
@@ -56,6 +56,12 @@ extern "C" void app_main(void)
     log_chip_details();
 
     if (!card.pre_begin())
+    {
+        boot_failure();
+        return;
+    }
+
+    if (!hardware::instance.pre_begin())
     {
         boot_failure();
         return;
