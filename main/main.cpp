@@ -11,7 +11,6 @@
 #include <esp_chip_info.h>
 #include <esp_flash.h>
 
-
 bool log_chip_details()
 {
     esp_chip_info_t chip_info;
@@ -32,10 +31,10 @@ bool log_chip_details()
         return false;
     }
 
-    ESP_LOGI(OPERATIONS_TAG, "%uMB %s flash\n", flash_size / (1024 * 1024),
+    ESP_LOGI(OPERATIONS_TAG, "%lu MB %s flash\n", flash_size / (1024 * 1024),
              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
-    ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
+    ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_minimum_free_heap_size());
     // log_i("SPIRAM size: %d bytes\n", esp_spiram_get_size());
     return true;
 }
@@ -44,7 +43,6 @@ void boot_failure()
 {
     ESP_LOGI(OPERATIONS_TAG, "Boot Failure");
     vTaskDelay(5000 / portTICK_PERIOD_MS);
-    ;
     esp_restart();
 }
 
@@ -72,7 +70,7 @@ extern "C" void app_main(void)
         printf("Restarting in %d seconds...\n", i);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-    printf("Restarting now.\n");
+    printf("Done now.\n");
     fflush(stdout);
-    esp_restart();
+    // esp_restart();
 }

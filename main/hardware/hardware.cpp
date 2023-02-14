@@ -300,17 +300,7 @@ bool hardware::pre_begin()
 //                                                                 vTaskDelay(500);
 //                                                             } while(true); });
 
-//     lvgl_refresh_task = std::make_unique<esp32::task>([this]
-//                                                       {
-//                                                             ESP_LOGI(HARDWARE_TAG, "Lvgl task started on core:%d", xPortGetCoreID());
-//                                                             do
-//                                                             {
-//                                                                 display_instance.loop();                                                                                                                         
-//                                                                 vTaskDelay(3);
-//                                                             } while(true); });
-
 //     // start on core 0
-//     lvgl_refresh_task->spawn_arduino_other_core("lvgl task", 4196);
 //     sensor_refresh_task->spawn_arduino_other_core("sensor task", 4196);
 // }
 

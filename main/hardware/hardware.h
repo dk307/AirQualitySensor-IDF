@@ -60,7 +60,6 @@ private:
     // std::unique_ptr<std::array<sensor_history, total_sensors>, esp32::psram::deleter> sensors_history;
 
     // std::unique_ptr<esp32::task> sensor_refresh_task;
-    // std::unique_ptr<esp32::task> lvgl_refresh_task;
 
     // using light_sensor_values_t = sensor_history_t<sensor_value::value_type, 10>;
     // light_sensor_values_t light_sensor_values;
