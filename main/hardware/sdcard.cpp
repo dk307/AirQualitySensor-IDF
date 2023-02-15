@@ -23,7 +23,8 @@ bool sd_card::pre_begin()
     esp_vfs_fat_mount_config_t mount_config{};
     mount_config.format_if_mount_failed = false;
     mount_config.max_files = 15;
-    mount_config.allocation_unit_size = 16 * 1024;
+    mount_config.allocation_unit_size = 512;
+    // mount_config.disk_status_check_enable = true;
 
     ESP_LOGI(HARDWARE_TAG, "Initializing SPI BUS");
     spi_bus_config_t bus_cfg{};

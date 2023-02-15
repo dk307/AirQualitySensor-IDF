@@ -1,7 +1,6 @@
 #pragma once
 
-#include <esp32-hal.h>
-
+#include <esp_heap_caps.h>
 #include <memory>
 
 namespace esp32
@@ -37,7 +36,7 @@ namespace esp32
 
             pointer allocate(size_type n, const void *hint = 0)
             {
-                return static_cast<pointer>(ps_malloc(n * sizeof(T)));
+                return static_cast<pointer>(heap_caps_malloc(n * sizeof(T), MALLOC_CAP_SPIRAM));
             }
 
             void deallocate(pointer p, size_type n)
@@ -68,7 +67,7 @@ namespace esp32
         template <class T, class... Args>
         std::unique_ptr<T, deleter> make_unique(Args &&...args)
         {
-            auto p = ps_malloc(sizeof(T));
+            auto p = heap_caps_malloc(sizeof(T), MALLOC_CAP_SPIRAM);
             return std::unique_ptr<T, deleter>(::new (p) T(std::forward<Args>(args)...), deleter());
         }
 
@@ -76,7 +75,7 @@ namespace esp32
         {
             void *allocate(size_t size)
             {
-                return ps_malloc(size);
+                return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
             }
 
             void deallocate(void *pointer)
@@ -86,7 +85,7 @@ namespace esp32
 
             void *reallocate(void *ptr, size_t new_size)
             {
-                return ps_realloc(ptr, new_size);
+                return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
             }
         };
     }

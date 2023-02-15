@@ -110,7 +110,7 @@ bool display::pre_begin()
 
     create_timer();
 
-    const auto err = lvgl_task.spawn_pinned("lv gui", 1024 * 4, 5, 1);
+    const auto err = lvgl_task.spawn_pinned("lv gui", 1024 * 4, 5, 0);
 
     if (err != ESP_OK)
     {
@@ -122,7 +122,7 @@ bool display::pre_begin()
         return false;
     }
 
-    // ui_instance.init();
+    ui_instance.init();
 
     display_device.setBrightness(128);
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
@@ -150,18 +150,18 @@ bool display::pre_begin()
 //     ESP_LOGI(DISPLAY_TAG, "Display Ready");
 // }
 
-// void display::update_boot_message(const String &message)
-// {
-//     std::lock_guard<esp32::semaphore> lock(lgvl_mutex);
-//     ui_instance.update_boot_message(message);
-// }
+void display::update_boot_message(const std::string &message)
+{
+    std::lock_guard<esp32::semaphore> lock(lvgl_mutex);
+    ui_instance.update_boot_message(message);
+}
 
-// void display::set_main_screen()
-// {
-//     std::lock_guard<esp32::semaphore> lock(lgvl_mutex);
-//     ESP_LOGI(DISPLAY_TAG, "Switching to main screen");
-//     ui_instance.set_main_screen();
-// }
+void display::set_main_screen()
+{
+    std::lock_guard<esp32::semaphore> lock(lvgl_mutex);
+    ESP_LOGI(DISPLAY_TAG, "Switching to main screen");
+    ui_instance.set_main_screen();
+}
 
 uint8_t display::get_brightness()
 {

@@ -10,8 +10,9 @@ idf_build_set_property(COMPILE_OPTIONS "-I../main" APPEND)
 
 
 # Disable annoying warnings (for now)
-# idf_build_set_property(COMPILE_OPTIONS "-Wno-error-format" APPEND)
-# idf_build_set_property(COMPILE_OPTIONS "-Wno-incompatible-pointer-types" APPEND)
+#idf_build_set_property(COMPILE_OPTIONS "-Wno-format" APPEND)
+#idf_build_set_property(COMPILE_OPTIONS "-Wno-incompatible-pointer-types" APPEND)
+
 
 project(air_quality_sensor)
 

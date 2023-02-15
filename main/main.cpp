@@ -34,7 +34,7 @@ bool log_chip_details()
     ESP_LOGI(OPERATIONS_TAG, "%lu MB %s flash\n", flash_size / (1024 * 1024),
              (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
-    ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_minimum_free_heap_size());
+    ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
     // log_i("SPIRAM size: %d bytes\n", esp_spiram_get_size());
     return true;
 }
@@ -42,7 +42,7 @@ bool log_chip_details()
 void boot_failure()
 {
     ESP_LOGI(OPERATIONS_TAG, "Boot Failure");
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     esp_restart();
 }
 
@@ -50,6 +50,11 @@ sd_card card;
 
 extern "C" void app_main(void)
 {
+    esp_log_level_set(UI_TAG, ESP_LOG_DEBUG);
+
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+
     ESP_LOGI(OPERATIONS_TAG, "Starting ...");
     log_chip_details();
 
@@ -64,6 +69,9 @@ extern "C" void app_main(void)
         boot_failure();
         return;
     }
+
+
+    hardware::instance.set_main_screen();
 
     for (int i = 10; i >= 0; i--)
     {

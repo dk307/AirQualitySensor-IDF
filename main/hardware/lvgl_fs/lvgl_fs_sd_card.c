@@ -10,6 +10,9 @@
 
 #include <lvgl.h> 
 #include <ff.h>
+#include <esp_log.h>
+
+#define LVGL_FS_TAG "lvgl_fs"
 
 /*********************
  *      DEFINES
@@ -113,6 +116,7 @@ static void * fs_open (lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode)
     	f_lseek(f, 0);
     	return f;
     } else {
+        ESP_LOGE(LVGL_FS_TAG, "Failed to open %s with %d", path, res);
         lv_mem_free(f);
     	return NULL;
     }
