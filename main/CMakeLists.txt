@@ -7,8 +7,10 @@ idf_component_register(SRCS "main.cpp"
                             "sensor/sensors_definitions.cpp" 
                             "ui/ui2.cpp" 
                             "ui/ui_img_logo.c" 
+                            "config/config_manager.cpp"
+                            "util/string_helper.cpp"
 
                     INCLUDE_DIRS "."
-                    REQUIRES fatfs spi_flash LovyanGFX lvgl)
+                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE "-Wno-deprecated-enum-enum-conversion")

@@ -233,14 +233,11 @@ bool hardware::clean_sps_30()
     return true;
 }
 
-bool hardware::pre_begin()
+void hardware::pre_begin()
 {
     sensors_history = esp32::psram::make_unique<std::array<sensor_history, total_sensors>>();
 
-    if (!display_instance.pre_begin())
-    {
-        return false;
-    }
+    display_instance.pre_begin(); 
 
     // // Wire is already used by touch i2c
     // if (!Wire1.begin(SDAWire, SCLWire))
@@ -287,8 +284,6 @@ bool hardware::pre_begin()
     // }
 
     // set_auto_display_brightness();
-
-    return true;
 }
 
 // void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)

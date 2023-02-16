@@ -1,5 +1,6 @@
 #include "sdcard.h"
 #include "logging/logging_tags.h"
+#include "exceptions.h"
 
 #include <esp_vfs_fat.h>
 #include <esp_log.h>
@@ -9,7 +10,7 @@
 #define SD_SCLK GPIO_NUM_39
 #define SD_CS GPIO_NUM_41
 
-bool sd_card::pre_begin()
+void sd_card::pre_begin()
 {
     sdspi_device_config_t device_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     device_config.host_id = SPI3_HOST;
@@ -36,11 +37,7 @@ bool sd_card::pre_begin()
     bus_cfg.max_transfer_sz = 4092;
 
     esp_err_t ret = spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA);
-    if (ret != ESP_OK)
-    {
-        ESP_LOGE(HARDWARE_TAG, "Failed to initialize bus.");
-        return false;
-    }
+    CHECK_THROW("Failed to initialize SPI bus", ret, init_failure_exception);
 
     ESP_LOGI(HARDWARE_TAG, "Mounting filesystem");
     ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sdcard);
@@ -48,19 +45,14 @@ bool sd_card::pre_begin()
     {
         if (ret == ESP_FAIL)
         {
-            ESP_LOGE(HARDWARE_TAG, "Failed to mount filesystem. Probaly not formated");
-            return false;
+            CHECK_THROW("Failed to mount filesystem. Likely not formated", ret, init_failure_exception);
         }
         else
         {
-            ESP_LOGE(HARDWARE_TAG, "Failed to initialize the card (%s)", esp_err_to_name(ret));
-            return false;
+            CHECK_THROW("Failed to initialize the card", ret, init_failure_exception);
         }
     }
     ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");
 
-    // Card has been initialized, print its properties
     sdmmc_card_print_info(stdout, sdcard);
-
-    return true;
 }

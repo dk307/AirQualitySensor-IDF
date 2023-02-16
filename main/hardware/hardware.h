@@ -13,7 +13,7 @@
 class hardware final : ui_interface
 {
 public:
-    bool pre_begin();
+    void pre_begin();
     void begin();
 
     static hardware instance;

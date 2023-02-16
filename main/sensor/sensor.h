@@ -4,7 +4,7 @@
 #include "util/semaphore_lockable.h"
 #include "util/psram_allocator.h"
 #include "sensor/sensor_id.h"
-#include "util/CircularBuffer.h"
+#include "util/circular_buffer.h"
 
 #include <math.h>
 #include <atomic>
@@ -193,7 +193,7 @@ public:
 
 private:
     mutable esp32::semaphore data_mutex;
-    CircularBuffer<T, countT> last_x_values;
+    circular_buffer<T, countT> last_x_values;
 };
 
 template <class T, uint8_t reads_per_minuteT, uint16_t minutesT>

@@ -13,7 +13,7 @@ namespace esp32
     class task
     {
     public:
-        task(std::function<void(void)> call) : call(call)
+        task(const std::function<void(void)> &call) : call(call)
         {
         }
         ~task() { kill(); }

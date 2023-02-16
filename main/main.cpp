@@ -5,7 +5,9 @@
 
 #include "logging/logging_tags.h"
 #include "hardware/sdcard.h"
+#include "config/config_manager.h"
 #include "hardware/hardware.h"
+#include "exceptions.h"
 
 #include <esp_log.h>
 #include <esp_chip_info.h>
@@ -39,46 +41,39 @@ bool log_chip_details()
     return true;
 }
 
-void boot_failure()
-{
-    ESP_LOGI(OPERATIONS_TAG, "Boot Failure");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    esp_restart();
-}
 
 sd_card card;
 
 extern "C" void app_main(void)
 {
-    esp_log_level_set(UI_TAG, ESP_LOG_DEBUG);
+    esp_log_level_set(CONFIG_TAG, ESP_LOG_DEBUG);
 
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-
-    ESP_LOGI(OPERATIONS_TAG, "Starting ...");
-    log_chip_details();
-
-    if (!card.pre_begin())
+    try
     {
-        boot_failure();
-        return;
-    }
+        ESP_LOGI(OPERATIONS_TAG, "Starting ...");
+        log_chip_details();
 
-    if (!hardware::instance.pre_begin())
+        card.pre_begin(); 
+        config::instance.pre_begin();
+        hardware::instance.pre_begin(); 
+        hardware::instance.set_main_screen();
+
+        for (int i = 10; i >= 0; i--)
+        {
+            printf("Restarting in %d seconds...\n", i);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+        printf("Done now.\n");
+        fflush(stdout);
+        // esp_restart();
+    }
+    catch (const esp32::init_failure_exception &ex)
     {
-        boot_failure();
-        return;
+        ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
+        fflush(stdout);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        esp_restart();
     }
-
-
-    hardware::instance.set_main_screen();
-
-    for (int i = 10; i >= 0; i--)
-    {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    printf("Done now.\n");
-    fflush(stdout);
-    // esp_restart();
 }

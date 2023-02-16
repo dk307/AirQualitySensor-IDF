@@ -1,22 +1,5 @@
-/*
- CircularBuffer.h - Circular buffer library for Arduino.
- Copyright (c) 2017 Roberto Lo Giacco.
+#pragma once 
 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as 
- published by the Free Software Foundation, either version 3 of the 
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-#ifndef CIRCULAR_BUFFER_H_
-#define CIRCULAR_BUFFER_H_
 #include <stdint.h>
 #include <stddef.h>
 
@@ -34,7 +17,7 @@ namespace Helper {
 	};
 }
 
-template<typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8_MAX), (S <= UINT16_MAX)>::Type> class CircularBuffer {
+template<typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8_MAX), (S <= UINT16_MAX)>::Type> class circular_buffer {
 public:
 	/**
 	 * The buffer capacity: read only as it cannot ever change.
@@ -46,19 +29,19 @@ public:
 	 */
 	using index_t = IT;
 
-	constexpr CircularBuffer();
+	constexpr circular_buffer();
 
 	/**
 	 * Disables copy constructor
 	 */
-	CircularBuffer(const CircularBuffer&) = delete;
-	CircularBuffer(CircularBuffer&&) = delete;
+	circular_buffer(const circular_buffer&) = delete;
+	circular_buffer(circular_buffer&&) = delete;
 
 	/**
 	 * Disables assignment operator
 	 */
-	CircularBuffer& operator=(const CircularBuffer&) = delete;
-	CircularBuffer& operator=(CircularBuffer&&) = delete;
+	circular_buffer& operator=(const circular_buffer&) = delete;
+	circular_buffer& operator=(circular_buffer&&) = delete;
 
 	/**
 	 * Adds an element to the beginning of buffer: the operation returns `false` if the addition caused overwriting an existing element.
@@ -124,29 +107,20 @@ public:
 	 */
 	void inline clear();
 
-	#ifdef CIRCULAR_BUFFER_DEBUG
-	void inline debug(Print* out);
-	void inline debugFn(Print* out, void (*printFunction)(Print*, T));
-	#endif
-
 private:
 	T buffer[S];
 	T *head;
 	T *tail;
-#ifndef CIRCULAR_BUFFER_INT_SAFE
 	IT count;
-#else
-	volatile IT count;
-#endif
 };
 
 template<typename T, size_t S, typename IT>
-constexpr CircularBuffer<T,S,IT>::CircularBuffer() :
+constexpr circular_buffer<T,S,IT>::circular_buffer() :
 		head(buffer), tail(buffer), count(0) {
 }
 
 template<typename T, size_t S, typename IT>
-bool CircularBuffer<T,S,IT>::unshift(T value) {
+bool circular_buffer<T,S,IT>::unshift(T value) {
 	if (head == buffer) {
 		head = buffer + capacity;
 	}
@@ -165,7 +139,7 @@ bool CircularBuffer<T,S,IT>::unshift(T value) {
 }
 
 template<typename T, size_t S, typename IT>
-bool CircularBuffer<T,S,IT>::push(T value) {
+bool circular_buffer<T,S,IT>::push(T value) {
 	if (++tail == buffer + capacity) {
 		tail = buffer;
 	}
@@ -184,7 +158,7 @@ bool CircularBuffer<T,S,IT>::push(T value) {
 }
 
 template<typename T, size_t S, typename IT>
-T CircularBuffer<T,S,IT>::shift() {
+T circular_buffer<T,S,IT>::shift() {
 	if (count == 0) return *head;
 	T result = *head++;
 	if (head >= buffer + capacity) {
@@ -195,7 +169,7 @@ T CircularBuffer<T,S,IT>::shift() {
 }
 
 template<typename T, size_t S, typename IT>
-T CircularBuffer<T,S,IT>::pop() {
+T circular_buffer<T,S,IT>::pop() {
 	if (count == 0) return *tail;
 	T result = *tail--;
 	if (tail < buffer) {
@@ -206,46 +180,43 @@ T CircularBuffer<T,S,IT>::pop() {
 }
 
 template<typename T, size_t S, typename IT>
-T inline CircularBuffer<T,S,IT>::first() const {
+T inline circular_buffer<T,S,IT>::first() const {
 	return *head;
 }
 
 template<typename T, size_t S, typename IT>
-T inline CircularBuffer<T,S,IT>::last() const {
+T inline circular_buffer<T,S,IT>::last() const {
 	return *tail;
 }
 
 template<typename T, size_t S, typename IT>
-T CircularBuffer<T,S,IT>::operator [](IT index) const {
+T circular_buffer<T,S,IT>::operator [](IT index) const {
 	if (index >= count) return *tail;
 	return *(buffer + ((head - buffer + index) % capacity));
 }
 
 template<typename T, size_t S, typename IT>
-IT inline CircularBuffer<T,S,IT>::size() const {
+IT inline circular_buffer<T,S,IT>::size() const {
 	return count;
 }
 
 template<typename T, size_t S, typename IT>
-IT inline CircularBuffer<T,S,IT>::available() const {
+IT inline circular_buffer<T,S,IT>::available() const {
 	return capacity - count;
 }
 
 template<typename T, size_t S, typename IT>
-bool inline CircularBuffer<T,S,IT>::isEmpty() const {
+bool inline circular_buffer<T,S,IT>::isEmpty() const {
 	return count == 0;
 }
 
 template<typename T, size_t S, typename IT>
-bool inline CircularBuffer<T,S,IT>::isFull() const {
+bool inline circular_buffer<T,S,IT>::isFull() const {
 	return count == capacity;
 }
 
 template<typename T, size_t S, typename IT>
-void inline CircularBuffer<T,S,IT>::clear() {
+void inline circular_buffer<T,S,IT>::clear() {
 	head = tail = buffer;
 	count = 0;
 }
-
-
-#endif

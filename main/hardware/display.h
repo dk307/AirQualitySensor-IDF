@@ -15,7 +15,7 @@ public:
     {
     }
 
-    bool pre_begin();
+    void pre_begin();
     // void begin();
 
     void update_boot_message(const std::string &message);

@@ -2,6 +2,7 @@
 
 #include <lvgl.h>
 #include "lvgl_fs\lvgl_fs_sd_card.h"
+#include "exceptions.h"
 
 // #include "ui/ui2.h"
 // #include "config_manager.h"
@@ -49,7 +50,7 @@ void display::touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     }
 }
 
-bool display::pre_begin()
+void display::pre_begin()
 {
     ESP_LOGI(DISPLAY_TAG, "Setting up display");
 
@@ -58,7 +59,7 @@ bool display::pre_begin()
 
     if (!display_device.init())
     {
-        ESP_LOGE(DISPLAY_TAG, "Failed to init display");
+        CHECK_THROW("Failed to init display", ESP_FAIL, init_failure_exception);
     }
     display_device.setRotation(1);
 
@@ -80,8 +81,7 @@ bool display::pre_begin()
 
     if (!disp_draw_buf || !disp_draw_buf2)
     {
-        ESP_LOGE(DISPLAY_TAG, "Failed to allocate lvgl display buffer");
-        return false;
+        CHECK_THROW("Failed to allocate lvgl display buffer", ESP_ERR_NO_MEM, init_failure_exception);
     }
 
     lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, disp_draw_buf2, screenWidth * buffer_size);
@@ -114,19 +114,17 @@ bool display::pre_begin()
 
     if (err != ESP_OK)
     {
-        ESP_LOGE(DISPLAY_TAG, "Create task for LVGL failed");
         if (lv_periodic_timer)
         {
             esp_timer_delete(lv_periodic_timer);
         }
-        return false;
+        CHECK_THROW("Create task for LVGL failed", err, init_failure_exception);
     }
 
     ui_instance.init();
 
     display_device.setBrightness(128);
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
-    return true;
 }
 
 // void display::begin()

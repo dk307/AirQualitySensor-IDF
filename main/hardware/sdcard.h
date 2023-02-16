@@ -4,7 +4,7 @@
 class sd_card
 {
 public:
-    bool pre_begin();
+    void pre_begin();
 
     constexpr static char mount_point[] = "/sd";
 private:
