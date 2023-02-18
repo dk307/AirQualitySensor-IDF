@@ -2,7 +2,7 @@
 #include "logging/logging_tags.h"
 #include "util/psram_allocator.h"
 #include "util/hash/hash.h"
-#include "util/string_helper.h"
+#include "util/helper.h"
 
 #include <filesystem>
 #include <esp_log.h>

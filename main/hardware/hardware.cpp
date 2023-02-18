@@ -7,7 +7,7 @@
 #include "config/config_manager.h"
 #include "hardware/display.h"
 #include "logging/logging_tags.h"
-#include "util/string_helper.h"
+#include "util/helper.h"
 
 #include <memory>
 #include <sstream>

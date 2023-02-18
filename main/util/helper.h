@@ -13,6 +13,54 @@
 
 namespace esp32
 {
+    // std::byteswap from C++23
+    template <typename T>
+    constexpr T byteswap(T n)
+    {
+        T m;
+        for (size_t i = 0; i < sizeof(T); i++)
+            reinterpret_cast<uint8_t *>(&m)[i] = reinterpret_cast<uint8_t *>(&n)[sizeof(T) - 1 - i];
+        return m;
+    }
+    template <>
+    constexpr uint8_t byteswap(uint8_t n) { return n; }
+    template <>
+    constexpr uint16_t byteswap(uint16_t n) { return __builtin_bswap16(n); }
+    template <>
+    constexpr uint32_t byteswap(uint32_t n) { return __builtin_bswap32(n); }
+    template <>
+    constexpr uint64_t byteswap(uint64_t n) { return __builtin_bswap64(n); }
+    template <>
+    constexpr int8_t byteswap(int8_t n) { return n; }
+    template <>
+    constexpr int16_t byteswap(int16_t n) { return __builtin_bswap16(n); }
+    template <>
+    constexpr int32_t byteswap(int32_t n) { return __builtin_bswap32(n); }
+    template <>
+    constexpr int64_t byteswap(int64_t n) { return __builtin_bswap64(n); }
+
+    /// Convert a value between host byte order and big endian (most significant byte first) order.
+    template <typename T>
+    constexpr T convert_big_endian(T val)
+    {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        return byteswap(val);
+#else
+        return val;
+#endif
+    }
+
+    /// Convert a value between host byte order and little endian (least significant byte first) order.
+    template <typename T>
+    constexpr T convert_little_endian(T val)
+    {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        return val;
+#else
+        return byteswap(val);
+#endif
+    }
+
     template <class... Args>
     std::string to_string_join(Args &&...args)
     {
@@ -172,28 +220,33 @@ namespace esp32
      * @return The number of characters parsed from \p str.
      */
     size_t parse_hex(const char *str, size_t len, uint8_t *data, size_t count);
+
     /// Parse \p count bytes from the hex-encoded string \p str of at least \p 2*count characters into array \p data.
     inline bool parse_hex(const char *str, uint8_t *data, size_t count)
     {
         return parse_hex(str, std::strlen(str), data, count) == 2 * count;
     }
+
     /// Parse \p count bytes from the hex-encoded string \p str of at least \p 2*count characters into array \p data.
     inline bool parse_hex(const std::string &str, uint8_t *data, size_t count)
     {
         return parse_hex(str.c_str(), str.length(), data, count) == 2 * count;
     }
+
     /// Parse \p count bytes from the hex-encoded string \p str of at least \p 2*count characters into vector \p data.
     inline bool parse_hex(const char *str, std::vector<uint8_t> &data, size_t count)
     {
         data.resize(count);
         return parse_hex(str, std::strlen(str), data.data(), count) == 2 * count;
     }
+
     /// Parse \p count bytes from the hex-encoded string \p str of at least \p 2*count characters into vector \p data.
     inline bool parse_hex(const std::string &str, std::vector<uint8_t> &data, size_t count)
     {
         data.resize(count);
         return parse_hex(str.c_str(), str.length(), data.data(), count) == 2 * count;
     }
+
     /** Parse a hex-encoded string into an unsigned integer.
      *
      * @param str String to read from, starting with the most significant byte.
@@ -205,14 +258,16 @@ namespace esp32
         T val = 0;
         if (len > 2 * sizeof(T) || parse_hex(str, len, reinterpret_cast<uint8_t *>(&val), sizeof(T)) == 0)
             return {};
-        return convert_big_endian(val);
+        return esp32::convert_big_endian(val);
     }
+
     /// Parse a hex-encoded null-terminated string (starting with the most significant byte) into an unsigned integer.
     template <typename T, std::enable_if_t<std::is_unsigned<T>::value, int> = 0>
     std::optional<T> parse_hex(const char *str)
     {
         return parse_hex<T>(str, strlen(str));
     }
+
     /// Parse a hex-encoded null-terminated string (starting with the most significant byte) into an unsigned integer.
     template <typename T, std::enable_if_t<std::is_unsigned<T>::value, int> = 0>
     std::optional<T> parse_hex(const std::string &str)

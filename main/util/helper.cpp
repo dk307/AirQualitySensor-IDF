@@ -1,4 +1,4 @@
-#include "string_helper.h"
+#include "helper.h"
 
 #include <cstdio>
 #include <algorithm>
@@ -16,21 +16,33 @@ namespace esp32
     {
         return strcasecmp(a.c_str(), b.c_str()) == 0;
     }
-    bool str_startswith(const std::string &str, const std::string &start) { return str.rfind(start, 0) == 0; }
+
+    bool str_startswith(const std::string &str, const std::string &start)
+    {
+        return str.rfind(start, 0) == 0;
+    }
+
     bool str_endswith(const std::string &str, const std::string &end)
     {
         return str.rfind(end) == (str.size() - end.size());
     }
+
     std::string str_truncate(const std::string &str, size_t length)
     {
         return str.length() > length ? str.substr(0, length) : str;
     }
+
     std::string str_until(const char *str, char ch)
     {
         char *pos = strchr(str, ch);
         return pos == nullptr ? std::string(str) : std::string(str, pos - str);
     }
-    std::string str_until(const std::string &str, char ch) { return str.substr(0, str.find(ch)); }
+
+    std::string str_until(const std::string &str, char ch)
+    {
+        return str.substr(0, str.find(ch));
+    }
+
     // wrapper around std::transform to run safely on functions from the ctype.h header
     // see https://en.cppreference.com/w/cpp/string/byte/toupper#Notes
     template <int (*fn)(int)>
