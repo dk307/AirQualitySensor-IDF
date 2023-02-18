@@ -9,6 +9,7 @@
 #include "hardware/hardware.h"
 #include "wifi/wifi_manager.h"
 #include "exceptions.h"
+#include "http_ota/http.h"
 
 #include <esp_log.h>
 #include <esp_chip_info.h>
@@ -56,18 +57,30 @@ extern "C" void app_main(void)
         ESP_LOGI(OPERATIONS_TAG, "Starting ...");
         ESP_ERROR_CHECK(nvs_flash_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
-        
+
         log_chip_details();
 
         card.pre_begin();
         config::instance.pre_begin();
 
-        hardware::instance.pre_begin();
+        // hardware::instance.pre_begin();
 
         wifi_manager::instance.begin();
-        hardware::instance.begin();
 
-        hardware::instance.set_main_screen();
+        while (!wifi_manager::instance.is_wifi_connected())
+        {
+            vTaskDelay(pdMS_TO_TICKS(5000));
+        }
+
+        http_init();
+        httpd_handle_t http_server;
+        http_start_webserver(&http_server);
+
+        // hardware::instance.begin();
+
+        // hardware::instance.set_main_screen();
+
+        ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
     }
     catch (const esp32::init_failure_exception &ex)
     {
