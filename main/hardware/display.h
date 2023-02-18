@@ -16,17 +16,14 @@ public:
     }
 
     void pre_begin();
-    // void begin();
+    void begin();
 
-    void update_boot_message(const std::string &message);
     void set_main_screen();
-
     uint8_t get_brightness();
     void set_brightness(uint8_t value);
 
 private:
     LGFX display_device;
-    esp32::semaphore lvgl_mutex;
     esp32::task lvgl_task;
     esp_timer_handle_t lv_periodic_timer{nullptr};
 

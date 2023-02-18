@@ -7,11 +7,13 @@
 #include "hardware/sdcard.h"
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
+#include "wifi/wifi_manager.h"
 #include "exceptions.h"
 
 #include <esp_log.h>
 #include <esp_chip_info.h>
 #include <esp_flash.h>
+#include <nvs_flash.h>
 
 bool log_chip_details()
 {
@@ -41,7 +43,6 @@ bool log_chip_details()
     return true;
 }
 
-
 sd_card card;
 
 extern "C" void app_main(void)
@@ -53,27 +54,26 @@ extern "C" void app_main(void)
     try
     {
         ESP_LOGI(OPERATIONS_TAG, "Starting ...");
+        ESP_ERROR_CHECK(nvs_flash_init());
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
+        
         log_chip_details();
 
-        card.pre_begin(); 
+        card.pre_begin();
         config::instance.pre_begin();
-        hardware::instance.pre_begin(); 
-        hardware::instance.set_main_screen();
 
-        for (int i = 10; i >= 0; i--)
-        {
-            printf("Restarting in %d seconds...\n", i);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
-        printf("Done now.\n");
-        fflush(stdout);
-        // esp_restart();
+        hardware::instance.pre_begin();
+
+        wifi_manager::instance.begin();
+        hardware::instance.begin();
+
+        hardware::instance.set_main_screen();
     }
     catch (const esp32::init_failure_exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
         fflush(stdout);
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(5000));
         esp_restart();
     }
 }

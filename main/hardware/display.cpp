@@ -4,16 +4,19 @@
 #include "lvgl_fs\lvgl_fs_sd_card.h"
 #include "exceptions.h"
 
-// #include "ui/ui2.h"
-// #include "config_manager.h"
-// #include "wifi_manager.h"
-// #include "hardware.h"
+#include "ui/ui2.h"
+#include "config/config_manager.h"
+#include "wifi/wifi_manager.h"
+#include "hardware/hardware.h"
 
 #include "logging/logging_tags.h"
 
 #include <esp_log.h>
 
-#define LV_TICK_PERIOD_MS 1
+const int LV_TICK_PERIOD_MS = 1;
+
+const int task_notify_wifi_changed_bit = BIT(total_sensors + 1);
+const int set_main_screen_changed_bit = BIT(total_sensors + 2);
 
 /* Display flushing */
 void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -110,7 +113,7 @@ void display::pre_begin()
 
     create_timer();
 
-    const auto err = lvgl_task.spawn_pinned("lv gui", 1024 * 4, 5, 0);
+    const auto err = lvgl_task.spawn_pinned("lv gui", 1024 * 4, 1, 1);
 
     if (err != ESP_OK)
     {
@@ -127,38 +130,30 @@ void display::pre_begin()
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 }
 
-// void display::begin()
-// {
-//     for (auto i = 0; i < total_sensors; i++)
-//     {
-//         const auto id = static_cast<sensor_id_index>(i);
-//         hardware::instance.get_sensor(id).add_callback([id, this]
-//                                                        {
-//             const auto& sensor =  hardware::instance.get_sensor(id);
-//             const auto value = sensor.get_value();
-//             std::lock_guard<esp32::semaphore> lock(lgvl_mutex);
-//             ui_instance.set_sensor_value(id, value); });
-//     }
-
-//     wifi_manager::instance.add_callback([this]
-//                                         {
-//             std::lock_guard<esp32::semaphore> lock(lgvl_mutex);
-//             ui_instance.wifi_changed(); });
-
-//     ESP_LOGI(DISPLAY_TAG, "Display Ready");
-// }
-
-void display::update_boot_message(const std::string &message)
+void display::begin()
 {
-    std::lock_guard<esp32::semaphore> lock(lvgl_mutex);
-    ui_instance.update_boot_message(message);
+    for (auto i = 0; i < total_sensors; i++)
+    {
+        const auto id = static_cast<sensor_id_index>(i);
+        hardware::instance.get_sensor(id).add_callback([i, this]
+                                                       { xTaskNotify(lvgl_task.handle(),
+                                                                     BIT(i + 1),
+                                                                     eSetBits); });
+    }
+
+    wifi_manager::instance.add_callback([this]
+                                        { xTaskNotify(lvgl_task.handle(),
+                                                      task_notify_wifi_changed_bit,
+                                                      eSetBits); });
+
+    ESP_LOGI(DISPLAY_TAG, "Display Ready");
 }
 
 void display::set_main_screen()
 {
-    std::lock_guard<esp32::semaphore> lock(lvgl_mutex);
-    ESP_LOGI(DISPLAY_TAG, "Switching to main screen");
-    ui_instance.set_main_screen();
+    xTaskNotify(lvgl_task.handle(),
+                set_main_screen_changed_bit,
+                eSetBits);
 }
 
 uint8_t display::get_brightness()
@@ -189,12 +184,38 @@ void display::lv_tick_task(void *)
 void display::gui_task()
 {
     ESP_LOGI(DISPLAY_TAG, "Start to run LVGL Task");
-    while (1)
+    do
     {
-        vTaskDelay(pdMS_TO_TICKS(10));
-
-        /* Try to take the semaphore, call lvgl related function on success */
-        std::lock_guard<esp32::semaphore> lock(lvgl_mutex);
         lv_task_handler();
-    }
+
+        uint32_t notification_value = 0;
+        const auto result = xTaskNotifyWait(pdFALSE,             /* Don't clear bits on entry. */
+                                            ULONG_MAX,           /* Clear all bits on exit. */
+                                            &notification_value, /* Stores the notified value. */
+                                            pdMS_TO_TICKS(10));
+
+        if (result == pdPASS)
+        {
+            if (notification_value & task_notify_wifi_changed_bit)
+            {
+                ui_instance.wifi_changed();
+            }
+
+            if (notification_value & set_main_screen_changed_bit)
+            {
+                ui_instance.set_main_screen();
+            }
+
+            for (auto i = 1; i <= total_sensors; i++)
+            {
+                if (notification_value & BIT(i))
+                {
+                    const auto id = static_cast<sensor_id_index>(i - 1);
+                    const auto &sensor = hardware::instance.get_sensor(id);
+                    const auto value = sensor.get_value();
+                    ui_instance.set_sensor_value(id, value);
+                }
+            }
+        }
+    } while(true);
 }

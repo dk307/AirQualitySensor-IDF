@@ -4,15 +4,17 @@
 #include <functional>
 #include <memory>
 
-#include "esp_err.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include <esp_err.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 namespace esp32
 {
     class task
     {
     public:
+        constexpr static uint32_t default_priority = 0;
+
         task(const std::function<void(void)> &call) : call(call)
         {
         }

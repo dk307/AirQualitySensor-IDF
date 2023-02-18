@@ -1,0 +1,315 @@
+#include "wifi_sta.h"
+#include "logging/logging_tags.h"
+
+#include <sstream>
+#include <mutex>
+#include <cstring>
+#include <esp_log.h>
+
+const int CONNECTED_BIT = BIT0;
+const int DISCONNECTED_BIT = BIT1;
+const int GOTIP_BIT = BIT2;
+const int LOSTIP_BIT = BIT3;
+
+/// \brief Copies at min(SourceLen, size) bytes from source to target buffer.
+template <typename InputIt, typename SourceLen, typename T, std::size_t size>
+void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[size])
+{
+    auto to_copy = std::min(static_cast<std::size_t>(source_length), size);
+    std::copy_n(source, to_copy, target);
+}
+
+wifi_sta::wifi_sta(bool auto_connect_to_ap_,
+                   const std::string &host_name_,
+                   const std::string &ssid_,
+                   const std::string &password_)
+    : auto_connect_to_ap(auto_connect_to_ap_), host_name(host_name_), ssid(ssid_), password(password_)
+{
+    wifi_event_group = xEventGroupCreate();
+    configASSERT(wifi_event_group);
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+                                                        ESP_EVENT_ANY_ID,
+                                                        &wifi_sta::wifi_event_callback,
+                                                        this,
+                                                        &instance_wifi_event));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+                                                        ESP_EVENT_ANY_ID,
+                                                        &wifi_sta::wifi_event_callback,
+                                                        this,
+                                                        &instance_ip_event));
+}
+
+wifi_sta::~wifi_sta()
+{
+    esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event);
+    esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event);
+    esp_wifi_disconnect();
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    vEventGroupDelete(wifi_event_group);
+}
+
+void wifi_sta::set_host_name(const std::string &name)
+{
+    host_name = name;
+}
+
+void wifi_sta::connect_to_ap()
+{
+    ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", ssid.c_str());
+
+    // Prepare to connect to the provided SSID and password
+    wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&init));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+    wifi_config_t config{};
+    memset(&config, 0, sizeof(config));
+    copy_min_to_buffer(ssid.begin(), ssid.length(), config.sta.ssid);
+    copy_min_to_buffer(password.begin(), password.length(), config.sta.password);
+
+    config.sta.threshold.authmode = password.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
+    config.sta.bssid_set = false;
+
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &config));
+
+    close_if();
+    interface = esp_netif_create_default_wifi_sta();
+    connect();
+}
+
+void wifi_sta::connect() const
+{
+    ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_wifi_connect());
+}
+
+void wifi_sta::wifi_event_callback(void *event_handler_arg,
+                                   esp_event_base_t event_base,
+                                   int32_t event_id,
+                                   void *event_data)
+{
+    auto instance = reinterpret_cast<wifi_sta *>(event_handler_arg);
+    instance->wifi_event_callback_impl(event_base, event_id, event_data);
+}
+
+void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base,
+                                        int32_t event_id,
+                                        void *event_data)
+{
+    if (event_base == WIFI_EVENT)
+    {
+        if (event_id == WIFI_EVENT_STA_START)
+        {
+            esp_netif_set_hostname(interface, host_name.c_str());
+        }
+        else if (event_id == WIFI_EVENT_STA_CONNECTED)
+        {
+            xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+        }
+        else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
+        {
+
+            const auto *data = reinterpret_cast<wifi_event_sta_disconnected_t *>(event_data);
+            ESP_LOGI(WIFI_EVENT_TAG, "WiFi STA disconnected with reason:%s", get_disconnect_reason_str(data->reason).c_str());
+            ip_info.ip.addr = 0;
+            ip_info.netmask = ip_info.ip;
+            ip_info.gw = ip_info.ip;
+
+            xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
+
+            if (auto_connect_to_ap)
+            {
+                esp_wifi_stop();
+                connect();
+            }
+        }
+    }
+    else if (event_base == IP_EVENT)
+    {
+        if (event_id == IP_EVENT_STA_GOT_IP || event_id == IP_EVENT_GOT_IP6 || event_id == IP_EVENT_ETH_GOT_IP)
+        {
+            ip_info = reinterpret_cast<ip_event_got_ip_t *>(event_data)->ip_info;
+            ESP_LOGI(WIFI_TAG, "New IP Address : %d.%d.%d.%d", IP2STR(&ip_info.ip));
+            xEventGroupSetBits(wifi_event_group, GOTIP_BIT);
+        }
+        else if (event_id == IP_EVENT_STA_LOST_IP)
+        {
+            ip_info.ip.addr = 0;
+            ip_info.netmask = ip_info.ip;
+            ip_info.gw = ip_info.ip;
+            xEventGroupSetBits(wifi_event_group, LOSTIP_BIT);
+        }
+    }
+}
+
+void wifi_sta::close_if()
+{
+    if (interface)
+    {
+        esp_netif_destroy(interface);
+        interface = nullptr;
+    }
+}
+
+std::string wifi_sta::get_mac_address()
+{
+    std::stringstream mac;
+
+    std::array<uint8_t, 6> m;
+    bool ret = get_local_mac_address(m);
+
+    if (ret)
+    {
+        for (const auto &v : m)
+        {
+            if (mac.tellp() > 0)
+            {
+                mac << ":";
+            }
+
+            mac << std::hex << static_cast<int>(v);
+        }
+    }
+
+    return mac.str();
+}
+
+bool wifi_sta::get_local_mac_address(std::array<uint8_t, 6> &m)
+{
+    wifi_mode_t mode;
+    esp_err_t err = esp_wifi_get_mode(&mode);
+
+    if (err == ESP_OK)
+    {
+        if (mode == WIFI_MODE_STA)
+        {
+            err = esp_wifi_get_mac(WIFI_IF_STA, m.data());
+        }
+        else if (mode == WIFI_MODE_AP)
+        {
+            err = esp_wifi_get_mac(WIFI_IF_AP, m.data());
+        }
+        else
+        {
+            err = ESP_FAIL;
+        }
+    }
+
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(WIFI_TAG, "get_local_mac_address(): %s", esp_err_to_name(err));
+    }
+
+    return err == ESP_OK;
+}
+
+uint32_t wifi_sta::get_local_ip()
+{
+    return ip_info.ip.addr;
+}
+
+std::string wifi_sta::get_local_ip_address()
+{
+    std::array<char, 16> str_ip;
+    return esp_ip4addr_ntoa(&ip_info.ip, str_ip.data(), 16);
+}
+
+std::string wifi_sta::get_netmask()
+{
+    std::array<char, 16> str_mask;
+    return esp_ip4addr_ntoa(&ip_info.netmask, str_mask.data(), 16);
+}
+
+std::string wifi_sta::get_gateway()
+{
+    std::array<char, 16> str_gw;
+    return esp_ip4addr_ntoa(&ip_info.gw, str_gw.data(), 16);
+}
+
+bool wifi_sta::wait_for_connect(TickType_t time)
+{
+    return xEventGroupWaitBits(wifi_event_group,
+                               CONNECTED_BIT | GOTIP_BIT,
+                               pdTRUE, // clear before return
+                               pdTRUE, // wait for both
+                               time) == (CONNECTED_BIT | GOTIP_BIT);
+}
+
+bool wifi_sta::wait_for_disconnect(TickType_t time)
+{
+    return xEventGroupWaitBits(wifi_event_group,
+                               DISCONNECTED_BIT | LOSTIP_BIT,
+                               pdTRUE, // clear before return
+                               pdFALSE, // wait for any
+                               time) != (0);
+}
+
+std::string wifi_sta::get_disconnect_reason_str(uint8_t reason)
+{
+    switch (reason)
+    {
+    case WIFI_REASON_AUTH_EXPIRE:
+        return "Auth Expired";
+    case WIFI_REASON_AUTH_LEAVE:
+        return "Auth Leave";
+    case WIFI_REASON_ASSOC_EXPIRE:
+        return "Association Expired";
+    case WIFI_REASON_ASSOC_TOOMANY:
+        return "Too Many Associations";
+    case WIFI_REASON_NOT_AUTHED:
+        return "Not Authenticated";
+    case WIFI_REASON_NOT_ASSOCED:
+        return "Not Associated";
+    case WIFI_REASON_ASSOC_LEAVE:
+        return "Association Leave";
+    case WIFI_REASON_ASSOC_NOT_AUTHED:
+        return "Association not Authenticated";
+    case WIFI_REASON_DISASSOC_PWRCAP_BAD:
+        return "Disassociate Power Cap Bad";
+    case WIFI_REASON_DISASSOC_SUPCHAN_BAD:
+        return "Disassociate Supported Channel Bad";
+    case WIFI_REASON_IE_INVALID:
+        return "IE Invalid";
+    case WIFI_REASON_MIC_FAILURE:
+        return "Mic Failure";
+    case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+        return "4-Way Handshake Timeout";
+    case WIFI_REASON_GROUP_KEY_UPDATE_TIMEOUT:
+        return "Group Key Update Timeout";
+    case WIFI_REASON_IE_IN_4WAY_DIFFERS:
+        return "IE In 4-Way Handshake Differs";
+    case WIFI_REASON_GROUP_CIPHER_INVALID:
+        return "Group Cipher Invalid";
+    case WIFI_REASON_PAIRWISE_CIPHER_INVALID:
+        return "Pairwise Cipher Invalid";
+    case WIFI_REASON_AKMP_INVALID:
+        return "AKMP Invalid";
+    case WIFI_REASON_UNSUPP_RSN_IE_VERSION:
+        return "Unsupported RSN IE version";
+    case WIFI_REASON_INVALID_RSN_IE_CAP:
+        return "Invalid RSN IE Cap";
+    case WIFI_REASON_802_1X_AUTH_FAILED:
+        return "802.1x Authentication Failed";
+    case WIFI_REASON_CIPHER_SUITE_REJECTED:
+        return "Cipher Suite Rejected";
+    case WIFI_REASON_BEACON_TIMEOUT:
+        return "Beacon Timeout";
+    case WIFI_REASON_NO_AP_FOUND:
+        return "AP Not Found";
+    case WIFI_REASON_AUTH_FAIL:
+        return "Authentication Failed";
+    case WIFI_REASON_ASSOC_FAIL:
+        return "Association Failed";
+    case WIFI_REASON_HANDSHAKE_TIMEOUT:
+        return "Handshake Failed";
+    case WIFI_REASON_CONNECTION_FAIL:
+        return "Connection Failed";
+    case WIFI_REASON_UNSPECIFIED:
+    default:
+        return std::to_string(reason);
+    }
+}

@@ -2,81 +2,40 @@
 #include "hardware/display.h"
 
 // #include "hardware/sdcard.h"
-// #include "wifi_manager.h"
-// #include "config_manager.h"
+#include "wifi/wifi_sta.h"
+#include "wifi/wifi_manager.h"
+#include "config/config_manager.h"
 #include "hardware/display.h"
-#include "hardware.h"
 #include "logging/logging_tags.h"
-
-// #include <Arduino.h>
-// #include <Wifi.h>
-// #include <esp_wifi.h>
-// #include <esp_netif_types.h>
-// #include <StreamString.h>
-// #include <SD.h>
-// #include <Wire.h>
+#include "util/string_helper.h"
 
 #include <memory>
 #include <sstream>
 #include <iomanip>
+#include <esp_timer.h>
+#include <esp_mac.h>
+#include <esp_wifi.h>
+#include <esp_netif_types.h>
 
 hardware hardware::instance;
 
-// static const char *timezone_strings[5]{
-//     "USA Eastern",
-//     "USA Central",
-//     "USA Mountain time",
-//     "USA Arizona",
-//     "USA Pacific",
-// };
+static const char *timezone_strings[5]{
+    "USA Eastern",
+    "USA Central",
+    "USA Mountain time",
+    "USA Arizona",
+    "USA Pacific",
+};
 
-// template <class T>
-// inline Print &operator<<(Print &obj, T &&arg)
-// {
-//     obj.print(std::forward<T>(arg));
-//     return obj;
-// }
-
-template <class... Args>
-std::string to_string(Args &&...args)
+std::string hardware::get_up_time()
 {
-    std::ostringstream stream;
-    (stream << ... << std::forward<Args>(args));
-    return stream.str();
+    const auto now = esp_timer_get_time() / (1000 * 1000);
+    const uint8_t hour = now / 3600;
+    const uint8_t mins = (now % 3600) / 60;
+    const uint8_t sec = (now % 3600) % 60;
+
+    return esp32::str_sprintf("%02d hours %02d mins %02d secs", hour, mins, sec);
 }
-
-std::string stringify_size(uint64_t bytes, int max_unit = 128)
-{
-    constexpr char suffix[3][3] = {"B", "KB", "MB"};
-    constexpr char length = sizeof(suffix) / sizeof(suffix[0]);
-
-    uint16_t i = 0;
-    double dblBytes = bytes;
-
-    if (bytes > 1024)
-    {
-        for (i = 0; (bytes / 1024) > 0 && i < length - 1 && (max_unit > 0); i++, bytes /= 1024)
-        {
-            dblBytes = bytes / 1024.0;
-            max_unit--;
-        }
-    }
-
-    return to_string(static_cast<uint64_t>(std::round(dblBytes)), ' ', suffix[i]);
-}
-
-// std::string hardware::get_up_time()
-// {
-//     const auto now = millis() / 1000;
-//     const auto hour = now / 3600;
-//     const auto mins = (now % 3600) / 60;
-//     const auto sec = (now % 3600) % 60;
-
-//     StreamString upTime;
-//     upTime.reserve(30U);
-//     upTime.printf_P(PSTR("%02d hours %02d mins %02d secs"), hour, mins, sec);
-//     return upTime;
-// }
 
 void hardware::set_screen_brightness(uint8_t value)
 {
@@ -88,23 +47,11 @@ void hardware::set_screen_brightness(uint8_t value)
     }
 }
 
-uint32_t esp_get_total_heap_size(void)
+std::string get_heap_info_str(uint32_t caps)
 {
     multi_heap_info_t info;
-    heap_caps_get_info(&info, MALLOC_CAP_INTERNAL);
-    return info.total_free_bytes + info.total_allocated_bytes;
-}
-
-uint32_t esp_get_psram_total_size(void)
-{
-    multi_heap_info_t info;
-    heap_caps_get_info(&info, MALLOC_CAP_SPIRAM);
-    return info.total_free_bytes + info.total_allocated_bytes;
-}
-
-uint32_t esp_get_psram_free_size(void)
-{
-    return heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    heap_caps_get_info(&info, caps);
+    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes), " free out of ", esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes));
 }
 
 ui_interface::information_table_type hardware::get_information_table(information_type type)
@@ -114,81 +61,68 @@ ui_interface::information_table_type hardware::get_information_table(information
     case information_type::system:
         return {
             // {"Firmware Version", to_string(VERSION)},
-            // {"SDK Version", to_string(ESP.getSdkVersion())},
+            {"IDF Version", std::string(esp_get_idf_version())},
             //{"Chip", to_string(ESP.getChipModel(), "\nRev: ", ESP.getChipRevision(), "\nFlash: ", stringify_size(ESP.getFlashChipSize()))},
-            {"Heap", to_string(stringify_size(esp_get_free_heap_size()), " free out of ", stringify_size(esp_get_total_heap_size()))},
-            {"PsRam", to_string(stringify_size(esp_get_psram_free_size(), 1), " free out of ", stringify_size(esp_get_psram_total_size(), 1))},
-            //{"Uptime", get_up_time()},
+            {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},
+            {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
+            {"Uptime", get_up_time()},
             //{"SD Card Size", to_string(SD.cardSize() / (1024 * 1024), " MB")},
-            {"Screen Brightness", to_string((display_instance.get_brightness() * 100) / 256, " %")},
+            {"Screen Brightness", esp32::to_string_join((display_instance.get_brightness() * 100) / 256, " %")},
             // {"SHT31 sensor status", get_sht31_status()},
             // {"SPS30 sensor status", get_sps30_error_register_status()},
         };
 
     case information_type::network:
-    // {
-    //     ui_interface::information_table_type table;
-    //     switch (WiFi.getMode())
-    //     {
-    //     case WIFI_MODE_STA:
-    //     {
-    //         table.push_back({"Mode", "STA Mode"});
+    {
+        ui_interface::information_table_type table;
 
-    //         wifi_ap_record_t info;
-    //         const auto result_info = esp_wifi_sta_get_ap_info(&info);
-    //         if (result_info != ESP_OK)
-    //         {
-    //             table.push_back({"Error", to_string("failed to get info with error", result_info)});
-    //         }
-    //         else
-    //         {
-    //             table.push_back({"SSID", reinterpret_cast<char *>(info.ssid)});
-    //             table.push_back({"Hostname", WiFi.getHostname()});
-    //             table.push_back({"IP address(wifi)", WiFi.localIP().toString()});
-    //             table.push_back({"Mac address", WiFi.softAPmacAddress()});
-    //             table.push_back({"RSSI (db)", to_string(info.rssi)});
-    //             table.push_back({"Gateway address", WiFi.gatewayIP().toString()});
-    //             table.push_back({"Subnet", WiFi.subnetMask().toString()});
-    //             table.push_back({"DNS", WiFi.dnsIP().toString()});
-    //         }
-    //     }
-    //     break;
-    //     case WIFI_MODE_AP:
-    //         table.push_back({"Mode", "Access Point Mode"});
-    //         table.push_back({"SSID", WiFi.softAPSSID()});
-    //         break;
-    //     case WIFI_MODE_APSTA:
-    //         table.push_back({"Mode", "AP+STA Mode"});
-    //         table.push_back({"AP SSID", WiFi.softAPSSID()});
-    //         table.push_back({"STA SSID", WiFi.SSID()});
-    //         break;
-    //     }
+        table.push_back({"Mode", "STA Mode"});
 
-    //     auto local_time_now = ntp_time::instance.get_local_time();
-    //     if (local_time_now.has_value())
-    //     {
-    //         char value[64];
-    //         tm tm;
-    //         gmtime_r(&local_time_now.value(), &tm);
-    //         table.push_back({"Local time", asctime_r(&tm, value)});
-    //     }
-    //     else
-    //     {
-    //         table.push_back({"Local time", "Not Synced"});
-    //     }
+        wifi_ap_record_t info;
+        const auto result_info = esp_wifi_sta_get_ap_info(&info);
+        if (result_info != ESP_OK)
+        {
+            table.push_back({"Error", esp32::to_string_join("failed to get info with error", result_info)});
+        }
+        else
+        {
+            // IP2STR()
+            // table.push_back({"Hostname", WiFi.getHostname()});
+            // table.push_back({"IP address(wifi)", WiFi.localIP().toString()});
+            table.push_back({"Ssid", std::string(reinterpret_cast<char *>(&info.ssid[0]))});
+            table.push_back({"RSSI", esp32::to_string_join(info.rssi, " db")});
+            // table.push_back({"Gateway address", WiFi.gatewayIP().toString()});
+            // table.push_back({"Subnet", WiFi.subnetMask().toString()});
+            // table.push_back({"DNS", WiFi.dnsIP().toString()});
+        }
 
-    //     return table;
-    // }
+        table.push_back({"Mac Address", wifi_sta::get_mac_address()});
+
+        // auto local_time_now = ntp_time::instance.get_local_time();
+        // if (local_time_now.has_value())
+        // {
+        //     char value[64];
+        //     tm tm;
+        //     gmtime_r(&local_time_now.value(), &tm);
+        //     table.push_back({"Local time", asctime_r(&tm, value)});
+        // }
+        // else
+        // {
+        table.push_back({"Local time", "Not Synced"});
+        // }
+
+        return table;
+    }
     case information_type::config:
-        //     return {
-        //         {"Hostname", to_string(config::instance.instance.data.get_host_name())},
-        //         {"NTP server", to_string(config::instance.instance.data.get_ntp_server())},
-        //         {"NTP server refresh interval", to_string(config::instance.instance.data.get_ntp_server_refresh_interval())},
-        //         {"Time zone", timezone_strings[static_cast<size_t>(config::instance.instance.data.get_timezone())]},
-        //         {"SSID", to_string(config::instance.instance.data.get_wifi_ssid())},
-        //         {"Web user name", to_string(config::instance.instance.data.get_web_user_name())},
-        //         {"Screen brightness (%)", to_string((100 * config::instance.instance.data.get_manual_screen_brightness().value_or(0)) / 256)},
-        //     };
+        return {
+            {"Hostname", config::instance.instance.data.get_host_name()},
+            {"NTP server", config::instance.instance.data.get_ntp_server()},
+            {"NTP server refresh interval", std::to_string(config::instance.instance.data.get_ntp_server_refresh_interval())},
+            {"Time zone", timezone_strings[static_cast<size_t>(config::instance.instance.data.get_timezone())]},
+            {"SSID", config::instance.instance.data.get_wifi_ssid()},
+            {"Web user name", config::instance.instance.data.get_web_user_name()},
+            {"Screen brightness (%)", std::to_string((100 * config::instance.instance.data.get_manual_screen_brightness().value_or(0)) / 256)},
+        };
         break;
     }
     return {};
@@ -207,14 +141,12 @@ sensor_history::sensor_history_snapshot hardware::get_sensor_detail_info(sensor_
 
 bool hardware::is_wifi_connected()
 {
-    return true;
-    // return wifi_manager::instance.is_wifi_connected();
+    return wifi_manager::instance.is_wifi_connected();
 }
 
 std::string hardware::get_wifi_status()
 {
-    return "";
-    // return wifi_manager::instance.get_wifi_status();
+    return wifi_manager::instance.get_wifi_status();
 }
 
 bool hardware::clean_sps_30()
@@ -237,7 +169,7 @@ void hardware::pre_begin()
 {
     sensors_history = esp32::psram::make_unique<std::array<sensor_history, total_sensors>>();
 
-    display_instance.pre_begin(); 
+    display_instance.pre_begin();
 
     // // Wire is already used by touch i2c
     // if (!Wire1.begin(SDAWire, SCLWire))
@@ -302,25 +234,25 @@ void hardware::pre_begin()
 //     }
 // }
 
-// void hardware::begin()
-// {
-//     display_instance.begin();
+void hardware::begin()
+{
+    display_instance.begin();
 
-//     sensor_refresh_task = std::make_unique<esp32::task>([this]
-//                                                         {
-//                                                             ESP_LOGI( HARDWARE_TAG, "Hardware task started on core:%d", xPortGetCoreID());
-//                                                             do
-//                                                             {
-//                                                                 read_bh1750_sensor();
-//                                                                 read_sht31_sensor();
-//                                                                 read_sps30_sensor();
-//                                                                 set_auto_display_brightness();
-//                                                                 vTaskDelay(500);
-//                                                             } while(true); });
+    // sensor_refresh_task = std::make_unique<esp32::task>([this]
+    //                                                     {
+    //                                                         ESP_LOGI( HARDWARE_TAG, "Hardware task started on core:%d", xPortGetCoreID());
+    //                                                         do
+    //                                                         {
+    //                                                             read_bh1750_sensor();
+    //                                                             read_sht31_sensor();
+    //                                                             read_sps30_sensor();
+    //                                                             set_auto_display_brightness();
+    //                                                             vTaskDelay(500);
+    //                                                         } while(true); });
 
-//     // start on core 0
-//     sensor_refresh_task->spawn_arduino_other_core("sensor task", 4196);
-// }
+    // // start on core 0
+    // sensor_refresh_task->spawn_arduino_other_core("sensor task", 4196);
+}
 
 // void hardware::read_bh1750_sensor()
 // {

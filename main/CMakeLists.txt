@@ -8,9 +8,11 @@ idf_component_register(SRCS "main.cpp"
                             "ui/ui2.cpp" 
                             "ui/ui_img_logo.c" 
                             "config/config_manager.cpp"
+                            "wifi/wifi_sta.cpp"
+                            "wifi/wifi_manager.cpp"
                             "util/string_helper.cpp"
 
                     INCLUDE_DIRS "."
-                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls)
+                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE "-Wno-deprecated-enum-enum-conversion")

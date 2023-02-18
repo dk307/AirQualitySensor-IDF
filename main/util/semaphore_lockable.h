@@ -19,8 +19,9 @@ namespace esp32
             vSemaphoreDelete(handle);
         }
 
-        explicit semaphore(const semaphore &other) = delete;
-        semaphore &operator=(const semaphore &other) = delete;
+        explicit semaphore(const semaphore &) = delete;
+        explicit semaphore(const semaphore &&) = delete;
+        semaphore &operator=(const semaphore &) = delete;
 
         void lock()
         {

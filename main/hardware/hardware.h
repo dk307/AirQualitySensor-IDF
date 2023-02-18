@@ -27,11 +27,7 @@ public:
     {
         return (*sensors_history)[static_cast<uint8_t>(index)];
     }
-
-    void update_boot_message(const std::string &message)
-    {
-        display_instance.update_boot_message(message);
-    }
+   
     void set_main_screen()
     {
         display_instance.set_main_screen();
@@ -78,7 +74,7 @@ private:
 
     void set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value);
 
-    // static std::string get_up_time();
+    static std::string get_up_time();
     // void read_bh1750_sensor();
     // void read_sht31_sensor();
     // void read_sps30_sensor();

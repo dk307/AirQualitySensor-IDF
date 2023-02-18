@@ -4,14 +4,72 @@
 #include <memory>
 #include <string>
 #include <cstring>
+#include <sstream>
 #include <type_traits>
 #include <vector>
 #include <optional>
 
-//copied from https://github.com/esphome/esphome/tree/dev/esphome/core
+// copied from https://github.com/esphome/esphome/tree/dev/esphome/core
 
 namespace esp32
 {
+    template <class... Args>
+    std::string to_string_join(Args &&...args)
+    {
+        std::ostringstream stream;
+        (stream << ... << std::forward<Args>(args));
+        return stream.str();
+    }
+
+    inline std::string stringify_size(uint64_t bytes, int max_unit = 128)
+    {
+        constexpr char suffix[3][3] = {"B", "KB", "MB"};
+        constexpr char length = sizeof(suffix) / sizeof(suffix[0]);
+
+        uint16_t i = 0;
+        double dblBytes = bytes;
+
+        if (bytes > 1024)
+        {
+            for (i = 0; (bytes / 1024) > 0 && i < length - 1 && (max_unit > 0); i++, bytes /= 1024)
+            {
+                dblBytes = bytes / 1024.0;
+                max_unit--;
+            }
+        }
+
+        return to_string_join(static_cast<uint64_t>(std::round(dblBytes)), ' ', suffix[i]);
+    }
+
+    inline void ltrim(std::string &s)
+    {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch)
+                                        { return !std::isspace(ch); }));
+    }
+
+    // trim from end (in place)
+    inline void rtrim(std::string &s)
+    {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch)
+                             { return !std::isspace(ch); })
+                    .base(),
+                s.end());
+    }
+
+    // trim from both ends (in place)
+    inline void trim(std::string &s)
+    {
+        rtrim(s);
+        ltrim(s);
+    }
+
+    // trim from start (copying)
+    inline std::string ltrim_copy(std::string s)
+    {
+        ltrim(s);
+        return s;
+    }
+
     /// Compare strings for equality in case-insensitive manner.
     bool str_equals_case_insensitive(const std::string &a, const std::string &b);
 
@@ -170,7 +228,6 @@ namespace esp32
     template <typename T, std::enable_if_t<std::is_unsigned<T>::value, int> = 0>
     std::string format_hex(T val)
     {
-        val = convert_big_endian(val);
         return format_hex(reinterpret_cast<uint8_t *>(&val), sizeof(T));
     }
 
