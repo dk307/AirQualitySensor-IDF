@@ -10,6 +10,7 @@ public:
     void init() override
     {
         ui_screen::init();
+        set_default_screen();
 
         tab_view = lv_tabview_create(screen, LV_DIR_LEFT, tab_width);
         lv_obj_set_style_text_font(screen, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);

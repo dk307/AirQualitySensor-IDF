@@ -11,8 +11,9 @@ idf_component_register(SRCS "main.cpp"
                             "wifi/wifi_sta.cpp"
                             "wifi/wifi_manager.cpp"
                             "util/string_helper.cpp"
+                            "http_ota/http.c"
 
                     INCLUDE_DIRS "."
-                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support)
+                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support app_update esp_http_server esp-tls)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE "-Wno-deprecated-enum-enum-conversion")
