@@ -10,13 +10,13 @@ namespace esp32
     class semaphore final
     {
     public:
-        semaphore() : handle(xSemaphoreCreateMutexStatic(&buffer))
+        semaphore() : handle_(xSemaphoreCreateMutexStatic(&buffer_))
         {
         }
 
         ~semaphore()
         {
-            vSemaphoreDelete(handle);
+            vSemaphoreDelete(handle_);
         }
 
         explicit semaphore(const semaphore &) = delete;
@@ -25,7 +25,7 @@ namespace esp32
 
         void lock()
         {
-            const auto result = xSemaphoreTake(handle, portMAX_DELAY);
+            const auto result = xSemaphoreTake(handle_, portMAX_DELAY);
             if (result != pdTRUE)
             {
                 std::__throw_system_error(EBUSY);
@@ -34,12 +34,12 @@ namespace esp32
 
         bool try_lock() noexcept
         {
-            return xSemaphoreTake(handle, 0) == pdTRUE;
+            return xSemaphoreTake(handle_, 0) == pdTRUE;
         }
 
         void unlock()
         {
-            const auto result = xSemaphoreGive(handle);
+            const auto result = xSemaphoreGive(handle_);
             if (result != pdTRUE)
             {
                 std::__throw_system_error(EBUSY);
@@ -47,7 +47,7 @@ namespace esp32
         }
 
     private:
-        SemaphoreHandle_t handle;
-        StaticSemaphore_t buffer;
+        SemaphoreHandle_t handle_;
+        StaticSemaphore_t buffer_;
     };
 }

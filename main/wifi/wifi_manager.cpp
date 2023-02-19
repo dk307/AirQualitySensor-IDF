@@ -16,7 +16,7 @@ const int IP_BIT = BIT1;
 
 void wifi_manager::begin()
 {
-    wifi_task.spawn_same("wifi task", 4096, esp32::task::default_priority);
+    wifi_task_.spawn_same("wifi task", 4096, esp32::task::default_priority);
 }
 
 bool wifi_manager::connect_saved_wifi()
@@ -29,11 +29,11 @@ bool wifi_manager::connect_saved_wifi()
         const auto rfc_name = get_rfc_name();
         ESP_LOGI(WIFI_TAG, "Hostname is %s", rfc_name.c_str());
         {
-            std::lock_guard<esp32::semaphore> lock(data_mutex);
-            wifi_instance = std::make_unique<wifi_sta>(true, rfc_name, ssid, pwd);
+            std::lock_guard<esp32::semaphore> lock(data_mutex_);
+            wifi_instance_ = std::make_unique<wifi_sta>(true, rfc_name, ssid, pwd);
         }
-        wifi_instance->connect_to_ap();
-        return wifi_instance->wait_for_connect(pdMS_TO_TICKS(30000));
+        wifi_instance_->connect_to_ap();
+        return wifi_instance_->wait_for_connect(pdMS_TO_TICKS(30000));
     }
     return false;
 }
@@ -44,13 +44,13 @@ void wifi_manager::wifi_task_ftn()
     ESP_ERROR_CHECK(esp_netif_init());
     do
     {
-        connected_to_ap = connect_saved_wifi();
+        connected_to_ap_ = connect_saved_wifi();
         call_change_listeners();
 
-        if (connected_to_ap)
+        if (connected_to_ap_)
         {
-            wifi_instance->wait_for_disconnect(portMAX_DELAY);
-            connected_to_ap = false;
+            wifi_instance_->wait_for_disconnect(portMAX_DELAY);
+            connected_to_ap_ = false;
             call_change_listeners();
         }
 
@@ -112,18 +112,18 @@ std::string wifi_manager::get_rfc_name()
 
 bool wifi_manager::is_wifi_connected()
 {
-    return connected_to_ap.load();
+    return connected_to_ap_.load();
 }
 
 std::string wifi_manager::get_wifi_status()
 {
-    std::lock_guard<esp32::semaphore> lock(data_mutex);
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
     std::stringstream stream;
-    if (connected_to_ap)
+    if (connected_to_ap_)
     {
-        if ((wifi_instance->get_local_ip() != 0))
+        if ((wifi_instance_->get_local_ip() != 0))
         {
-            stream << "Connected to " << wifi_instance->get_ssid() << " with IP " << wifi_instance->get_local_ip_address();
+            stream << "Connected to " << wifi_instance_->get_ssid() << " with IP " << wifi_instance_->get_local_ip_address();
         }
         else
         {

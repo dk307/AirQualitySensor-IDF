@@ -37,30 +37,30 @@ class sensor_definition
 {
 public:
     sensor_definition(const char *name, const char *unit, const sensor_definition_display *display_definitions, size_t display_definitions_count)
-        : name(name), unit(unit), display_definitions(display_definitions), display_definitions_count(display_definitions_count)
+        : name_(name), unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count)
     {
     }
 
     sensor_level calculate_level(double value_p) const
     {
-        for (uint8_t i = 0; i < display_definitions_count; i++)
+        for (uint8_t i = 0; i < display_definitions_count_; i++)
         {
-            if (display_definitions[i].is_in_range(value_p))
+            if (display_definitions_[i].is_in_range(value_p))
             {
-                return display_definitions[i].get_level();
+                return display_definitions_[i].get_level();
             }
         }
-        return display_definitions[0].get_level();
+        return display_definitions_[0].get_level();
     }
 
-    const char *get_unit() const { return unit; }
-    const char *get_name() const { return name; }
+    const char *get_unit() const { return unit_; }
+    const char *get_name() const { return name_; }
 
 private:
-    const char *name;
-    const char *unit;
-    const sensor_definition_display *display_definitions;
-    const uint8_t display_definitions_count;
+    const char *name_;
+    const char *unit_;
+    const sensor_definition_display *display_definitions_;
+    const uint8_t display_definitions_count_;
 };
 
 template <class T>
@@ -119,14 +119,14 @@ public:
 
     void add_value(T value)
     {
-        std::lock_guard<esp32::semaphore> lock(data_mutex);
-        last_x_values.push(value);
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        last_x_values_.push(value);
     }
 
     void clear()
     {
-        std::lock_guard<esp32::semaphore> lock(data_mutex);
-        last_x_values.clear();
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        last_x_values_.clear();
     }
 
     sensor_history_snapshot get_snapshot(uint8_t group_by_count) const
@@ -134,8 +134,8 @@ public:
         vector_history_t return_values;
 
 
-        std::lock_guard<esp32::semaphore> lock(data_mutex);
-        const auto size = last_x_values.size();
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        const auto size = last_x_values_.size();
         if (size)
         {
             return_values.reserve(1 + (size / group_by_count));
@@ -144,7 +144,7 @@ public:
             double group_sum = 0;
             for (auto i = 0; i < size; i++)
             {
-                const auto value = last_x_values[i];
+                const auto value = last_x_values_[i];
                 sum += value;
                 group_sum += value;
                 stats_value.max = std::max(value, stats_value.max);
@@ -174,14 +174,14 @@ public:
    
     std::optional<T> get_average() const
     {
-        std::lock_guard<esp32::semaphore> lock(data_mutex);
-        const auto size = last_x_values.size();
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        const auto size = last_x_values_.size();
         if (size)
         {
             double sum = 0;
             for (auto i = 0; i < size; i++)
             {
-                sum += last_x_values[i];
+                sum += last_x_values_[i];
             }
             return static_cast<T>(sum / size);
         }
@@ -192,8 +192,8 @@ public:
     }
 
 private:
-    mutable esp32::semaphore data_mutex;
-    circular_buffer<T, countT> last_x_values;
+    mutable esp32::semaphore data_mutex_;
+    circular_buffer<T, countT> last_x_values_;
 };
 
 template <class T, uint8_t reads_per_minuteT, uint16_t minutesT>

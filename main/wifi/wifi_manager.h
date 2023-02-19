@@ -17,14 +17,14 @@ public:
     static wifi_manager instance;
 
 private:
-    wifi_manager() : wifi_task(std::bind(&wifi_manager::wifi_task_ftn, this))
+    wifi_manager() : wifi_task_(std::bind(&wifi_manager::wifi_task_ftn, this))
     {
     }
-    mutable esp32::semaphore data_mutex;
-    std::unique_ptr<wifi_sta> wifi_instance;
-    esp32::task wifi_task;
+    mutable esp32::semaphore data_mutex_;
+    std::unique_ptr<wifi_sta> wifi_instance_;
+    esp32::task wifi_task_;
 
-    std::atomic_bool connected_to_ap{false};
+    std::atomic_bool connected_to_ap_{false};
 
     bool connect_saved_wifi();
     void wifi_task_ftn();

@@ -40,7 +40,7 @@ void sd_card::pre_begin()
     CHECK_THROW("Failed to initialize SPI bus", ret, init_failure_exception);
 
     ESP_LOGI(HARDWARE_TAG, "Mounting filesystem");
-    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sdcard);
+    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_);
     if (ret != ESP_OK)
     {
         if (ret == ESP_FAIL)
@@ -54,5 +54,5 @@ void sd_card::pre_begin()
     }
     ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");
 
-    sdmmc_card_print_info(stdout, sdcard);
+    sdmmc_card_print_info(stdout, sd_card_);
 }

@@ -108,31 +108,31 @@ public:
 	void inline clear();
 
 private:
-	T buffer[S];
-	T *head;
-	T *tail;
-	IT count;
+	T buffer_[S];
+	T *head_;
+	T *tail_;
+	IT count_;
 };
 
 template<typename T, size_t S, typename IT>
 constexpr circular_buffer<T,S,IT>::circular_buffer() :
-		head(buffer), tail(buffer), count(0) {
+		head_(buffer_), tail_(buffer_), count_(0) {
 }
 
 template<typename T, size_t S, typename IT>
 bool circular_buffer<T,S,IT>::unshift(T value) {
-	if (head == buffer) {
-		head = buffer + capacity;
+	if (head_ == buffer_) {
+		head_ = buffer_ + capacity;
 	}
-	*--head = value;
-	if (count == capacity) {
-		if (tail-- == buffer) {
-			tail = buffer + capacity - 1;
+	*--head_ = value;
+	if (count_ == capacity) {
+		if (tail_-- == buffer_) {
+			tail_ = buffer_ + capacity - 1;
 		}
 		return false;
 	} else {
-		if (count++ == 0) {
-			tail = head;
+		if (count_++ == 0) {
+			tail_ = head_;
 		}
 		return true;
 	}
@@ -140,18 +140,18 @@ bool circular_buffer<T,S,IT>::unshift(T value) {
 
 template<typename T, size_t S, typename IT>
 bool circular_buffer<T,S,IT>::push(T value) {
-	if (++tail == buffer + capacity) {
-		tail = buffer;
+	if (++tail_ == buffer_ + capacity) {
+		tail_ = buffer_;
 	}
-	*tail = value;
-	if (count == capacity) {
-		if (++head == buffer + capacity) {
-			head = buffer;
+	*tail_ = value;
+	if (count_ == capacity) {
+		if (++head_ == buffer_ + capacity) {
+			head_ = buffer_;
 		}
 		return false;
 	} else {
-		if (count++ == 0) {
-			head = tail;
+		if (count_++ == 0) {
+			head_ = tail_;
 		}
 		return true;
 	}
@@ -159,64 +159,64 @@ bool circular_buffer<T,S,IT>::push(T value) {
 
 template<typename T, size_t S, typename IT>
 T circular_buffer<T,S,IT>::shift() {
-	if (count == 0) return *head;
-	T result = *head++;
-	if (head >= buffer + capacity) {
-		head = buffer;
+	if (count_ == 0) return *head_;
+	T result = *head_++;
+	if (head_ >= buffer_ + capacity) {
+		head_ = buffer_;
 	}
-	count--;
+	count_--;
 	return result;
 }
 
 template<typename T, size_t S, typename IT>
 T circular_buffer<T,S,IT>::pop() {
-	if (count == 0) return *tail;
-	T result = *tail--;
-	if (tail < buffer) {
-		tail = buffer + capacity - 1;
+	if (count_ == 0) return *tail_;
+	T result = *tail_--;
+	if (tail_ < buffer_) {
+		tail_ = buffer_ + capacity - 1;
 	}
-	count--;
+	count_--;
 	return result;
 }
 
 template<typename T, size_t S, typename IT>
 T inline circular_buffer<T,S,IT>::first() const {
-	return *head;
+	return *head_;
 }
 
 template<typename T, size_t S, typename IT>
 T inline circular_buffer<T,S,IT>::last() const {
-	return *tail;
+	return *tail_;
 }
 
 template<typename T, size_t S, typename IT>
 T circular_buffer<T,S,IT>::operator [](IT index) const {
-	if (index >= count) return *tail;
-	return *(buffer + ((head - buffer + index) % capacity));
+	if (index >= count_) return *tail_;
+	return *(buffer_ + ((head_ - buffer_ + index) % capacity));
 }
 
 template<typename T, size_t S, typename IT>
 IT inline circular_buffer<T,S,IT>::size() const {
-	return count;
+	return count_;
 }
 
 template<typename T, size_t S, typename IT>
 IT inline circular_buffer<T,S,IT>::available() const {
-	return capacity - count;
+	return capacity - count_;
 }
 
 template<typename T, size_t S, typename IT>
 bool inline circular_buffer<T,S,IT>::isEmpty() const {
-	return count == 0;
+	return count_ == 0;
 }
 
 template<typename T, size_t S, typename IT>
 bool inline circular_buffer<T,S,IT>::isFull() const {
-	return count == capacity;
+	return count_ == capacity;
 }
 
 template<typename T, size_t S, typename IT>
 void inline circular_buffer<T,S,IT>::clear() {
-	head = tail = buffer;
-	count = 0;
+	head_ = tail_ = buffer_;
+	count_ = 0;
 }

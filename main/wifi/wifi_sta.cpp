@@ -19,46 +19,46 @@ void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[siz
     std::copy_n(source, to_copy, target);
 }
 
-wifi_sta::wifi_sta(bool auto_connect_to_ap_,
-                   const std::string &host_name_,
-                   const std::string &ssid_,
-                   const std::string &password_)
-    : auto_connect_to_ap(auto_connect_to_ap_), host_name(host_name_), ssid(ssid_), password(password_)
+wifi_sta::wifi_sta(bool auto_connect_to_ap,
+                   const std::string &host_name,
+                   const std::string &ssid,
+                   const std::string &password)
+    : auto_connect_to_ap_(auto_connect_to_ap), host_name_(host_name), ssid_(ssid), password_(password)
 {
-    wifi_event_group = xEventGroupCreate();
-    configASSERT(wifi_event_group);
+    wifi_event_group_ = xEventGroupCreate();
+    configASSERT(wifi_event_group_);
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
                                                         ESP_EVENT_ANY_ID,
                                                         &wifi_sta::wifi_event_callback,
                                                         this,
-                                                        &instance_wifi_event));
+                                                        &instance_wifi_event_));
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
                                                         ESP_EVENT_ANY_ID,
                                                         &wifi_sta::wifi_event_callback,
                                                         this,
-                                                        &instance_ip_event));
+                                                        &instance_ip_event_));
 }
 
 wifi_sta::~wifi_sta()
 {
-    esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event);
-    esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event);
+    esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event_);
+    esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event_);
     esp_wifi_disconnect();
     esp_wifi_stop();
     esp_wifi_deinit();
-    vEventGroupDelete(wifi_event_group);
+    vEventGroupDelete(wifi_event_group_);
 }
 
 void wifi_sta::set_host_name(const std::string &name)
 {
-    host_name = name;
+    host_name_ = name;
 }
 
 void wifi_sta::connect_to_ap()
 {
-    ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", ssid.c_str());
+    ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", ssid_.c_str());
 
     // Prepare to connect to the provided SSID and password
     wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
@@ -67,17 +67,17 @@ void wifi_sta::connect_to_ap()
 
     wifi_config_t config{};
     memset(&config, 0, sizeof(config));
-    copy_min_to_buffer(ssid.begin(), ssid.length(), config.sta.ssid);
-    copy_min_to_buffer(password.begin(), password.length(), config.sta.password);
+    copy_min_to_buffer(ssid_.begin(), ssid_.length(), config.sta.ssid);
+    copy_min_to_buffer(password_.begin(), password_.length(), config.sta.password);
 
-    config.sta.threshold.authmode = password.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
+    config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
     config.sta.bssid_set = false;
 
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &config));
 
     close_if();
-    interface = esp_netif_create_default_wifi_sta();
+    interface_ = esp_netif_create_default_wifi_sta();
     connect();
 }
 
@@ -104,24 +104,24 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base,
     {
         if (event_id == WIFI_EVENT_STA_START)
         {
-            esp_netif_set_hostname(interface, host_name.c_str());
+            esp_netif_set_hostname(interface_, host_name_.c_str());
         }
         else if (event_id == WIFI_EVENT_STA_CONNECTED)
         {
-            xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+            xEventGroupSetBits(wifi_event_group_, CONNECTED_BIT);
         }
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
         {
 
             const auto *data = reinterpret_cast<wifi_event_sta_disconnected_t *>(event_data);
             ESP_LOGI(WIFI_EVENT_TAG, "WiFi STA disconnected with reason:%s", get_disconnect_reason_str(data->reason).c_str());
-            ip_info.ip.addr = 0;
-            ip_info.netmask = ip_info.ip;
-            ip_info.gw = ip_info.ip;
+            ip_info_.ip.addr = 0;
+            ip_info_.netmask = ip_info_.ip;
+            ip_info_.gw = ip_info_.ip;
 
-            xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
+            xEventGroupSetBits(wifi_event_group_, DISCONNECTED_BIT);
 
-            if (auto_connect_to_ap)
+            if (auto_connect_to_ap_)
             {
                 esp_wifi_stop();
                 connect();
@@ -132,33 +132,32 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base,
     {
         if (event_id == IP_EVENT_STA_GOT_IP || event_id == IP_EVENT_GOT_IP6 || event_id == IP_EVENT_ETH_GOT_IP)
         {
-            ip_info = reinterpret_cast<ip_event_got_ip_t *>(event_data)->ip_info;
-            ESP_LOGI(WIFI_TAG, "New IP Address : %d.%d.%d.%d", IP2STR(&ip_info.ip));
-            xEventGroupSetBits(wifi_event_group, GOTIP_BIT);
+            ip_info_ = reinterpret_cast<ip_event_got_ip_t *>(event_data)->ip_info;
+            ESP_LOGI(WIFI_TAG, "New IP Address : %d.%d.%d.%d", IP2STR(&ip_info_.ip));
+            xEventGroupSetBits(wifi_event_group_, GOTIP_BIT);
         }
         else if (event_id == IP_EVENT_STA_LOST_IP)
         {
-            ip_info.ip.addr = 0;
-            ip_info.netmask = ip_info.ip;
-            ip_info.gw = ip_info.ip;
-            xEventGroupSetBits(wifi_event_group, LOSTIP_BIT);
+            ip_info_.ip.addr = 0;
+            ip_info_.netmask = ip_info_.ip;
+            ip_info_.gw = ip_info_.ip;
+            xEventGroupSetBits(wifi_event_group_, LOSTIP_BIT);
         }
     }
 }
 
 void wifi_sta::close_if()
 {
-    if (interface)
+    if (interface_)
     {
-        esp_netif_destroy(interface);
-        interface = nullptr;
+        esp_netif_destroy(interface_);
+        interface_ = nullptr;
     }
 }
 
 std::string wifi_sta::get_mac_address()
 {
     std::stringstream mac;
-
     std::array<uint8_t, 6> m;
     bool ret = get_local_mac_address(m);
 
@@ -181,7 +180,7 @@ std::string wifi_sta::get_mac_address()
 bool wifi_sta::get_local_mac_address(std::array<uint8_t, 6> &m)
 {
     wifi_mode_t mode;
-    esp_err_t err = esp_wifi_get_mode(&mode);
+     auto err = esp_wifi_get_mode(&mode);
 
     if (err == ESP_OK)
     {
@@ -209,30 +208,30 @@ bool wifi_sta::get_local_mac_address(std::array<uint8_t, 6> &m)
 
 uint32_t wifi_sta::get_local_ip()
 {
-    return ip_info.ip.addr;
+    return ip_info_.ip.addr;
 }
 
 std::string wifi_sta::get_local_ip_address()
 {
     std::array<char, 16> str_ip;
-    return esp_ip4addr_ntoa(&ip_info.ip, str_ip.data(), 16);
+    return esp_ip4addr_ntoa(&ip_info_.ip, str_ip.data(), 16);
 }
 
 std::string wifi_sta::get_netmask()
 {
     std::array<char, 16> str_mask;
-    return esp_ip4addr_ntoa(&ip_info.netmask, str_mask.data(), 16);
+    return esp_ip4addr_ntoa(&ip_info_.netmask, str_mask.data(), 16);
 }
 
 std::string wifi_sta::get_gateway()
 {
     std::array<char, 16> str_gw;
-    return esp_ip4addr_ntoa(&ip_info.gw, str_gw.data(), 16);
+    return esp_ip4addr_ntoa(&ip_info_.gw, str_gw.data(), 16);
 }
 
 bool wifi_sta::wait_for_connect(TickType_t time)
 {
-    return xEventGroupWaitBits(wifi_event_group,
+    return xEventGroupWaitBits(wifi_event_group_,
                                CONNECTED_BIT | GOTIP_BIT,
                                pdTRUE, // clear before return
                                pdTRUE, // wait for both
@@ -241,7 +240,7 @@ bool wifi_sta::wait_for_connect(TickType_t time)
 
 bool wifi_sta::wait_for_disconnect(TickType_t time)
 {
-    return xEventGroupWaitBits(wifi_event_group,
+    return xEventGroupWaitBits(wifi_event_group_,
                                DISCONNECTED_BIT | LOSTIP_BIT,
                                pdTRUE, // clear before return
                                pdFALSE, // wait for any

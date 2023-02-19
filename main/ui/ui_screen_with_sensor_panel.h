@@ -26,13 +26,13 @@ public:
     }
 
 protected:
-    const static uint8_t no_value_label = std::numeric_limits<uint8_t>::max();
+    const static uint8_t no_value_label_ = std::numeric_limits<uint8_t>::max();
 
     static void set_default_value_in_panel(const panel_and_label &pair)
     {
         if (pair.panel)
         {
-            set_label_panel_color(pair.panel, no_value_label);
+            set_label_panel_color(pair.panel, no_value_label_);
         }
 
         if (pair.label)
@@ -73,7 +73,7 @@ protected:
             color = 0x940606; // Maroon
             color_grad = 0xc30808;
             break;
-        case no_value_label:
+        case no_value_label_:
             color = 0xC0C0C0; // Silver
             color_grad = 0x696969;
             break;

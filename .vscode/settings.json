@@ -73,7 +73,10 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "netfwd": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

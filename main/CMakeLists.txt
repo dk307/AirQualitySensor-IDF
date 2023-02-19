@@ -11,8 +11,11 @@ idf_component_register(SRCS "main.cpp"
                             "wifi/wifi_sta.cpp"
                             "wifi/wifi_manager.cpp"
                             "util/helper.cpp"
+                            "util/async_web_server/http_server.cpp"
+                            "util/async_web_server/http_request.cpp"
+                            "util/async_web_server/http_response.cpp"
                             "http_ota/http.c"
-                            "web_server/async_web_server.cpp"
+                            "web_server/web_server.cpp"
 
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support app_update esp_http_server esp-tls)

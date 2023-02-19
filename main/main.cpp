@@ -8,6 +8,7 @@
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
 #include "wifi/wifi_manager.h"
+#include "web_server/web_server.h"
 #include "exceptions.h"
 #include "http_ota/http.h"
 
@@ -54,11 +55,11 @@ extern "C" void app_main(void)
 
     try
     {
-        ESP_LOGI(OPERATIONS_TAG, "Starting ...");
+        ESP_LOGI(WEBSERVER_TAG, "Starting ...");
         ESP_ERROR_CHECK(nvs_flash_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-        log_chip_details();
+        // log_chip_details();
 
         card.pre_begin();
         config::instance.pre_begin();
@@ -75,6 +76,8 @@ extern "C" void app_main(void)
         http_init();
         httpd_handle_t http_server;
         http_start_webserver(&http_server);
+
+        web_server::instance.begin();
 
         // hardware::instance.begin();
 

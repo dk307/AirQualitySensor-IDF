@@ -10,8 +10,8 @@
 class display
 {
 public:
-    display(ui_interface &ui_interface_) : lvgl_task(std::bind(&display::gui_task, this)),
-                                           ui_instance(ui_interface_)
+    display(ui_interface &ui_interface_) : lvgl_task_(std::bind(&display::gui_task, this)),
+                                           ui_instance_(ui_interface_)
     {
     }
 
@@ -23,17 +23,17 @@ public:
     void set_brightness(uint8_t value);
 
 private:
-    LGFX display_device;
-    esp32::task lvgl_task;
-    esp_timer_handle_t lv_periodic_timer{nullptr};
+    LGFX display_device_;
+    esp32::task lvgl_task_;
+    esp_timer_handle_t lv_periodic_timer_{nullptr};
 
-    lv_disp_draw_buf_t draw_buf{};
-    lv_disp_drv_t disp_drv{};
-    lv_indev_drv_t indev_drv{};
-    lv_disp_t *lv_display{};
-    lv_color_t *disp_draw_buf{};
-    lv_color_t *disp_draw_buf2{};
-    ui ui_instance;
+    lv_disp_draw_buf_t draw_buf_{};
+    lv_disp_drv_t disp_drv_{};
+    lv_indev_drv_t indev_drv_{};
+    lv_disp_t *lv_display_{};
+    lv_color_t *disp_draw_buf_{};
+    lv_color_t *disp_draw_buf2_{};
+    ui ui_instance_;
 
     static void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
     static void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);

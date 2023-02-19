@@ -13,7 +13,7 @@ public:
         ui_screen::init();
         set_default_screen();
 
-        lv_obj_add_event_cb(screen, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::screen_callback>, LV_EVENT_ALL, this);
+        lv_obj_add_event_cb(screen_, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::screen_callback>, LV_EVENT_ALL, this);
 
         // baseline
         auto btn_clean = create_btn("Clean SPS 30",
@@ -23,17 +23,17 @@ public:
 
         init_status_win();
 
-        create_close_button_to_main_screen(screen, LV_ALIGN_BOTTOM_LEFT, 15, -15);
+        create_close_button_to_main_screen(screen_, LV_ALIGN_BOTTOM_LEFT, 15, -15);
     }
 
     void show_screen()
     {
-        lv_scr_load_anim(screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
+        lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
 private:
-    lv_obj_t *win_status;
-    lv_obj_t *win_status_label;
+    lv_obj_t *win_status_;
+    lv_obj_t *win_status_label_;
 
     void screen_callback(lv_event_t *e)
     {
@@ -41,13 +41,13 @@ private:
 
         if ((event_code == LV_EVENT_SCREEN_LOAD_START) || (event_code == LV_EVENT_SCREEN_UNLOADED))
         {
-            lv_obj_add_flag(win_status, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
         }
     }
 
     lv_obj_t *create_btn(const char *label_text, lv_event_cb_t event_cb)
     {
-        auto btn_set_baseline = lv_btn_create(screen);
+        auto btn_set_baseline = lv_btn_create(screen_);
         lv_obj_add_event_cb(btn_set_baseline, event_cb, LV_EVENT_ALL, this);
         lv_obj_set_height(btn_set_baseline, LV_SIZE_CONTENT);
 
@@ -61,12 +61,12 @@ private:
 
     void init_status_win()
     {
-        win_status = lv_win_create(screen, 35);
-        lv_win_add_title(win_status, "Status");
-        lv_obj_set_size(win_status, 2 * screen_width / 3, screen_height / 2);
+        win_status_ = lv_win_create(screen_, 35);
+        lv_win_add_title(win_status_, "Status");
+        lv_obj_set_size(win_status_, 2 * screen_width / 3, screen_height / 2);
 
-        auto cont = lv_win_get_content(win_status);
-        win_status_label = lv_label_create(cont);
+        auto cont = lv_win_get_content(win_status_);
+        win_status_label_ = lv_label_create(cont);
 
         auto btn_close = lv_btn_create(cont);
         auto btn_close_label = lv_label_create(btn_close);
@@ -77,17 +77,17 @@ private:
                             event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::close_win_confirm>,
                             LV_EVENT_CLICKED, this);
 
-        lv_obj_center(win_status);
-        lv_obj_align(win_status_label, LV_ALIGN_TOP_MID, 0, 5);
+        lv_obj_center(win_status_);
+        lv_obj_align(win_status_label_, LV_ALIGN_TOP_MID, 0, 5);
         lv_obj_align(btn_close, LV_ALIGN_BOTTOM_MID, 0, -5);
 
-        lv_obj_add_flag(win_status, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
     }
 
     void close_win_confirm(lv_event_t *e)
     {
         ESP_LOGI(UI_TAG, "No clicked");
-        lv_obj_add_flag(win_status, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
     }
 
     void clean_sps_30(lv_event_t *e)
@@ -96,9 +96,9 @@ private:
 
         if (code == LV_EVENT_PRESSED)
         {
-            const bool success = ui_interface_instance.clean_sps_30();
-            lv_label_set_text_static(win_status_label, success ? "Cleanup started." : "Clean start failed.");
-            lv_obj_clear_flag(win_status, LV_OBJ_FLAG_HIDDEN);
+            const bool success = ui_interface_instance_.clean_sps_30();
+            lv_label_set_text_static(win_status_label_, success ? "Cleanup started." : "Clean start failed.");
+            lv_obj_clear_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
         }
     }
 };

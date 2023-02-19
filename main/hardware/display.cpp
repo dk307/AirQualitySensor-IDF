@@ -21,13 +21,13 @@ const int set_main_screen_changed_bit = BIT(total_sensors + 2);
 /* Display flushing */
 void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
-    auto display_device = reinterpret_cast<LGFX *>(disp->user_data);
-    if (display_device->getStartCount() == 0)
+    auto display_device_ = reinterpret_cast<LGFX *>(disp->user_data);
+    if (display_device_->getStartCount() == 0)
     {
-        display_device->endWrite();
+        display_device_->endWrite();
     }
 
-    display_device->pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1,
+    display_device_->pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1,
                                  (lgfx::swap565_t *)&color_p->full);
 
     lv_disp_flush_ready(disp); /* tell lvgl that flushing is done */
@@ -36,9 +36,9 @@ void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color
 /*Read the touchpad*/
 void display::touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
-    auto display_device = reinterpret_cast<LGFX *>(indev_driver->user_data);
+    auto display_device_ = reinterpret_cast<LGFX *>(indev_driver->user_data);
     uint16_t touchX, touchY;
-    const bool touched = display_device->getTouch(&touchX, &touchY);
+    const bool touched = display_device_->getTouch(&touchX, &touchY);
 
     if (!touched)
     {
@@ -60,17 +60,17 @@ void display::pre_begin()
     lv_init();
     lv_fs_if_fatfs_init();
 
-    if (!display_device.init())
+    if (!display_device_.init())
     {
         CHECK_THROW("Failed to init display", ESP_FAIL, init_failure_exception);
     }
-    display_device.setRotation(1);
+    display_device_.setRotation(1);
 
-    display_device.initDMA();
-    display_device.startWrite();
+    display_device_.initDMA();
+    display_device_.startWrite();
 
-    const auto screenWidth = display_device.width();
-    const auto screenHeight = display_device.height();
+    const auto screenWidth = display_device_.width();
+    const auto screenHeight = display_device_.height();
 
     ESP_LOGI(DISPLAY_TAG, "Display initialized width:%ld height:%ld", screenWidth, screenHeight);
 
@@ -79,54 +79,54 @@ void display::pre_begin()
 
     const auto display_buffer_size = screenWidth * buffer_size * sizeof(lv_color_t);
     ESP_LOGI(DISPLAY_TAG, "Display buffer size:%ld", display_buffer_size);
-    disp_draw_buf = (lv_color_t *)heap_caps_malloc(display_buffer_size, MALLOC_CAP_DMA);
-    disp_draw_buf2 = (lv_color_t *)heap_caps_malloc(display_buffer_size, MALLOC_CAP_DMA);
+    disp_draw_buf_ = (lv_color_t *)heap_caps_malloc(display_buffer_size, MALLOC_CAP_DMA);
+    disp_draw_buf2_ = (lv_color_t *)heap_caps_malloc(display_buffer_size, MALLOC_CAP_DMA);
 
-    if (!disp_draw_buf || !disp_draw_buf2)
+    if (!disp_draw_buf_ || !disp_draw_buf2_)
     {
         CHECK_THROW("Failed to allocate lvgl display buffer", ESP_ERR_NO_MEM, init_failure_exception);
     }
 
-    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, disp_draw_buf2, screenWidth * buffer_size);
+    lv_disp_draw_buf_init(&draw_buf_, disp_draw_buf_, disp_draw_buf2_, screenWidth * buffer_size);
 
     ESP_LOGD(DISPLAY_TAG, "LVGL display buffer initialized");
 
     /*** LVGL : Setup & Initialize the display device driver ***/
-    lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = display_device.width();
-    disp_drv.ver_res = display_device.height();
-    disp_drv.flush_cb = display_flush;
-    disp_drv.draw_buf = &draw_buf;
-    disp_drv.user_data = &display_device;
-    lv_display = lv_disp_drv_register(&disp_drv);
+    lv_disp_drv_init(&disp_drv_);
+    disp_drv_.hor_res = display_device_.width();
+    disp_drv_.ver_res = display_device_.height();
+    disp_drv_.flush_cb = display_flush;
+    disp_drv_.draw_buf = &draw_buf_;
+    disp_drv_.user_data = &display_device_;
+    lv_display_ = lv_disp_drv_register(&disp_drv_);
 
     ESP_LOGD(DISPLAY_TAG, "LVGL display initialized");
 
     //*** LVGL : Setup & Initialize the input device driver ***F
-    lv_indev_drv_init(&indev_drv);
-    indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = touchpad_read;
-    indev_drv.user_data = &display_device;
-    lv_indev_drv_register(&indev_drv);
+    lv_indev_drv_init(&indev_drv_);
+    indev_drv_.type = LV_INDEV_TYPE_POINTER;
+    indev_drv_.read_cb = touchpad_read;
+    indev_drv_.user_data = &display_device_;
+    lv_indev_drv_register(&indev_drv_);
 
     ESP_LOGD(DISPLAY_TAG, "LVGL input device driver initialized");
 
     create_timer();
 
-    const auto err = lvgl_task.spawn_pinned("lv gui", 1024 * 4, 1, 1);
+    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 4, 1, 1);
 
     if (err != ESP_OK)
     {
-        if (lv_periodic_timer)
+        if (lv_periodic_timer_)
         {
-            esp_timer_delete(lv_periodic_timer);
+            esp_timer_delete(lv_periodic_timer_);
         }
         CHECK_THROW("Create task for LVGL failed", err, init_failure_exception);
     }
 
-    ui_instance.init();
+    ui_instance_.init();
 
-    display_device.setBrightness(128);
+    display_device_.setBrightness(128);
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 }
 
@@ -136,13 +136,13 @@ void display::begin()
     {
         const auto id = static_cast<sensor_id_index>(i);
         hardware::instance.get_sensor(id).add_callback([i, this]
-                                                       { xTaskNotify(lvgl_task.handle(),
+                                                       { xTaskNotify(lvgl_task_.handle(),
                                                                      BIT(i + 1),
                                                                      eSetBits); });
     }
 
     wifi_manager::instance.add_callback([this]
-                                        { xTaskNotify(lvgl_task.handle(),
+                                        { xTaskNotify(lvgl_task_.handle(),
                                                       task_notify_wifi_changed_bit,
                                                       eSetBits); });
 
@@ -151,19 +151,19 @@ void display::begin()
 
 void display::set_main_screen()
 {
-    xTaskNotify(lvgl_task.handle(),
+    xTaskNotify(lvgl_task_.handle(),
                 set_main_screen_changed_bit,
                 eSetBits);
 }
 
 uint8_t display::get_brightness()
 {
-    return display_device.getBrightness();
+    return display_device_.getBrightness();
 }
 
 void display::set_brightness(uint8_t value)
 {
-    display_device.setBrightness(value);
+    display_device_.setBrightness(value);
 }
 
 void display::create_timer()
@@ -172,8 +172,8 @@ void display::create_timer()
     esp_timer_create_args_t lv_periodic_timer_args{};
     lv_periodic_timer_args.callback = &lv_tick_task;
     lv_periodic_timer_args.name = "periodic_gui";
-    ESP_ERROR_CHECK(esp_timer_create(&lv_periodic_timer_args, &lv_periodic_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(lv_periodic_timer, LV_TICK_PERIOD_MS * 1000));
+    ESP_ERROR_CHECK(esp_timer_create(&lv_periodic_timer_args, &lv_periodic_timer_));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(lv_periodic_timer_, LV_TICK_PERIOD_MS * 1000));
 }
 
 void display::lv_tick_task(void *)
@@ -198,12 +198,12 @@ void display::gui_task()
         {
             if (notification_value & task_notify_wifi_changed_bit)
             {
-                ui_instance.wifi_changed();
+                ui_instance_.wifi_changed();
             }
 
             if (notification_value & set_main_screen_changed_bit)
             {
-                ui_instance.set_main_screen();
+                ui_instance_.set_main_screen();
             }
 
             for (auto i = 1; i <= total_sensors; i++)
@@ -213,7 +213,7 @@ void display::gui_task()
                     const auto id = static_cast<sensor_id_index>(i - 1);
                     const auto &sensor = hardware::instance.get_sensor(id);
                     const auto value = sensor.get_value();
-                    ui_instance.set_sensor_value(id, value);
+                    ui_instance_.set_sensor_value(id, value);
                 }
             }
         }

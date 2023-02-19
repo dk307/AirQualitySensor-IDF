@@ -17,47 +17,47 @@ namespace esp32
 
         static_queue()
         {
-            queue = xQueueCreateStatic(TSize,
-                                       item_size,
-                                       reinterpret_cast<uint8_t*>(queue_data.data()),
-                                       &static_queue_esp);
+            queue_ = xQueueCreateStatic(TSize,
+                                        item_size,
+                                        reinterpret_cast<uint8_t *>(queue_data_.data()),
+                                        &static_queue_esp_);
 
-            configASSERT(queue);
+            configASSERT(queue_);
         }
 
         ~static_queue()
         {
-            vQueueDelete(queue);
+            vQueueDelete(queue_);
         }
 
         bool enqueue(const T &item, TickType_t timeout)
         {
-            const auto success = xQueueSendToBack(queue, &item, timeout);
+            const auto success = xQueueSendToBack(queue_, &item, timeout);
             return success == pdTRUE ? true : false;
         }
 
         bool dequeue(T &item, TickType_t timeout)
         {
-            auto success = xQueueReceive(queue, &item, timeout);
+            auto success = xQueueReceive(queue_, &item, timeout);
             return success == pdTRUE ? true : false;
         }
 
         bool peek(T &item, TickType_t timeout)
         {
-            auto success = xQueuePeek(queue, &item, timeout);
+            auto success = xQueuePeek(queue_, &item, timeout);
             return success == pdTRUE ? true : false;
         }
 
         bool is_empty() const
         {
-            const auto cnt = uxQueueMessagesWaiting(queue);
+            const auto cnt = uxQueueMessagesWaiting(queue_);
             return cnt == 0 ? true : false;
         }
 
     private:
-        std::array<T, TSize> queue_data;
-        StaticQueue_t static_queue_esp;
-        QueueHandle_t queue;
+        std::array<T, TSize> queue_data_;
+        StaticQueue_t static_queue_esp_;
+        QueueHandle_t queue_;
     };
 
 }

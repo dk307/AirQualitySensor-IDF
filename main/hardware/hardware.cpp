@@ -39,11 +39,11 @@ std::string hardware::get_up_time()
 
 void hardware::set_screen_brightness(uint8_t value)
 {
-    if (current_brightness != value)
+    if (current_brightness_ != value)
     {
         ESP_LOGI(DISPLAY_TAG, "Setting display brightness to %d", value);
-        display_instance.set_brightness(std::max<uint8_t>(30, value));
-        current_brightness = value;
+        display_instance_.set_brightness(std::max<uint8_t>(30, value));
+        current_brightness_ = value;
     }
 }
 
@@ -67,7 +67,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
             {"Uptime", get_up_time()},
             //{"SD Card Size", to_string(SD.cardSize() / (1024 * 1024), " MB")},
-            {"Screen Brightness", esp32::to_string_join((display_instance.get_brightness() * 100) / 256, " %")},
+            {"Screen Brightness", esp32::to_string_join((display_instance_.get_brightness() * 100) / 256, " %")},
             // {"SHT31 sensor status", get_sht31_status()},
             // {"SPS30 sensor status", get_sps30_error_register_status()},
         };
@@ -169,7 +169,7 @@ void hardware::pre_begin()
 {
     sensors_history = esp32::psram::make_unique<std::array<sensor_history, total_sensors>>();
 
-    display_instance.pre_begin();
+    display_instance_.pre_begin();
 
     // // Wire is already used by touch i2c
     // if (!Wire1.begin(SDAWire, SCLWire))
@@ -236,7 +236,7 @@ void hardware::pre_begin()
 
 void hardware::begin()
 {
-    display_instance.begin();
+    display_instance_.begin();
 
     // sensor_refresh_task = std::make_unique<esp32::task>([this]
     //                                                     {

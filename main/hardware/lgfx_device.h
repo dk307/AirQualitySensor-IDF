@@ -12,8 +12,8 @@ public:
     const uint16_t Height = 480;
 
 private:
-    lgfx::Panel_ST7796 _panel_instance;
-    lgfx::Bus_Parallel8 _bus_instance;
-    lgfx::Light_PWM _light_instance;
-    lgfx::Touch_FT5x06 _touch_instance;
+    lgfx::Panel_ST7796 panel_instance_;
+    lgfx::Bus_Parallel8 bus_instance_;
+    lgfx::Light_PWM light_instance_;
+    lgfx::Touch_FT5x06 touch_instance_;
 };

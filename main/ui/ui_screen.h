@@ -22,18 +22,18 @@ class ui_screen
 {
 public:
     ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface_, const ui_common_fonts *fonts_)
-        : ui_interface_instance(ui_interface_instance_), inter_screen_interface(ui_inter_screen_interface_), fonts(fonts_)
+        : ui_interface_instance_(ui_interface_instance_), inter_screen_interface(ui_inter_screen_interface_), fonts_(fonts_)
     {
     }
 
     virtual void init()
     {
-        screen = lv_obj_create(NULL);
+        screen_ = lv_obj_create(NULL);
     }
 
     bool is_active()
     {
-        return lv_scr_act() == screen;
+        return lv_scr_act() == screen_;
     }
 
 protected:
@@ -42,10 +42,10 @@ protected:
     const lv_color_t off_black_color = lv_color_hex(0x1E1E1E);
     const lv_color_t text_color = lv_color_hex(0xFFFAFA);
 
-    ui_interface &ui_interface_instance;
+    ui_interface &ui_interface_instance_;
     ui_inter_screen_interface &inter_screen_interface;
-    const ui_common_fonts *fonts;
-    lv_obj_t *screen{nullptr};
+    const ui_common_fonts *fonts_;
+    lv_obj_t *screen_{nullptr};
 
     static void set_padding_zero(lv_obj_t *obj)
     {
@@ -95,9 +95,9 @@ protected:
 
     void set_default_screen()
     {
-        lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_color(screen, lv_color_hex(0x0C0D0C), LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_grad_color(screen, lv_color_hex(0x111210), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_grad_dir(screen_, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(screen_, lv_color_hex(0x0C0D0C), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_grad_color(screen_, lv_color_hex(0x111210), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
 private:

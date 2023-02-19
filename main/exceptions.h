@@ -8,27 +8,27 @@ namespace esp32
     class esp_exception : public std::exception
     {
     public:
-        esp_exception(const char *extra_message, esp_err_t error) : error(error)
+        esp_exception(const char *extra_message, esp_err_t error) : error_(error)
         {
-            message.append(extra_message);
-            message.append(" Error:");
-            message.append(esp_err_to_name(error));
+            message_.append(extra_message);
+            message_.append(" Error:");
+            message_.append(esp_err_to_name(error));
         }
-        esp_exception(esp_err_t error) : error(error) {}
+        esp_exception(esp_err_t error) : error_(error) {}
         virtual ~esp_exception() = default;
         const char *what() const _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW override
         {
-            return message.empty() ? esp_err_to_name(error) : message.c_str();
+            return message_.empty() ? esp_err_to_name(error_) : message_.c_str();
         }
 
         esp_err_t get_error() const
         {
-            return error;
+            return error_;
         }
 
     private:
-        std::string message;
-        const esp_err_t error;
+        std::string message_;
+        const esp_err_t error_;
     };
 
     class init_failure_exception : public esp_exception

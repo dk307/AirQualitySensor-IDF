@@ -15,13 +15,13 @@ public:
         const auto x_pad = 6;
         const auto y_pad = 4;
 
-        lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_clear_flag(screen_, LV_OBJ_FLAG_SCROLLABLE);
 
         sensor_detail_screen_top_label =
-            create_sensor_label(screen, fonts->font_montserrat_medium_48, LV_ALIGN_TOP_MID, 0, y_pad, text_color);
+            create_sensor_label(screen_, fonts_->font_montserrat_medium_48, LV_ALIGN_TOP_MID, 0, y_pad, text_color);
 
         sensor_detail_screen_top_label_units =
-            create_sensor_label(screen, fonts->font_montserrat_medium_units_18, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
+            create_sensor_label(screen_, fonts_->font_montserrat_medium_units_18, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
 
         lv_obj_set_style_text_align(sensor_detail_screen_top_label_units, LV_TEXT_ALIGN_AUTO, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -54,7 +54,7 @@ public:
 
         {
             const auto extra_chart_x = 45;
-            sensor_detail_screen_chart = lv_chart_create(screen);
+            sensor_detail_screen_chart = lv_chart_create(screen_);
             lv_obj_set_style_bg_opa(sensor_detail_screen_chart, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_size(sensor_detail_screen_chart,
                             screen_width - panel_w - x_pad * 3 - extra_chart_x - 10,
@@ -65,7 +65,7 @@ public:
                 lv_chart_add_series(sensor_detail_screen_chart,
                                     lv_theme_get_color_primary(sensor_detail_screen_chart),
                                     LV_CHART_AXIS_PRIMARY_Y);
-            lv_obj_set_style_text_font(sensor_detail_screen_chart, fonts->font_montserrat_medium_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(sensor_detail_screen_chart, fonts_->font_montserrat_medium_14, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_chart_set_axis_tick(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_Y, 5, 1, 3, 1, true, 200);
             lv_chart_set_axis_tick(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_X, 10, 5, chart_total_x_ticks, 1, true, 50);
 
@@ -76,8 +76,8 @@ public:
                                 LV_EVENT_DRAW_PART_BEGIN, this);
         }
 
-        create_close_button_to_main_screen(screen, LV_ALIGN_BOTTOM_LEFT, 15, -15);
-        lv_obj_add_event_cb(screen, event_callback<ui_sensor_detail_screen, &ui_sensor_detail_screen::screen_callback>, LV_EVENT_ALL, this);
+        create_close_button_to_main_screen(screen_, LV_ALIGN_BOTTOM_LEFT, 15, -15);
+        lv_obj_add_event_cb(screen_, event_callback<ui_sensor_detail_screen, &ui_sensor_detail_screen::screen_callback>, LV_EVENT_ALL, this);
 
         ESP_LOGD(UI_TAG, "Sensor detail init done");
     }
@@ -96,22 +96,22 @@ public:
 
     sensor_id_index get_sensor_id_index()
     {
-        return static_cast<sensor_id_index>(reinterpret_cast<uint64_t>(lv_obj_get_user_data(screen)));
+        return static_cast<sensor_id_index>(reinterpret_cast<uint64_t>(lv_obj_get_user_data(screen_)));
     }
 
     void show_screen(sensor_id_index index)
     {
         ESP_LOGI(UI_TAG, "Panel pressed for sensor index:%s", get_sensor_name(index));
-        lv_obj_set_user_data(screen, reinterpret_cast<void *>(index));
+        lv_obj_set_user_data(screen_, reinterpret_cast<void *>(index));
 
         const auto sensor_definition = get_sensor_definition(index);
         lv_label_set_text(sensor_detail_screen_top_label, sensor_definition.get_name());
         lv_label_set_text_static(sensor_detail_screen_top_label_units, sensor_definition.get_unit());
 
-        const auto value = ui_interface_instance.get_sensor_value(index);
+        const auto value = ui_interface_instance_.get_sensor_value(index);
         set_current_values(index, value);
 
-        lv_scr_load_anim(screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
+        lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
 private:
@@ -156,7 +156,7 @@ private:
                                  lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs,
                                  lv_coord_t w, lv_coord_t h)
     {
-        auto panel = lv_obj_create(screen);
+        auto panel = lv_obj_create(screen_);
         lv_obj_set_size(panel, w, h);
         lv_obj_align(panel, align, x_ofs, y_ofs);
         lv_obj_set_style_border_width(panel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -170,12 +170,12 @@ private:
         set_padding_zero(panel);
 
         auto current_static_label =
-            create_sensor_label(panel, fonts->font_montserrat_medium_14, LV_ALIGN_TOP_MID, 0, 3, text_color);
+            create_sensor_label(panel, fonts_->font_montserrat_medium_14, LV_ALIGN_TOP_MID, 0, 3, text_color);
 
         lv_label_set_text_static(current_static_label, label_text);
 
         auto value_label =
-            create_sensor_label(panel, fonts->font_montserrat_regular_numbers_40, LV_ALIGN_BOTTOM_MID,
+            create_sensor_label(panel, fonts_->font_montserrat_regular_numbers_40, LV_ALIGN_BOTTOM_MID,
                                 0, -3, text_color);
 
         return {panel, value_label};
@@ -316,7 +316,7 @@ private:
 
         time_t t = sensor_detail_screen_chart_series_data_time.value_or((time_t)0);
 
-        auto &&sensor_info = ui_interface_instance.get_sensor_detail_info(index);
+        auto &&sensor_info = ui_interface_instance_.get_sensor_detail_info(index);
 
         if (sensor_info.stat.has_value())
         {

@@ -13,8 +13,8 @@ namespace esp32
     public:
         void add_callback(const std::function<void()> &func) const
         {
-            std::lock_guard<esp32::semaphore> lock(list_mutex);
-            change_callbacks.push_back(func);
+            std::lock_guard<esp32::semaphore> lock(list_mutex_);
+            change_callbacks_.push_back(func);
         }
 
         void call_change_listeners() const
@@ -28,11 +28,11 @@ namespace esp32
     private:
         std::vector<std::function<void()>> get_copy() const
         {
-            std::lock_guard<esp32::semaphore> lock(list_mutex);
-            return change_callbacks;
+            std::lock_guard<esp32::semaphore> lock(list_mutex_);
+            return change_callbacks_;
         }
 
-        mutable esp32::semaphore list_mutex;
-        mutable std::vector<std::function<void()>> change_callbacks;
+        mutable esp32::semaphore list_mutex_;
+        mutable std::vector<std::function<void()>> change_callbacks_;
     };
 }

@@ -113,13 +113,13 @@ void config::reset()
 {
     ESP_LOGI(CONFIG_TAG, "config reset is requested");
     data.setDefaults();
-    request_save.store(true);
+    request_save_.store(true);
 }
 
 void config::save()
 {
     ESP_LOGD(CONFIG_TAG, "config save is requested");
-    request_save.store(true);
+    request_save_.store(true);
 }
 
 void config::save_config()
@@ -173,7 +173,7 @@ void config::save_config()
 void config::loop()
 {
     bool expected = true;
-    if (request_save.compare_exchange_strong(expected, false))
+    if (request_save_.compare_exchange_strong(expected, false))
     {
         save_config();
     }

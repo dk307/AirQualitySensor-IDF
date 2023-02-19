@@ -14,10 +14,10 @@
 class wifi_sta
 {
 public:
-    wifi_sta(bool auto_connect_to_ap_,
-             const std::string &host_name_,
-             const std::string &ssid_,
-             const std::string &password_);
+    wifi_sta(bool auto_connect_to_ap,
+             const std::string &host_name,
+             const std::string &ssid,
+             const std::string &password);
 
     wifi_sta(const wifi_sta &) = delete;
     wifi_sta(wifi_sta &&) = delete;
@@ -51,7 +51,7 @@ public:
 
     const std::string &get_ssid() const
     {
-        return ssid;
+        return ssid_;
     }
 
     bool wait_for_connect(TickType_t time);
@@ -72,18 +72,18 @@ private:
 
     static std::string get_disconnect_reason_str(uint8_t reason);
 
-    const bool auto_connect_to_ap;
-    std::string host_name;
-    const std::string ssid;
-    const std::string password;
+    const bool auto_connect_to_ap_;
+    std::string host_name_;
+    const std::string ssid_;
+    const std::string password_;
 
-    EventGroupHandle_t wifi_event_group;
+    EventGroupHandle_t wifi_event_group_;
 
-    esp_netif_t *interface {
+    esp_netif_t *interface_ {
         nullptr
     };
 
-    esp_event_handler_instance_t instance_wifi_event{};
-    esp_event_handler_instance_t instance_ip_event{};
-    esp_netif_ip_info_t ip_info{};
+    esp_event_handler_instance_t instance_wifi_event_{};
+    esp_event_handler_instance_t instance_ip_event_{};
+    esp_netif_ip_info_t ip_info_{};
 };

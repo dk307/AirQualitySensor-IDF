@@ -30,7 +30,7 @@ public:
    
     void set_main_screen()
     {
-        display_instance.set_main_screen();
+        display_instance_.set_main_screen();
     }
 
     // ui_interface
@@ -45,8 +45,8 @@ public:
 private:
     hardware() = default; 
 
-    display display_instance{*this};
-    uint8_t current_brightness{0};
+    display display_instance_{*this};
+    uint8_t current_brightness_{0};
 
     // // same index as sensor_id_index
     std::array<sensor_value, total_sensors> sensors;

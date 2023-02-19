@@ -15,7 +15,7 @@ namespace esp32
     public:
         constexpr static uint32_t default_priority = 0;
 
-        task(const std::function<void(void)> &call) : call(call)
+        task(const std::function<void(void)> &call) : call_(call)
         {
         }
         ~task() { kill(); }
@@ -68,11 +68,11 @@ namespace esp32
     protected:
         void run()
         {
-            call();
+            call_();
         }
 
     private:
-        std::function<void(void)> call;
+        std::function<void(void)> call_;
         std::atomic<TaskHandle_t> handle_{nullptr};
 
         task(const task &) = delete;

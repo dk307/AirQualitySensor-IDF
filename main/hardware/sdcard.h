@@ -8,5 +8,5 @@ public:
 
     constexpr static char mount_point[] = "/sd";
 private:
-    sdmmc_card_t *sdcard{nullptr};
+    sdmmc_card_t *sd_card_{nullptr};
 };
