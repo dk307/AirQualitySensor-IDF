@@ -10,21 +10,45 @@
 namespace esp32
 {
 
-#define LOG_AND_RETURN(x)                                                                  \
-  do                                                                                       \
-  {                                                                                        \
-    const auto err_rc_ = (x);                                                              \
-    if (err_rc_ != ESP_OK)                                                                 \
-    {                                                                                      \
-      ESP_LOGE(WEBSERVER_TAG, "Failed with %s(%d)", esp_err_to_name(err_rc_), err_rc_); \
-      return err_rc_;                                                                      \
-    }                                                                                      \
+#define LOG_AND_RETURN(x)                                                                                    \
+  do                                                                                                         \
+  {                                                                                                          \
+    const auto err_rc_ = (x);                                                                                \
+    if (err_rc_ != ESP_OK)                                                                                   \
+    {                                                                                                        \
+      ESP_LOGE(WEBSERVER_TAG, "Failed with %s(%d) on Line:%d", esp_err_to_name(err_rc_), err_rc_, __LINE__); \
+      return err_rc_;                                                                                        \
+    }                                                                                                        \
   } while (0)
+
+  esp_err_t http_response::add_common_headers()
+  {
+    LOG_AND_RETURN(httpd_resp_set_hdr(req_->req_, "Connection", "keep-alive"));
+    return ESP_OK;
+  }
+
+  esp_err_t array_gz_response::send_response()
+  {
+    ESP_LOGD(WEBSERVER_TAG, "Handling %s", req_->url().c_str());
+    LOG_AND_RETURN(add_common_headers());
+
+    // content type
+    LOG_AND_RETURN(httpd_resp_set_type(req_->req_, content_type_));
+
+    LOG_AND_RETURN(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
+
+    httpd_resp_set_status(req_->req_, HTTPD_200);
+    httpd_resp_set_hdr(req_->req_, "Connection", "keep-alive");
+    httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_), buf_len_);
+    return ESP_OK;
+  }
 
   esp_err_t fs_card_file_response::send_response()
   {
     ESP_LOGD(WEBSERVER_TAG, "Handling %s", req_->url().c_str());
-    const auto gz_path = file_path_.generic_string() + ".gz";
+    LOG_AND_RETURN(add_common_headers());
+
+    const auto gz_path = std::string(file_path_) + ".gz";
 
     // Content encoding
     std::filesystem::path path;
@@ -53,7 +77,7 @@ namespace esp32
     LOG_AND_RETURN(httpd_resp_set_hdr(req_->req_, "Content-Disposition", content_disposition_header.c_str()));
 
     // content type
-    LOG_AND_RETURN(httpd_resp_set_type(req_->req_, content_type_.c_str()));
+    LOG_AND_RETURN(httpd_resp_set_type(req_->req_, content_type_));
 
     // Content-Length
     const auto size = std::to_string(std::filesystem::file_size(path));

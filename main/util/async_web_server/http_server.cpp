@@ -32,13 +32,13 @@ namespace esp32
         }
     }
 
-    void http_server::add_handler(const char *url, httpd_method_t method, url_handler request_handler)
+    void http_server::add_handler(const char *url, httpd_method_t method, url_handler request_handler, const void *user_ctx)
     {
         httpd_uri_t handler{};
         handler.uri = url;
         handler.method = method;
         handler.handler = request_handler;
-        handler.user_ctx = this;
+        handler.user_ctx = const_cast<void *>(user_ctx);
 
         handlers_.emplace_back(handler);
         httpd_register_uri_handler(server_, &(*handlers_.rbegin()));

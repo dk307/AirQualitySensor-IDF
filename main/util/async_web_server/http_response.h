@@ -2,8 +2,6 @@
 
 #include <esp_http_server.h>
 
-#include <filesystem>
-
 namespace esp32
 {
     class http_request;
@@ -18,14 +16,32 @@ namespace esp32
 
         virtual esp_err_t send_response() = 0;
 
+        esp_err_t add_common_headers();
+
     protected:
         const http_request *req_;
     };
 
-    class fs_card_file_response : http_response
+    class array_gz_response final : http_response
     {
     public:
-        fs_card_file_response(const http_request *req, const std::filesystem::path &file_path, const std::string &content_type, bool download)
+        array_gz_response(const http_request *req, const uint8_t *buf, ssize_t buf_len, const char *content_type)
+            : http_response(req), buf_(buf), buf_len_(buf_len), content_type_(content_type)
+        {
+        }
+
+        esp_err_t send_response() override;
+
+    private:
+        const uint8_t *buf_;
+        const ssize_t buf_len_;
+        const char *content_type_;
+    };
+
+    class fs_card_file_response final : http_response
+    {
+    public:
+        fs_card_file_response(const http_request *req, const char *file_path, const char *content_type, bool download)
             : http_response(req), file_path_(file_path), content_type_(content_type), download_(download)
         {
         }
@@ -33,8 +49,8 @@ namespace esp32
         esp_err_t send_response() override;
 
     private:
-        const std::filesystem::path file_path_;
-        const std::string content_type_;
+        const char *file_path_;
+        const char *content_type_;
         const bool download_;
     };
 

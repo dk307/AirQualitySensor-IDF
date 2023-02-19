@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="shortcut icon" href="media/favicon.png" type="image/x-icon">
+  <link rel="icon" href="media/favicon.png" type="image/x-icon">
+  <title>Login</title>
+</head>
+
+<body>
+  <div class="container py-5 h-100">
+
+    <div class="row d-flex justify-content-center align-items-center">
+      <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        <div class="card shadow-lg" style="border-radius: 2rem;">
+          <div class="card-body text-center">
+
+            <h3 class="mb-5 "><img src="/media/logo.png" alt="Logo" /></h3>
+            <form class="needs-validation" action="/login.handler" method="post">
+              <div class="form-floating mb-4">
+                <input type="text" id="username" name="username" class="form-control" autofocus required />
+                <label class="form-label" for="username"><B>Username</B></label>
+              </div>
+
+              <div class="form-floating mb-4">
+                <input type="password" id="password" name="password" class="form-control" required />
+                <label class="form-label" for="password"><B>Password</B></label>
+              </div>
+              <div class="d-grid gap-2 mx-auto">
+                <button class="btn btn-primary d-md-block" type="submit">Login</button>
+              </div>
+            </form>
+
+            <div class="pt-2">
+              <div class="alert alert-danger" role="alert" id="message"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/s.js"></script>
+
+  <script>
+    function getURLParameter(sParam) {
+      var sPageURL = window.location.search.substring(1);
+      var sURLVariables = sPageURL.split('&');
+      for (var i = 0; i < sURLVariables.length; i++) {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam) {
+          return sParameterName[1];
+        }
+      }
+    }
+
+    if (getURLParameter("msg")) {
+      $("#message").html(decodeURI(getURLParameter("msg")));
+      $("#message").show();
+    } else {
+      $("#message").hide();
+    }
+  </script>
+</body>
+
+</html>

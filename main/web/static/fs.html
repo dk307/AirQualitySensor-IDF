@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="media/favicon.png" type="image/x-icon">
+  <link rel="icon" href="media/favicon.png" type="image/x-icon">
+  <title>SD Card</title>
+
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/datatables.min.css" />
+</head>
+
+<body>
+  <div class="container py-4">
+    <div class="row py-1">
+      <div class="col px-1 align-self-start">
+
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb h4" id="pathBreadCrumb">
+          </ol>
+        </nav>
+      </div>
+      <div class="col align-self-end d-flex justify-content-end">
+        <button type="button" class="btn btn-info me-3" id="mkdirButtonId">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+            <path
+              d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+          </svg>
+          Create Directory</button>
+        <button type="button" class="btn btn-info" id="uploadButtonId">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1"
+            viewBox="0 0 16 16">
+            <path
+              d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+            <path
+              d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z" />
+          </svg>
+          Upload
+        </button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <table id="fs" class="table table-striped dt-responsive nowrap" style="width:100%">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Size(Bytes)</th>
+              <th>Last Modified</th>
+              <th></th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal Start-->
+  <form id="deleteActionForm" method="post" action="/fs/delete">
+    <div class="modal fade" id="deleteActionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirm</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-4">
+              <span class="justify-left">Do you want to delete </span>
+              <span class="justify-left" id="deleteFileName"></span>
+              <span class="justify-left">?</span>
+            </div>
+
+            <div class="mb-4">
+              <div class="alert alert-danger" role="alert" id="deleteActionStatus"></div>
+            </div>
+
+            <input type="hidden" id="deleteFilePath" name="deleteFilePath">
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+  <!-- Confirm Delete Modal End -->
+
+  <!-- Rename Modal -->
+  <form id="renameActionForm" method="post" action="/fs/rename">
+    <div class="modal fade" id="renameModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+      role="dialog" aria-labelledby="renameModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="renameModalLabel">Rename</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="renameNewName">Rename to:</label>
+              <input type="text" class="form-control" id="renameNewName" required>
+            </div>
+
+            <div class="mb-4">
+              <div class="alert alert-danger" role="alert" id="renameActionStatus"></div>
+            </div>
+
+            <input type="hidden" id="renameOldFilePath">
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary" id="confirmRename">Rename</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Mkdir Modal -->
+  <form id="mkdirActionForm" method="post" action="/fs/mkdir">
+    <div class="modal fade" id="mkdirModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+      role="dialog" aria-labelledby="mkdirModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="mkdirModalLabel">Create Directory</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <input type="text" class="form-control" id="mkdirName" required>
+            </div>
+
+            <div class="mb-4">
+              <div class="alert alert-danger" role="alert" id="mkdirActionStatus"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary" id="confirmmkdir">Create</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- File Update Modal Start-->
+  <form class="needs-validation" id="fileUploadUploadForm" method="post" enctype="multipart/form-data"
+    action="/fs/upload">
+    <div class="modal fade" id="fileUploadUpdateModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="fileUploadUpdateModalLabel">Select File</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-1">
+              <div>Select file for upload</div>
+            </div>
+            <div class="mb-4">
+              <input class="form-control" id="fileUploadFileUploadId" type="file" name="fileUploadFileUploadId"
+                required />
+            </div>
+
+            <div class="mb-4" id="fileUploadUploadStatusWrapper">
+              <div>Upload Status:</div>
+              <div class="progress" style="height: 15px;">
+                <div id="fileUploadUploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+              </div>
+              <div id="fileUploadUploadStatus"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" id="fileUploadButton">Upload</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+  <!-- File update Modal End -->
+
+  <script src="js/s.js"></script>
+  <script src="js/datatables.min.js"></script>
+  <script src="js/moment.min.js"></script>
+
+  <script>
+    var attempted_current_dir = "/";
+    var current_dir = attempted_current_dir;
+
+    function updateNavigator(dir) {
+
+      const getCumulativePathSegments = (path) =>
+        path
+          .split('/')
+          .filter(Boolean) // Drop empty strings caused by the splitting
+          .reduce(
+            (segments, segment) => {
+              const previous = segments[segments.length - 1]
+              segments.push(`${previous}${segment}/`)
+              return segments
+            },
+            ['/']
+          );
+
+      const items = getCumulativePathSegments(dir);
+      $("#pathBreadCrumb").html("");
+
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i].replace(/\/$/, "");
+
+        var home = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" fill=\"currentColor\" class=\"bi bi-house-door-fill\" viewBox=\"0 0 16 16\"><path d=\"M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z\"/></svg>";
+        var name = (i == 0) ? home : item.replace(/^.*[\\\/]/, '');
+
+        var hrefUrl = i != 0 ? item : "/";
+        var href = "loadDir(\"" + hrefUrl + "\"); return false;";
+        var data = "<a title='Navigate' href='#disable' onclick='" + href + "'>" + name + "</a>";
+        var active = (i == items.length - 1) ? " active" : "";
+        var child = "<li class=\"breadcrumb-item" + active + "\" >" + data + "</li>";
+
+        $("#pathBreadCrumb").append(child);
+      }
+    }
+
+    $("#deleteActionForm").on('submit', function (e) {
+      e.preventDefault();
+      var form = $('#deleteActionForm');
+
+      $.ajax({
+        type: form.attr('method'),
+        url: form.attr('action'),
+        data: new FormData(this),
+        contentType: false,
+        cache: false,
+        processData: false,
+        beforeSend: function () {
+          $('#deleteActionStatus').hide();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 500) {
+            $('#deleteActionStatus').text(jqXHR.responseText);
+          } else {
+            $('#deleteActionStatus').text('Delete operation failed');
+          }
+          $('#deleteActionStatus').show();
+        },
+        success: function (resp) {
+          $('#deleteActionModal').modal('hide');
+          refreshCurrent();
+        }
+      });
+    });
+
+    var fs_table = null;
+
+    function refreshCurrent() {
+      fs_table.ajax.reload();
+    }
+
+    function loadDir(dir) {
+      attempted_current_dir = dir;
+
+      var ajaxUrl = "/fs/list?dir=" + encodeURIComponent(dir);
+
+      // table load
+      if (fs_table == null) {
+        fs_table = $('#fs').DataTable({
+          ajax: {
+            url: ajaxUrl,
+            error: function (xhr, error, code) {
+              alert("Failed to navigate with error " + error);
+            },
+            dataSrc: function (json) {
+              console.log("dir data fetched");
+              current_dir = attempted_current_dir;
+              updateNavigator(current_dir);
+              return json.data;
+            }
+          },
+          rowId: "path",
+          responsive: true,
+          columns: [
+            {
+              data: "name",
+              responsivePriority: 1,
+              render: function (data, type, row, meta) {
+                var dataStr = data.toString();
+                var fullPath = row["path"];
+
+                if (row["isDir"]) {
+                  var image = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-folder2 me-2\" viewBox=\"0 0 16 16\"><path d=\"M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V7z\"/></svg>";
+                  var href = "loadDir(\"" + fullPath + "\"); return false;";
+                  data = image + "<a title='Navigate' href='#disable' onclick='" + href + "'>" + dataStr + "</a>";
+                } else {
+                  var image = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-file-earmark me-2\" viewBox=\"0 0 16 16\"><path d=\"M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z\"/></svg>";
+                  data = image + "<a title='Download' href='/fs/download?path=" + encodeURIComponent(fullPath) + "&download=true'>" + dataStr + "</a>";
+                }
+                return data;
+              }
+            },
+            {
+              data: "size",
+              responsivePriority: 2,
+              render: function (data, type, row, meta) {
+                if (row["isDir"]) {
+                  return "";
+                }
+                return data;
+              }
+            },
+            {
+              data: "lastModified",
+              responsivePriority: 3,
+              render: function (data, type, full, meta) { return moment.unix(data).fromNow(); }
+            },
+            {
+              responsivePriority: 1,
+              orderable: false,
+              data: null,
+              render: function (data, type, row, meta) {
+                var deleteImg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-trash-fill\" viewBox=\"0 0 16 16\"><path d=\"M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z\"/></svg>";
+                var renameImg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pencil-square\" viewBox=\"0 0 16 16\"><path d=\"M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z\"/><path fill-rule=\"evenodd\" d=\"M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z\"/></svg>";
+                var name = row["name"];
+                var fullPath = row["path"];
+                return "<a class='btn btn-secondary' title='Delete' onclick='deleteNode(\"" + fullPath + "\", \"" + name + "\");'>" + deleteImg + "</a>" +
+                  "&nbsp;<a href='#'class='btn btn-secondary' title='Rename' onclick='renameNode(\"" + fullPath + "\", \"" + name + "\");'>" + renameImg + "</a>";
+              }
+            }
+          ]
+
+        });
+      } else {
+        fs_table.ajax.url(ajaxUrl);
+        fs_table.ajax.reload();
+      }
+    }
+
+    function deleteNode(filePath, name) {
+      $('#deleteFilePath').val(filePath);
+      $('#deleteFileName').text(name);
+      $('#deleteActionStatus').hide();
+      $('#deleteActionModal').modal('show');
+    }
+
+    function renameNode(filePath, name) {
+
+      $('#renameOldFilePath').val(filePath);
+      $('#renameNewName').val(name);
+      $('#renameActionStatus').hide();
+      $('#renameModal').modal('show');
+    }
+
+    $("#renameActionForm").on('submit', function (e) {
+      e.preventDefault();
+      var form = $('#renameActionForm');
+
+      var oldPath = $("#renameOldFilePath").val();
+      var newName = $("#renameNewName").val();
+      var parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
+
+      var formData = new FormData(this);
+      formData.append("oldPath", oldPath)
+      formData.append("newPath", parent + "/" + newName);
+
+      $.ajax({
+        type: form.attr('method'),
+        url: form.attr('action'),
+        data: formData,
+        contentType: false,
+        cache: false,
+        processData: false,
+        beforeSend: function () {
+          $('#renameActionStatus').hide();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 500) {
+            $('#renameActionStatus').text(jqXHR.responseText);
+          } else {
+            $('#renameActionStatus').text('Rename operation failed');
+          }
+          $('#renameActionStatus').show();
+        },
+        success: function (resp) {
+          $('#renameModal').modal('hide');
+          refreshCurrent();
+        }
+      });
+    });
+
+    $("#mkdirActionForm").on('submit', function (e) {
+      e.preventDefault();
+      var form = $('#mkdirActionForm');
+
+      var name = $("#mkdirName").val();
+      var formData = new FormData(this);
+      formData.append("dir", current_dir + "/" + name);
+
+      $.ajax({
+        type: form.attr('method'),
+        url: form.attr('action'),
+        data: formData,
+        contentType: false,
+        cache: false,
+        processData: false,
+        beforeSend: function () {
+          $('#mkdirActionStatus').hide();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 500) {
+            $('#mkdirActionStatus').text(jqXHR.responseText);
+          } else {
+            $('#mkdirActionStatus').text('Create operation failed');
+          }
+          $('#mkdirActionStatus').show();
+        },
+        success: function (resp) {
+          $('#mkdirModal').modal('hide');
+          refreshCurrent();
+        }
+      });
+    });
+
+    // File upload via Ajax
+    var uploadAjax = null;
+    $("#fileUploadUploadForm").on('submit', function (e) {
+      e.preventDefault();
+
+      var formData = new FormData(this);
+
+      var form = $('#fileUploadUploadForm');
+      uploadAjax = $.ajax({
+        xhr: function () {
+          var xhr = new window.XMLHttpRequest();
+          xhr.upload.addEventListener("progress", function (evt) {
+            if (evt.lengthComputable) {
+              var percentComplete = ((evt.loaded / evt.total) * 100).toFixed();
+              $("#fileUploadUploadProgressBar").width(percentComplete + '%');
+              $("#fileUploadUploadProgressBar").html('<span class="text-center">' + percentComplete + '%</span>');
+            }
+          }, false);
+          return xhr;
+        },
+        type: form.attr('method'),
+        url: form.attr('action'),
+        data: formData,
+        contentType: false,
+        cache: false,
+        processData: false,
+        headers: { "uploadDir": current_dir, "md5": fileUploadFileUploadMd5 },
+        oLanguage: {
+          "sEmptyTable": "No files or folder"
+        },
+        beforeSend: function () {
+          $("#fileUploadUploadProgressBar").width('0%');
+          $('#fileUploadUploadStatus').html('');
+          $("#fileUploadUploadStatusWrapper").show();
+          $('#fileUploadButton').hide();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 500) {
+            $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUpgradeError"></div>');
+            $('#fileUploadUpgradeError').text(jqXHR.responseText);
+          } else {
+            $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert">File upload failed, please try again.</div>');
+          }
+          $('#fileUploadButton').show();
+        },
+        success: function (resp) {
+          $('#fileUploadUpdateModal').modal('hide');
+        }
+      });
+    });
+
+    // md5
+    document.getElementById('fileUploadFileUploadId').addEventListener('change', function () {
+
+      $('#fileUploadUploadStatus').html('');
+      $("#fileUploadUploadStatusWrapper").hide();
+
+      var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
+        file = this.files[0],
+        chunkSize = 1024 * 1024,
+        chunks = Math.ceil(file.size / chunkSize),
+        currentChunk = 0,
+        spark = new SparkMD5.ArrayBuffer(),
+        fileReader = new FileReader();
+
+      fileReader.onload = function (e) {
+        spark.append(e.target.result);
+        currentChunk++;
+
+        if (currentChunk < chunks) {
+          loadNext();
+        } else {
+          fileUploadFileUploadMd5 = spark.end();
+          console.info('computed hash', fileUploadFileUploadMd5);
+        }
+      };
+
+      fileReader.onerror = function () {
+        console.warn('oops, something went wrong.');
+      };
+
+      function loadNext() {
+        var start = currentChunk * chunkSize,
+          end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+
+        fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
+      }
+      loadNext();
+    });
+
+    document.getElementById('uploadButtonId').addEventListener('click', function () {
+      $("#fileUploadFileUploadId").val('');
+      $("#fileUploadUploadStatusWrapper").hide();
+      $('#fileUploadButton').show();
+      $('#fileUploadUpdateModal').modal('show');
+    });
+
+    document.getElementById('mkdirButtonId').addEventListener('click', function () {
+      $('#mkdirName').val('');
+      $('#mkdirActionStatus').hide();
+      $('#mkdirModal').modal('show');
+    });
+
+    document.getElementById('fileUploadUpdateModal').addEventListener('hide.bs.modal', (e) => {
+      if (uploadAjax) {
+        uploadAjax.abort();
+        uploadAjax = null;
+        console.log("Cancelled upload");
+        refreshCurrent();
+      }
+    });
+
+
+    // focus
+    $('#mkdirModal').on('shown.bs.modal', function () {
+      $("#mkdirName").focus();
+    });
+
+    $('#renameModal').on('shown.bs.modal', function () {
+      $("#renameNewName").focus();
+    })
+
+    loadDir(attempted_current_dir);
+  </script>
+</body>
+
+</html>

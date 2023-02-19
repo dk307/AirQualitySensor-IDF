@@ -16,10 +16,10 @@
 // #include "hardware.h"
 // #include "logging/logging.h"
 #include "logging/logging_tags.h"
-// #include "web/include/index.html.gz.h"
-// #include "web/include/login.html.gz.h"
-// #include "web/include/fs.html.gz.h"
-// #include "web/include/debug.html.gz.h"
+#include "web/include/index.html.gz.h"
+#include "web/include/login.html.gz.h"
+#include "web/include/fs.html.gz.h"
+#include "web/include/debug.html.gz.h"
 
 #include <esp_log.h>
 
@@ -40,14 +40,10 @@
 
 static const char JsonMediaType[] = "application/json";
 static const char js_media_type[] = "text/javascript";
-static const char HtmlMediaType[] = "text/html";
+static const char html_media_type[] = "text/html";
 static const char css_media_type[] = "text/css";
 static const char png_media_type[] = "image/png";
 static const char TextPlainMediaType[] = "text/plain";
-
-static const char LoginUrl[] = "/login.html";
-static const char IndexUrl[] = "/index.html";
-static const char DebugUrl[] = "/debug.html";
 
 static const char SettingsUrl[] = "/media/settings.png";
 
@@ -70,7 +66,10 @@ static constexpr char datatables_js_url[] = "/js/datatables.min.js";
 static constexpr char moment_js_url[] = "/js/moment.min.js";
 static constexpr char bootstrap_css_url[] = "/css/bootstrap.min.css";
 static constexpr char datatable_css_url[] = "/css/datatables.min.css";
-
+static constexpr char root_url[] = "/";
+static constexpr char login_url[] = "/login.html";
+static constexpr char index_url[] = "/index.html";
+static constexpr char debug_url[] = "/debug.html";
 
 // sd card file paths
 static constexpr char logo_file_path[] = "/sd/web/logo.png";
@@ -79,7 +78,6 @@ static constexpr char datatable_js_file_path[] = "/sd/web/datatables.min.js";
 static constexpr char moment_js_file_path[] = "/sd/web/moment.min.js";
 static constexpr char bootstrap_css_file_path[] = "/sd/web/bootstrap.min.css";
 static constexpr char datatables_css_file_path[] = "/sd/web/datatables.min.css";
-
 
 // const static static_files_map static_files[] = {
 // 	{FSListUrl, fs_html_gz, fs_html_gz_len, HtmlMediaType, static_file_type::array_zipped},
@@ -127,12 +125,21 @@ void web_server::begin()
 	add_fs_file_handler<all_js_file_path, js_media_type>(all_js_url);
 	add_fs_file_handler<datatable_js_file_path, js_media_type>(datatables_js_url);
 	add_fs_file_handler<moment_js_file_path, js_media_type>(moment_js_url);
-	
+
 	add_fs_file_handler<bootstrap_css_file_path, css_media_type>(bootstrap_css_url);
 	add_fs_file_handler<datatables_css_file_path, css_media_type>(datatable_css_url);
 
+	// static pages from flash
+	add_array_handler<index_html_gz_len, html_media_type>(root_url, index_html_gz);
+	add_array_handler<index_html_gz_len, html_media_type>(index_url, index_html_gz);
+	add_array_handler<login_html_gz_len, html_media_type>(login_url, login_html_gz);
+	add_array_handler<debug_html_gz_len, html_media_type>(debug_url, debug_html_gz);
+
 	ESP_LOGD(WEBSERVER_TAG, "Setup web server routing");
+
+
 	
+
 	// events.onConnect(std::bind(&web_server::on_event_connec&t, this, std::placeholders::_1));
 	// events.setFilter(std::bind(&web_server::filter_events, this, std::placeholders::_1));
 

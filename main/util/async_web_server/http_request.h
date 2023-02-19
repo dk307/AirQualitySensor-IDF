@@ -64,6 +64,7 @@ namespace esp32
         httpd_req_t *req_;
 
         friend class http_response;
+        friend class array_gz_response;
         friend class fs_card_file_response;
 
         // AsyncResponse *rsp_{};
