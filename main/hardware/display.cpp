@@ -1,9 +1,8 @@
 #include "display.h"
 
 #include <lvgl.h>
-#include "lvgl_fs\lvgl_fs_sd_card.h"
-#include "exceptions.h"
-
+#include "lvgl_fs/lvgl_fs_sd_card.h"
+#include "util/exceptions.h"
 #include "ui/ui2.h"
 #include "config/config_manager.h"
 #include "wifi/wifi_manager.h"
@@ -28,7 +27,7 @@ void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color
     }
 
     display_device_->pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1,
-                                 (lgfx::swap565_t *)&color_p->full);
+                                  (lgfx::swap565_t *)&color_p->full);
 
     lv_disp_flush_ready(disp); /* tell lvgl that flushing is done */
 }
@@ -62,7 +61,7 @@ void display::pre_begin()
 
     if (!display_device_.init())
     {
-        CHECK_THROW("Failed to init display", ESP_FAIL, init_failure_exception);
+        CHECK_THROW(ESP_FAIL, "Failed to init display", esp32::init_failure_exception);
     }
     display_device_.setRotation(1);
 
@@ -84,7 +83,7 @@ void display::pre_begin()
 
     if (!disp_draw_buf_ || !disp_draw_buf2_)
     {
-        CHECK_THROW("Failed to allocate lvgl display buffer", ESP_ERR_NO_MEM, init_failure_exception);
+        CHECK_THROW(ESP_ERR_NO_MEM, "Failed to allocate lvgl display buffer", esp32::init_failure_exception);
     }
 
     lv_disp_draw_buf_init(&draw_buf_, disp_draw_buf_, disp_draw_buf2_, screenWidth * buffer_size);
@@ -121,7 +120,7 @@ void display::pre_begin()
         {
             esp_timer_delete(lv_periodic_timer_);
         }
-        CHECK_THROW("Create task for LVGL failed", err, init_failure_exception);
+        CHECK_THROW(err, "Create task for LVGL failed", esp32::init_failure_exception);
     }
 
     ui_instance_.init();
@@ -217,5 +216,5 @@ void display::gui_task()
                 }
             }
         }
-    } while(true);
+    } while (true);
 }

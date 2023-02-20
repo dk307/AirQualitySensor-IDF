@@ -9,7 +9,7 @@
 #include "hardware/hardware.h"
 #include "wifi/wifi_manager.h"
 #include "web_server/web_server.h"
-#include "exceptions.h"
+#include "util/exceptions.h"
 #include "http_ota/http.h"
 
 #include <esp_log.h>
@@ -49,7 +49,8 @@ sd_card card;
 
 extern "C" void app_main(void)
 {
-    esp_log_level_set(CONFIG_TAG, ESP_LOG_DEBUG);
+    esp_log_level_set("httpd_parse", ESP_LOG_DEBUG);
+    esp_log_level_set(WEBSERVER_TAG, ESP_LOG_DEBUG);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 

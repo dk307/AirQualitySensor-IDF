@@ -1,6 +1,7 @@
 #pragma once
 
 #include <esp_http_server.h>
+#include <string>
 
 namespace esp32
 {
@@ -14,28 +15,34 @@ namespace esp32
         }
         virtual ~http_response() {}
 
-        virtual esp_err_t send_response() = 0;
+        void add_common_headers();
 
-        esp_err_t add_common_headers();
+        void add_header(const char *field, const char *value);
+
+        void redirect(const std::string &url);
+        void send_error(httpd_err_code_t code, const char *message = nullptr);
 
     protected:
         const http_request *req_;
     };
 
-    class array_gz_response final : http_response
+    class array_response final : http_response
     {
     public:
-        array_gz_response(const http_request *req, const uint8_t *buf, ssize_t buf_len, const char *content_type)
-            : http_response(req), buf_(buf), buf_len_(buf_len), content_type_(content_type)
+        array_response(const http_request *req, const uint8_t *buf, ssize_t buf_len, bool is_gz, const char *content_type)
+            : http_response(req), buf_(buf), buf_len_(buf_len), content_type_(content_type), is_gz_(is_gz)
         {
         }
 
-        esp_err_t send_response() override;
+        void send_response();
+
+        static void send_response(esp32::http_request * request,const std::string& data, const char *content_type);
 
     private:
         const uint8_t *buf_;
         const ssize_t buf_len_;
         const char *content_type_;
+        const bool is_gz_;
     };
 
     class fs_card_file_response final : http_response
@@ -46,12 +53,11 @@ namespace esp32
         {
         }
 
-        esp_err_t send_response() override;
+        void send_response();
 
     private:
         const char *file_path_;
         const char *content_type_;
         const bool download_;
     };
-
 }

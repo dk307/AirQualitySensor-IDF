@@ -88,5 +88,7 @@ namespace esp32
                 return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
             }
         };
+
+        using string = std::basic_string<char, std::char_traits<char>, esp32::psram::json_allocator>;
     }
 }

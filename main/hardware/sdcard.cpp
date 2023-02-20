@@ -1,6 +1,6 @@
 #include "sdcard.h"
 #include "logging/logging_tags.h"
-#include "exceptions.h"
+#include "util/exceptions.h"
 
 #include <esp_vfs_fat.h>
 #include <esp_log.h>
@@ -37,7 +37,7 @@ void sd_card::pre_begin()
     bus_cfg.max_transfer_sz = 4092;
 
     esp_err_t ret = spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA);
-    CHECK_THROW("Failed to initialize SPI bus", ret, init_failure_exception);
+    CHECK_THROW(ret, "Failed to initialize SPI bus", esp32::init_failure_exception);
 
     ESP_LOGI(HARDWARE_TAG, "Mounting filesystem");
     ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_);
@@ -45,11 +45,11 @@ void sd_card::pre_begin()
     {
         if (ret == ESP_FAIL)
         {
-            CHECK_THROW("Failed to mount filesystem. Likely not formated", ret, init_failure_exception);
+            CHECK_THROW(ret, "Failed to mount filesystem. Likely not formated", esp32::init_failure_exception);
         }
         else
         {
-            CHECK_THROW("Failed to initialize the card", ret, init_failure_exception);
+            CHECK_THROW(ret, "Failed to initialize the card", esp32::init_failure_exception);
         }
     }
     ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");

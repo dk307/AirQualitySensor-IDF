@@ -96,11 +96,6 @@ namespace esp32
       return {};
     }
     auto buf = std::unique_ptr<char[]>(new char[++buf_len]);
-    if (!buf)
-    {
-      ESP_LOGE(TAG, "No enough memory for get header %s", name);
-      return {};
-    }
     if (httpd_req_get_hdr_value_str(*this, name, buf.get(), buf_len) != ESP_OK)
     {
       return {};

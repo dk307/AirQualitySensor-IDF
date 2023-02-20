@@ -70,7 +70,9 @@ protected:
     }
 
     // do not call this in loop, only for first time init
-    static struct _lv_event_dsc_t *add_event_callback(lv_obj_t *obj, const std::function<void(lv_event_t *)> &ftn, lv_event_code_t filter = LV_EVENT_ALL)
+    static struct _lv_event_dsc_t *add_event_callback(lv_obj_t *obj,
+                                                      const std::function<void(lv_event_t *)> &ftn,
+                                                      lv_event_code_t filter = LV_EVENT_ALL)
     {
         auto param = new std::function<void(lv_event_t *)>(ftn); // never freed
         return lv_obj_add_event_cb(obj, event_callback_ftn, filter, param);

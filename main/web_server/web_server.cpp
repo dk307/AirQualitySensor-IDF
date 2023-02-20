@@ -4,16 +4,18 @@
 
 #include "util/async_web_server/http_response.h"
 #include "util/async_web_server/http_request.h"
+#include "util/async_web_server/http_response.h"
 
 // #include <mbedtls/md.h>
 #include "util/psram_allocator.h"
+#include "util/helper.h"
 
 // #include "uwifi_manager.h"
-// #include "config_manager.h"
+#include "config/config_manager.h"
 // #include "ui/ui_interface.h"
 
 // #include "operations.h"
-// #include "hardware.h"
+#include "hardware/hardware.h"
 // #include "logging/logging.h"
 #include "logging/logging_tags.h"
 #include "web/include/index.html.gz.h"
@@ -22,23 +24,9 @@
 #include "web/include/debug.html.gz.h"
 
 #include <esp_log.h>
+#include <mbedtls/md.h>
 
-// enum class static_file_type
-// {
-// 	array_zipped,
-// 	sdcard,
-// };
-
-// typedef struct
-// {
-// 	const char *path;
-// 	const void *data;
-// 	const uint32_t size;
-// 	const char *media_type;
-// 	const static_file_type type;
-// } static_files_map;
-
-static const char JsonMediaType[] = "application/json";
+static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
 static const char html_media_type[] = "text/html";
 static const char css_media_type[] = "text/css";
@@ -50,8 +38,6 @@ static const char SettingsUrl[] = "/media/settings.png";
 static const char DatatableJsUrl[] = "/js/datatables.min.js";
 static const char MomentJsUrl[] = "/js/moment.min.js";
 static constexpr char LogoutUrl[] = "/media/logout.png";
-
-static const char FSListUrl[] = "/fs.html";
 
 static const char MD5Header[] = "md5";
 static const char CacheControlHeader[] = "Cache-Control";
@@ -70,6 +56,7 @@ static constexpr char root_url[] = "/";
 static constexpr char login_url[] = "/login.html";
 static constexpr char index_url[] = "/index.html";
 static constexpr char debug_url[] = "/debug.html";
+static constexpr char fs_url[] = "/fs.html";
 
 // sd card file paths
 static constexpr char logo_file_path[] = "/sd/web/logo.png";
@@ -79,40 +66,46 @@ static constexpr char moment_js_file_path[] = "/sd/web/moment.min.js";
 static constexpr char bootstrap_css_file_path[] = "/sd/web/bootstrap.min.css";
 static constexpr char datatables_css_file_path[] = "/sd/web/datatables.min.css";
 
-// const static static_files_map static_files[] = {
-// 	{FSListUrl, fs_html_gz, fs_html_gz_len, HtmlMediaType, static_file_type::array_zipped},
-// 	{IndexUrl, index_html_gz, index_html_gz_len, HtmlMediaType, static_file_type::array_zipped},
-// 	{LoginUrl, login_html_gz, login_html_gz_len, HtmlMediaType, static_file_type::array_zipped},
-// 	{DebugUrl, debug_html_gz, debug_html_gz_len, HtmlMediaType, static_file_type::array_zipped},
-// 	{DatatableJsUrl, "/web/datatables.min.js", 0, JsMediaType, static_file_type::sdcard},
-// 	{MomentJsUrl, "/web/moment.min.js", 0, JsMediaType, static_file_type::sdcard},
-// 	{BootstrapCssUrl, "/web/bootstrap.min.css", 0, CssMediaType, static_file_type::sdcard},
-// 	{DatatableCssUrl, "/web/datatables.min.css", 0, CssMediaType, static_file_type::sdcard},
-// };
-
 web_server web_server::instance;
 
-// std::string create_hash(const std::string &user, const std::string &password, const std::string &ipAddress)
-// {
-// 	byte hmacResult[20];
-// 	mbedtls_md_context_t ctx;
-// 	mbedtls_md_type_t md_type = MBEDTLS_MD_SHA1;
+std::string create_hash(const std::string &user, const std::string &password, const std::string &host)
+{
+	uint8_t hmacResult[20];
+	mbedtls_md_context_t ctx;
+	mbedtls_md_type_t md_type = MBEDTLS_MD_SHA1;
 
-// 	mbedtls_md_init(&ctx);
-// 	mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
-// 	mbedtls_md_hmac_update(&ctx, reinterpret_cast<const unsigned char *>(user.c_str()), user.length());
-// 	mbedtls_md_hmac_update(&ctx, reinterpret_cast<const unsigned char *>(password.c_str()), password.length());
-// 	mbedtls_md_hmac_update(&ctx, reinterpret_cast<const unsigned char *>(ipAddress.c_str()), ipAddress.length());
-// 	mbedtls_md_hmac_finish(&ctx, hmacResult);
-// 	mbedtls_md_free(&ctx);
+	mbedtls_md_init(&ctx);
+	try
+	{
+		CHECK_HTTP_REQUEST(mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0));
+		CHECK_HTTP_REQUEST(mbedtls_md_update(&ctx, reinterpret_cast<const unsigned char *>(user.c_str()), user.size()));
+		CHECK_HTTP_REQUEST(mbedtls_md_update(&ctx, reinterpret_cast<const unsigned char *>(password.c_str()), password.size()));
+		CHECK_HTTP_REQUEST(mbedtls_md_update(&ctx, reinterpret_cast<const unsigned char *>(host.c_str()), host.size()));
+		CHECK_HTTP_REQUEST(mbedtls_md_finish(&ctx, hmacResult));
+	}
+	catch (...)
+	{
+		mbedtls_md_free(&ctx);
+		throw;
+	}
+	mbedtls_md_free(&ctx);
 
-// 	Streamstd::string stream;
-// 	for (auto i = 0; i < 20; i++)
-// 	{
-// 		stream += std::string(hmacResult[i], HEX);
-// 	}
-// 	return stream;
-// }
+	return esp32::format_hex(&hmacResult[0], 20);
+}
+
+template <const uint8_t data[], const auto len>
+void web_server::handle_array_page_with_auth(esp32::http_request *request)
+{
+	if (!is_authenticated(request))
+	{
+		esp32::http_response response(request);
+		response.redirect(login_url);
+		return;
+	}
+
+	esp32::array_response response(request, data, len, true, html_media_type);
+	response.send_response();
+}
 
 void web_server::begin()
 {
@@ -130,15 +123,25 @@ void web_server::begin()
 	add_fs_file_handler<datatables_css_file_path, css_media_type>(datatable_css_url);
 
 	// static pages from flash
-	add_array_handler<index_html_gz_len, html_media_type>(root_url, index_html_gz);
-	add_array_handler<index_html_gz_len, html_media_type>(index_url, index_html_gz);
-	add_array_handler<login_html_gz_len, html_media_type>(login_url, login_html_gz);
-	add_array_handler<debug_html_gz_len, html_media_type>(debug_url, debug_html_gz);
+	add_array_handler<login_html_gz, login_html_gz_len, true, html_media_type>(login_url);
+
+	// static pages from flash with auth
+	add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len>>(root_url, HTTP_GET);
+	add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len>>(index_url, HTTP_GET);
+	add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<debug_html_gz, debug_html_gz_len>>(debug_url, HTTP_GET);
+	add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<fs_html_gz, fs_html_gz_len>>(fs_url, HTTP_GET);
+
+	// not static pages
 
 	ESP_LOGD(WEBSERVER_TAG, "Setup web server routing");
 
+	add_handler_ftn<web_server, &web_server::handle_login>("/login.handler", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_logout>("/logout.handler", HTTP_POST);
 
-	
+	add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
+	add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
+
+	// 	http_server.on(("/logout.handler"), HTTP_POST, handle_logout);
 
 	// events.onConnect(std::bind(&web_server::on_event_connec&t, this, std::placeholders::_1));
 	// events.setFilter(std::bind(&web_server::filter_events, this, std::placeholders::_1));
@@ -160,18 +163,19 @@ void web_server::begin()
 	// }
 }
 
-// bool web_server::manage_security(esp32::AsyncWebServerRequest *request)
-// {
-// 	if (!is_authenticated(request))
-// 	{
-// 		ESP_LOGW(WEBSERVER_TAG, "Auth Failed");
-// 		request->send(401, JsonMediaType, ("{\"msg\": \"Not-authenticated\"}"));
-// 		return false;
-// 	}
-// 	return true;
-// }
+bool web_server::check_authenticated(esp32::http_request *request)
+{
+	if (!is_authenticated(request))
+	{
+		ESP_LOGW(WEBSERVER_TAG, "Auth Failed");
+		esp32::http_response response(request);
+		response.send_error(HTTPD_403_FORBIDDEN);
+		return false;
+	}
+	return true;
+}
 
-// bool web_server::filter_events(esp32::AsyncWebServerRequest *request)
+// bool web_server::filter_events(esp32::http_request *request)
 // {
 // 	if (!is_authenticated(request))
 // 	{
@@ -220,7 +224,7 @@ void web_server::begin()
 // 	http_server.onNotFound(handle_file_read);
 
 // 	// log
-// 	http_server.on("/api/log/webstart", HTTP_POST, [this](esp32::AsyncWebServerRequest *request)
+// 	http_server.on("/api/log/webstart", HTTP_POST, [this](esp32::http_request *request)
 // 				   {
 // 			if (logger::instance.enable_web_logging(std::bind(&web_server::send_log_data, this, std::placeholders::_1))) {
 // 					request->send(200);
@@ -228,12 +232,12 @@ void web_server::begin()
 // 					request->send(500);
 // 			} });
 
-// 	http_server.on("/api/log/webstop", HTTP_POST, [this](esp32::AsyncWebServerRequest *request)
+// 	http_server.on("/api/log/webstop", HTTP_POST, [this](esp32::http_request *request)
 // 				   {
 // 			logger::instance.disable_web_logging();
 // 					request->send(200); });
 
-// 	http_server.on("/api/log/sdstart", HTTP_POST, [this](esp32::AsyncWebServerRequest *request)
+// 	http_server.on("/api/log/sdstart", HTTP_POST, [this](esp32::http_request *request)
 // 				   {
 // 			if (logger::instance.enable_sd_logging()) {
 // 					request->send(200);
@@ -241,7 +245,7 @@ void web_server::begin()
 // 					request->send(500);
 // 			} });
 
-// 	http_server.on("/api/log/sdstop", HTTP_POST, [this](esp32::AsyncWebServerRequest *request)
+// 	http_server.on("/api/log/sdstop", HTTP_POST, [this](esp32::http_request *request)
 // 				   {
 // 			logger::instance.disable_sd_logging();
 // 					request->send(200); });
@@ -280,10 +284,10 @@ void web_server::begin()
 // 	send_log_data("Start");
 // }
 
-// void web_server::wifi_get(esp32::AsyncWebServerRequest *request)
+// void web_server::wifi_get(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "/api/wifi/get");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -297,14 +301,14 @@ void web_server::begin()
 // 	request->send(response);
 // }
 
-// void web_server::wifi_update(esp32::AsyncWebServerRequest *request)
+// void web_server::wifi_update(esp32::http_request *request)
 // {
 // 	const auto SsidParameter = ("ssid");
 // 	const auto PasswordParameter = ("wifipassword");
 
 // 	ESP_LOGI(WEBSERVER_TAG, "Wifi Update");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -321,46 +325,49 @@ void web_server::begin()
 // 	}
 // }
 
-// template <class Array, class K, class T>
-// void web_server::add_key_value_object(Array &array, const K &key, const T &value)
-// {
-// 	auto j1 = array.createNestedObject();
-// 	j1[("key")] = key;
-// 	j1[("value")] = value;
-// }
+template <class Array, class K, class T>
+void web_server::add_key_value_object(Array &array, const K &key, const T &value)
+{
+	auto j1 = array.createNestedObject();
+	j1[("key")] = key;
+	j1[("value")] = value;
+}
 
-// void web_server::information_get(esp32::AsyncWebServerRequest *request)
-// {
-// 	ESP_LOGD(WEBSERVER_TAG, "/api/information/get");
-// 	if (!manage_security(request))
-// 	{
-// 		return;
-// 	}
+void web_server::handle_information_get(esp32::http_request *request)
+{
+	ESP_LOGD(WEBSERVER_TAG, "/api/information/get");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	auto response = new AsyncJsonResponse(true, 1024);
-// 	auto arr = response->getRoot();
+	BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+	JsonArray arr = json_document.to<JsonArray>();
 
-// 	const auto data = hardware::instance.get_information_table(ui_interface::information_type::system);
+	const auto data = hardware::instance.get_information_table(ui_interface::information_type::system);
 
-// 	for (auto &&[key, value] : data)
-// 	{
-// 		add_key_value_object(arr, key, value);
-// 	}
+	for (auto &&[key, value] : data)
+	{
+		add_key_value_object(arr, key, value);
+	}
 
-// 	response->setLength();
-// 	request->send(response);
-// }
+	std::string data_str;
+	data_str.reserve(1024); 
+	serializeJson(json_document, data_str);
 
-// void web_server::config_get(esp32::AsyncWebServerRequest *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "/api/information/get");
-// 	if (!manage_security(request))
-// 	{
-// 		return;
-// 	}
-// 	const auto json = config::instance.get_all_config_as_json();
-// 	request->send(200, JsonMediaType, json);
-// }
+	esp32::array_response::send_response(request, data_str, js_media_type);
+}
+
+void web_server::handle_config_get(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/api/config/get");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
+	const auto json = config::instance.get_all_config_as_json();
+	esp32::array_response::send_response(request, json, js_media_type);
+}
 
 // template <class V, class T>
 // void web_server::add_to_json_doc(V &doc, T id, float value)
@@ -371,10 +378,10 @@ void web_server::begin()
 // 	}
 // }
 
-// void web_server::sensor_get(esp32::AsyncWebServerRequest *request)
+// void web_server::sensor_get(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "/api/sensor/get");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -384,101 +391,87 @@ void web_server::begin()
 // 	request->send(response);
 // }
 
-// // Check if header is present and correct
-// bool web_server::is_authenticated(esp32::AsyncWebServerRequest *request)
-// {
-// 	ESP_LOGV(WEBSERVER_TAG, "Checking if authenticated");
-// 	if (request->hasHeader((CookieHeader)))
-// 	{
-// 		const std::string cookie = request->header((CookieHeader));
-// 		ESP_LOGV(WEBSERVER_TAG, "Found cookie:%s", cookie.c_str());
+// Check if header is present and correct
+bool web_server::is_authenticated(esp32::http_request *request)
+{
+	ESP_LOGV(WEBSERVER_TAG, "Checking if authenticated");
+	auto const cookie = request->get_header(CookieHeader);
+	if (cookie.has_value())
+	{
+		ESP_LOGV(WEBSERVER_TAG, "Found cookie:%s", cookie->c_str());
 
-// 		const std::string token = create_hash(config::instance.data.get_web_user_name(),
-// 										 config::instance.data.get_web_password(),
-// 										 request->client()->remoteIP().tostd::string());
+		const std::string token = create_hash(config::instance.data.get_web_user_name(),
+											  config::instance.data.get_web_password(),
+											  request->client_ip_address());
 
-// 		if (cookie.indexOf(std::string(AuthCookieName) + token) != -1)
-// 		{
-// 			ESP_LOGV(WEBSERVER_TAG, "Authentication Successful");
-// 			return true;
-// 		}
-// 	}
-// 	ESP_LOGD(WEBSERVER_TAG, "Authentication Failed");
-// 	return false;
-// }
+		if (cookie->find_last_of(std::string(AuthCookieName) + token) != -1)
+		{
+			ESP_LOGV(WEBSERVER_TAG, "Authentication Successful");
+			return true;
+		}
+	}
+	ESP_LOGI(WEBSERVER_TAG, "Authentication Failed");
+	return false;
+}
 
-// void web_server::handle_login(esp32::AsyncWebServerRequest *request)
-// {
-// 	const auto UserNameParameter = ("username");
-// 	const auto PasswordParameter = ("password");
+void web_server::handle_login(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "Handle login");
 
-// 	ESP_LOGI(WEBSERVER_TAG, "Handle login");
-// 	std::string msg;
-// 	if (request->hasHeader((CookieHeader)))
-// 	{
-// 		// Print cookies
-// 		ESP_LOGV(WEBSERVER_TAG, "Found cookie: %s", request->header((CookieHeader)).c_str());
-// 	}
+	const auto arguments = request->get_form_url_encoded_arguments({"username", "password"});
+	auto &&user_name = arguments[0];
+	auto &&password = arguments[1];
 
-// 	if (request->hasArg(UserNameParameter) && request->hasArg(PasswordParameter))
-// 	{
-// 		const auto user = config::instance.data.get_web_user_name();
-// 		const auto password = config::instance.data.get_web_password();
-// 		if (request->arg(UserNameParameter).equalsIgnoreCase(user) &&
-// 			request->arg(PasswordParameter).equalsConstantTime(password))
-// 		{
-// 			ESP_LOGW(WEBSERVER_TAG, "User/Password correct");
-// 			auto response = request->beginResponse(301); // Sends 301 redirect
+	esp32::http_response response(request);
 
-// 			response->addHeader(("Location"), ("/"));
-// 			response->addHeader((CacheControlHeader), ("no-cache"));
+	if (user_name.has_value() && password.has_value())
+	{
+		const bool correct_credentials =
+			esp32::str_equals_case_insensitive(user_name.value(), config::instance.data.get_web_user_name()) &&
+			(password.value() ==  config::instance.data.get_web_password());
 
-// 			const std::string token = create_hash(user, password, request->client()->remoteIP().tostd::string());
-// 			ESP_LOGD(WEBSERVER_TAG, "Token:%s", token.c_str());
-// 			response->addHeader(("Set-Cookie"), std::string(AuthCookieName) + token);
+		if (correct_credentials)
+		{
+			ESP_LOGI(WEBSERVER_TAG, "User/Password correct");
 
-// 			request->send(response);
-// 			ESP_LOGI(WEBSERVER_TAG, "Log in Successful");
-// 			return;
-// 		}
+			const std::string token = create_hash(user_name.value(), password.value(), request->client_ip_address());
+			ESP_LOGD(WEBSERVER_TAG, "Token:%s", token.c_str());
 
-// 		msg = ("Wrong username/password! Try again.");
-// 		ESP_LOGW(WEBSERVER_TAG, "Log in Failed");
-// 		auto response = request->beginResponse(301); // Sends 301 redirect
+			const auto cookie_header = std::string(AuthCookieName) + token;
+			response.add_header("Set-Cookie", cookie_header.c_str());
 
-// 		response->addHeader(("Location"), std::string(("/login.html?msg=")) + msg);
-// 		response->addHeader((CacheControlHeader), ("no-cache"));
-// 		request->send(response);
-// 		return;
-// 	}
-// 	else
-// 	{
-// 		handle_error(request, ("Login Parameter not provided"), 400);
-// 	}
-// }
+			response.redirect("/");
+			ESP_LOGI(WEBSERVER_TAG, "Log in Successful");
+			return;
+		}
 
-// /**
-//  * Manage logout (simply remove correct token and redirect to login form)
-//  */
-// void web_server::handle_logout(esp32::AsyncWebServerRequest *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "Disconnection");
-// 	AsyncWebServerResponse *response = request->beginResponse(301); // Sends 301 redirect
-// 	response->addHeader("Location", "/login.html?msg=User disconnected");
-// 	response->addHeader("CacheControlHeader", "no-cache");
-// 	response->addHeader("Set-Cookie", "ESPSESSIONID=0");
-// 	request->send(response);
-// 	return;
-// }
+		ESP_LOGW(WEBSERVER_TAG, "Log in Failed for %s", user_name.value().c_str());
+		response.redirect("/login.html?msg=Wrong username/password! Try again");
+		return;
+	}
+	else
+	{
+		ESP_LOGW(WEBSERVER_TAG, "Parameters not supplied for login");
+		response.send_error(HTTPD_400_BAD_REQUEST);
+	}
+}
 
-// void web_server::web_login_update(esp32::AsyncWebServerRequest *request)
+void web_server::handle_logout(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "Disconnection");
+	esp32::http_response response(request);
+	response.add_header("Set-Cookie", "ESPSESSIONID=0");
+	response.redirect("/login.html?msg=User disconnected");
+}
+
+// void web_server::web_login_update(esp32::http_request *request)
 // {
 // 	const auto webUserName = "webUserName";
 // 	const auto webPassword = "webPassword";
 
 // 	ESP_LOGI(WEBSERVER_TAG, "web login Update");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -498,7 +491,7 @@ void web_server::begin()
 // 	redirect_to_root(request);
 // }
 
-// void web_server::other_settings_update(esp32::AsyncWebServerRequest *request)
+// void web_server::other_settings_update(esp32::http_request *request)
 // {
 // 	const auto hostName = ("hostName");
 // 	const auto ntpServer = ("ntpServer");
@@ -509,7 +502,7 @@ void web_server::begin()
 
 // 	ESP_LOGI(WEBSERVER_TAG, "config Update", request->args());
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -547,11 +540,11 @@ void web_server::begin()
 // 	redirect_to_root(request);
 // }
 
-// void web_server::restart_device(esp32::AsyncWebServerRequest *request)
+// void web_server::restart_device(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "restart");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -560,11 +553,11 @@ void web_server::begin()
 // 	operations::instance.reboot();
 // }
 
-// void web_server::factory_reset(esp32::AsyncWebServerRequest *request)
+// void web_server::factory_reset(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "factoryReset");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -573,11 +566,11 @@ void web_server::begin()
 // 	operations::instance.factory_reset();
 // }
 
-// void web_server::reboot_on_upload_complete(esp32::AsyncWebServerRequest *request)
+// void web_server::reboot_on_upload_complete(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "reboot");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -586,7 +579,7 @@ void web_server::begin()
 // 	operations::instance.reboot();
 // }
 
-// void web_server::handle_file_read(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_file_read(esp32::http_request *request)
 // {
 // 	auto path = request->url();
 // 	ESP_LOGD(WEBSERVER_TAG, "handleFileRead: %s", path.c_str());
@@ -657,7 +650,7 @@ void web_server::begin()
 
 // /** Redirect to captive portal if we got a request for another domain.
 //  * Return true in that case so the page handler do not try to handle the request again. */
-// bool web_server::is_captive_portal_request(esp32::AsyncWebServerRequest *request)
+// bool web_server::is_captive_portal_request(esp32::http_request *request)
 // {
 // 	if (!is_ip(request->host()))
 // 	{
@@ -670,7 +663,7 @@ void web_server::begin()
 // 	return false;
 // }
 
-// void web_server::handle_not_found(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_not_found(esp32::http_request *request)
 // {
 // 	if (is_captive_portal_request(request))
 // 	{
@@ -714,14 +707,14 @@ void web_server::begin()
 // 	return ip.tostd::string();
 // }
 
-// void web_server::redirect_to_root(esp32::AsyncWebServerRequest *request)
+// void web_server::redirect_to_root(esp32::http_request *request)
 // {
 // 	AsyncWebServerResponse *response = request->beginResponse(301); // Sends 301 redirect
 // 	response->addHeader(("Location"), ("/"));
 // 	request->send(response);
 // }
 
-// void web_server::firmware_update_upload(esp32::AsyncWebServerRequest *request,
+// void web_server::firmware_update_upload(esp32::http_request *request,
 // 										const std::string &filename,
 // 										size_t index,
 // 										uint8_t *data,
@@ -730,7 +723,7 @@ void web_server::begin()
 // {
 // 	ESP_LOGD(WEBSERVER_TAG, "firmwareUpdateUpload");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -782,7 +775,7 @@ void web_server::begin()
 // 	}
 // }
 
-// void web_server::restore_configuration_upload(esp32::AsyncWebServerRequest *request,
+// void web_server::restore_configuration_upload(esp32::http_request *request,
 // 											  const std::string &filename,
 // 											  size_t index,
 // 											  uint8_t *data,
@@ -791,7 +784,7 @@ void web_server::begin()
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "restoreConfigurationUpload");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -831,7 +824,7 @@ void web_server::begin()
 // 	}
 // }
 
-// void web_server::handle_error(esp32::AsyncWebServerRequest *request, const std::string &message, int code)
+// void web_server::handle_error(esp32::http_request *request, const std::string &message, int code)
 // {
 // 	if (!message.isEmpty())
 // 	{
@@ -871,12 +864,12 @@ void web_server::begin()
 // 	}
 // }
 
-// void web_server::handle_dir_list(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_dir_list(esp32::http_request *request)
 // {
 // 	const auto dir_param = "dir";
 
 // 	ESP_LOGI(WEBSERVER_TAG, "/fs/list");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -930,12 +923,12 @@ void web_server::begin()
 // 	request->send(response);
 // }
 
-// void web_server::handle_fs_download(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_fs_download(esp32::http_request *request)
 // {
 // 	const auto path_param = "path";
 
 // 	ESP_LOGI(WEBSERVER_TAG, "/fs/download");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -970,12 +963,12 @@ void web_server::begin()
 // 	request->send(response);
 // }
 
-// void web_server::handle_fs_delete(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_fs_delete(esp32::http_request *request)
 // {
 // 	const auto path_param = "deleteFilePath";
 
 // 	ESP_LOGI(WEBSERVER_TAG, "/fs/delete");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -1011,12 +1004,12 @@ void web_server::begin()
 // 	request->send(200);
 // }
 
-// void web_server::handle_dir_create(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_dir_create(esp32::http_request *request)
 // {
 // 	const auto path_param = "dir";
 
 // 	ESP_LOGI(WEBSERVER_TAG, "/fs/mkdir");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -1039,13 +1032,13 @@ void web_server::begin()
 // 	request->send(200);
 // }
 
-// void web_server::handle_fs_rename(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_fs_rename(esp32::http_request *request)
 // {
 // 	const auto path_original_path = "oldPath";
 // 	const auto path_dest_path = "newPath";
 
 // 	ESP_LOGI(WEBSERVER_TAG, "/fs/rename");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -1069,7 +1062,7 @@ void web_server::begin()
 // 	request->send(200);
 // }
 
-// void web_server::handle_file_upload(esp32::AsyncWebServerRequest *request,
+// void web_server::handle_file_upload(esp32::http_request *request,
 // 									const std::string &filename,
 // 									size_t index,
 // 									uint8_t *data,
@@ -1078,7 +1071,7 @@ void web_server::begin()
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "/fs/upload");
 
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -1184,10 +1177,10 @@ void web_server::begin()
 // 	return hashBuilder.tostd::string();
 // }
 
-// void web_server::handle_file_upload_complete(esp32::AsyncWebServerRequest *request)
+// void web_server::handle_file_upload_complete(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "file upload complete");
-// 	if (!manage_security(request))
+// 	if (!check_authenticated(request))
 // 	{
 // 		return;
 // 	}
@@ -1239,7 +1232,7 @@ void web_server::begin()
 // 	}
 // }
 
-// void web_server::on_get_log_info(esp32::AsyncWebServerRequest *request)
+// void web_server::on_get_log_info(esp32::http_request *request)
 // {
 // 	ESP_LOGI(WEBSERVER_TAG, "/api/log/info");
 

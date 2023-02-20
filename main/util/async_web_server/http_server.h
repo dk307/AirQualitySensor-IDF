@@ -5,6 +5,8 @@
 
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_response.h"
+#include "logging/logging_tags.h"
+#include <esp_log.h>
 
 namespace esp32
 {
@@ -25,12 +27,46 @@ namespace esp32
     protected:
         void add_handler(const char *url, httpd_method_t method, url_handler request_handler, const void *user_ctx);
 
+        // general url handler
+        template <class T, void (T::*ftn)(esp32::http_request *)>
+        static esp_err_t server_url_ftn(httpd_req_t *request_p)
+        {
+            try
+            {
+                auto p_this = reinterpret_cast<T *>(request_p->user_ctx);
+                esp32::http_request request(request_p);
+                (p_this->*ftn)(&request);
+                return ESP_OK;
+            }
+            catch (const esp32::esp_exception &ex)
+            {
+                ESP_LOGI(WEBSERVER_TAG, "Failed to process request with:%s", ex.what());
+                return ex.get_error();
+            }
+        }
+
+        template <class T, void (T::*ftn)(esp32::http_request *)>
+        inline void add_handler_ftn(const auto url, httpd_method_t method)
+        {
+            add_handler(url, method, server_url_ftn<T, ftn>, this);
+        }
+
+        // fs handler
         template <const auto file_pathT, const auto content_typeT>
         static esp_err_t serve_fs_file(httpd_req_t *request_p)
         {
-            esp32::http_request request(request_p);
-            esp32::fs_card_file_response response(&request, file_pathT, content_typeT, false);
-            return response.send_response();
+            try
+            {
+                esp32::http_request request(request_p);
+                esp32::fs_card_file_response response(&request, file_pathT, content_typeT, false);
+                response.send_response();
+                return ESP_OK;
+            }
+            catch (const esp32::esp_exception &ex)
+            {
+                ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
+                return ex.get_error();
+            }
         }
 
         template <const auto file_pathT, const auto content_typeT>
@@ -39,18 +75,28 @@ namespace esp32
             add_handler(url, method, serve_fs_file<file_pathT, content_typeT>, nullptr);
         }
 
-        template <const auto len, const auto content_type>
+        // array handler
+        template <const uint8_t buf[], const auto len, bool is_gz, const auto content_type>
         static esp_err_t serve_array(httpd_req_t *request_p)
         {
-            esp32::http_request request(request_p);
-            esp32::array_gz_response response(&request, reinterpret_cast< const uint8_t *>(request_p->user_ctx), len, content_type);
-            return response.send_response();
+            try
+            {
+                esp32::http_request request(request_p);
+                esp32::array_response response(&request, reinterpret_cast<const uint8_t *>(buf), len, is_gz, content_type);
+                response.send_response();
+                return ESP_OK;
+            }
+            catch (const esp32::esp_exception &ex)
+            {
+                ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
+                return ex.get_error();
+            }
         }
 
-        template <const auto len, const auto content_type>
-        inline void add_array_handler(const char *url, const uint8_t *buf, httpd_method_t method = HTTP_GET)
+        template <const uint8_t buf[], const auto len, bool is_gz, const auto content_type>
+        inline void add_array_handler(const char *url, httpd_method_t method = HTTP_GET)
         {
-            add_handler(url, method, serve_array<len, content_type>, buf);
+            add_handler(url, method, serve_array<buf, len, is_gz, content_type>, nullptr);
         }
 
     private:
