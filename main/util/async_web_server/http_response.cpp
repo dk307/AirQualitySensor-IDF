@@ -29,8 +29,15 @@ namespace esp32
     CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, nullptr, 0));
   }
 
+  void http_response::send_empty_200()
+  {
+    add_common_headers();
+    CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, "", HTTPD_RESP_USE_STRLEN));
+  }
+
   void http_response::send_error(httpd_err_code_t code, const char *message)
   {
+    add_common_headers();
     CHECK_HTTP_REQUEST(httpd_resp_send_err(req_->req_, code, message));
   }
 

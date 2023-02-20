@@ -14,7 +14,7 @@
 #include "config/config_manager.h"
 // #include "ui/ui_interface.h"
 
-// #include "operations.h"
+#include "operations/operations.h"
 #include "hardware/hardware.h"
 // #include "logging/logging.h"
 #include "logging/logging_tags.h"
@@ -137,9 +137,16 @@ void web_server::begin()
 
 	add_handler_ftn<web_server, &web_server::handle_login>("/login.handler", HTTP_POST);
 	add_handler_ftn<web_server, &web_server::handle_logout>("/logout.handler", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_other_settings_update>("/othersettings.update.handler", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_web_login_update>("/weblogin.update.handler", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_restart_device>("/restart.handler", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_factory_reset>("/factory.reset.handler", HTTP_POST);
 
 	add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
 	add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
+
+	// 	http_server.on(("/othersettings.update.handler"), HTTP_POST, other_settings_update);
+	// 	http_server.on(("/factory.reset.handler"), HTTP_POST, factory_reset);
 
 	// 	http_server.on(("/logout.handler"), HTTP_POST, handle_logout);
 
@@ -192,7 +199,7 @@ bool web_server::check_authenticated(esp32::http_request *request)
 // 	http_server.on(("/logout.handler"), HTTP_POST, handle_logout);
 // 	http_server.on(("/wifiupdate.handler"), HTTP_POST, wifi_update);
 
-// 	http_server.on(("/othersettings.update.handler"), HTTP_POST, other_settings_update);
+// http_server.on(("/othersettings.update.handler"), HTTP_POST, other_settings_update);
 // 	http_server.on(("/weblogin.update.handler"), HTTP_POST, web_login_update);
 
 // 	// ajax form call
@@ -352,7 +359,7 @@ void web_server::handle_information_get(esp32::http_request *request)
 	}
 
 	std::string data_str;
-	data_str.reserve(1024); 
+	data_str.reserve(1024);
 	serializeJson(json_document, data_str);
 
 	esp32::array_response::send_response(request, data_str, js_media_type);
@@ -428,7 +435,7 @@ void web_server::handle_login(esp32::http_request *request)
 	{
 		const bool correct_credentials =
 			esp32::str_equals_case_insensitive(user_name.value(), config::instance.data.get_web_user_name()) &&
-			(password.value() ==  config::instance.data.get_web_password());
+			(password.value() == config::instance.data.get_web_password());
 
 		if (correct_credentials)
 		{
@@ -464,107 +471,117 @@ void web_server::handle_logout(esp32::http_request *request)
 	response.redirect("/login.html?msg=User disconnected");
 }
 
-// void web_server::web_login_update(esp32::http_request *request)
-// {
-// 	const auto webUserName = "webUserName";
-// 	const auto webPassword = "webPassword";
+void web_server::handle_web_login_update(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "web login Update");
 
-// 	ESP_LOGI(WEBSERVER_TAG, "web login Update");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	const auto arguments = request->get_form_url_encoded_arguments({"webUserName", "webPassword"});
+	auto &&user_name = arguments[0];
+	auto &&password = arguments[1];
 
-// 	if (request->hasArg(webUserName) && request->hasArg("webPassword"))
-// 	{
-// 		ESP_LOGI(WEBSERVER_TAG, "Updating web username/password");
-// 		config::instance.data.set_web_password(request->arg(webUserName));
-// 		config::instance.data.set_wifi_password(request->arg(webPassword));
-// 	}
-// 	else
-// 	{
-// 		handle_error(request, ("Correct Parameters not provided"), 400);
-// 	}
+	if (user_name.has_value() && password.has_value())
+	{
+		ESP_LOGI(WEBSERVER_TAG, "Updating web username/password");
+		config::instance.data.set_web_password(user_name.value());
+		config::instance.data.set_wifi_password(password.value());
+		config::instance.save();
+		redirect_to_root(request);
+	}
+	else
+	{
+		ESP_LOGW(WEBSERVER_TAG, "Parameters not supplied for update");
+		esp32::http_response response(request);
+		response.send_error(HTTPD_400_BAD_REQUEST);
+	}
+}
 
-// 	config::instance.save();
-// 	redirect_to_root(request);
-// }
+void web_server::handle_other_settings_update(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "config Update");
 
-// void web_server::other_settings_update(esp32::http_request *request)
-// {
-// 	const auto hostName = ("hostName");
-// 	const auto ntpServer = ("ntpServer");
-// 	const auto ntpServerRefreshInterval = ("ntpServerRefreshInterval");
-// 	const auto timezone = ("timezone");
-// 	const auto autoScreenBrightness = "autoScreenBrightness";
-// 	const auto screenBrightness = "screenBrightness";
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	ESP_LOGI(WEBSERVER_TAG, "config Update", request->args());
+	const auto arguments = request->get_form_url_encoded_arguments({"hostName", "ntpServer", "ntpServerRefreshInterval",
+																	"timezone", "autoScreenBrightness", "screenBrightness"});
+	auto &&host_name = arguments[0];
+	auto &&ntp_server = arguments[1];
+	auto &&ntp_server_refresh_interval = arguments[2];
+	auto &&timezone = arguments[3];
+	auto &&auto_screen_brightness = arguments[4];
+	auto &&screen_brightness = arguments[5];
 
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	if (host_name.has_value())
+	{
+		config::instance.data.set_host_name(host_name.value());
+	}
 
-// 	if (request->hasArg(hostName))
-// 	{
-// 		config::instance.data.set_host_name(request->arg(hostName));
-// 	}
+	if (ntp_server.has_value())
+	{
+		config::instance.data.set_ntp_server(ntp_server.value());
+	}
 
-// 	if (request->hasArg(ntpServer))
-// 	{
-// 		config::instance.data.set_ntp_server(request->arg(ntpServer));
-// 	}
+	if (ntp_server_refresh_interval.has_value())
+	{
+		config::instance.data.set_ntp_server_refresh_interval(std::atoi(ntp_server_refresh_interval.value().c_str()));
+	}
 
-// 	if (request->hasArg(ntpServerRefreshInterval))
-// 	{
-// 		config::instance.data.set_ntp_server_refresh_interval(request->arg(ntpServerRefreshInterval).toInt() * 1000);
-// 	}
+	if (timezone.has_value())
+	{
+		config::instance.data.set_timezone(static_cast<TimeZoneSupported>(std::atoi(timezone.value().c_str())));
+	}
 
-// 	if (request->hasArg(timezone))
-// 	{
-// 		config::instance.data.set_timezone(static_cast<TimeZoneSupported>(request->arg(timezone).toInt()));
-// 	}
+	if (!auto_screen_brightness.has_value())
+	{
+		const auto value = screen_brightness.value_or("128");
+		config::instance.data.set_manual_screen_brightness(std::atoi(value.c_str()));
+	}
+	else
+	{
+		config::instance.data.set_manual_screen_brightness(std::nullopt);
+	}
 
-// 	if (!request->hasArg(autoScreenBrightness))
-// 	{
-// 		config::instance.data.set_manual_screen_brightness(request->arg(screenBrightness).toInt());
-// 	}
-// 	else
-// 	{
-// 		config::instance.data.set_manual_screen_brightness(std::nullopt);
-// 	}
+	config::instance.save();
 
-// 	config::instance.save();
-// 	redirect_to_root(request);
-// }
+	redirect_to_root(request);
+}
 
-// void web_server::restart_device(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "restart");
+void web_server::handle_restart_device(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "restart");
 
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	request->send(200);
-// 	operations::instance.reboot();
-// }
+	esp32::http_response response(request);
+	response.send_empty_200();
 
-// void web_server::factory_reset(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "factoryReset");
+	operations::instance.reboot();
+}
 
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+void web_server::handle_factory_reset(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "factoryReset");
 
-// 	request->send(200);
-// 	operations::instance.factory_reset();
-// }
+	if (!check_authenticated(request))
+	{
+		return;
+	}
+
+	esp32::http_response response(request);
+	response.send_empty_200();
+
+	operations::instance.factory_reset();
+}
 
 // void web_server::reboot_on_upload_complete(esp32::http_request *request)
 // {
@@ -707,12 +724,11 @@ void web_server::handle_logout(esp32::http_request *request)
 // 	return ip.tostd::string();
 // }
 
-// void web_server::redirect_to_root(esp32::http_request *request)
-// {
-// 	AsyncWebServerResponse *response = request->beginResponse(301); // Sends 301 redirect
-// 	response->addHeader(("Location"), ("/"));
-// 	request->send(response);
-// }
+void web_server::redirect_to_root(esp32::http_request *request)
+{
+	esp32::http_response response(request);
+	response.redirect("/");
+}
 
 // void web_server::firmware_update_upload(esp32::http_request *request,
 // 										const std::string &filename,

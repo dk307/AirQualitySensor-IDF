@@ -161,7 +161,6 @@ public:
     bool pre_begin();
     void save();
     void reset();
-    void loop();
 
     static void erase();
     static config instance;
@@ -187,5 +186,4 @@ private:
     static std::string md5_hash(const std::string &data);
 
     void save_config();
-    std::atomic_bool request_save_{false};
 };

@@ -51,7 +51,9 @@ std::string get_heap_info_str(uint32_t caps)
 {
     multi_heap_info_t info;
     heap_caps_get_info(&info, caps);
-    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes), " free out of ", esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes));
+    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes),
+                                 " free out of ",
+                                 esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes));
 }
 
 ui_interface::information_table_type hardware::get_information_table(information_type type)

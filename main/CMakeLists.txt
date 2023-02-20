@@ -16,6 +16,7 @@ idf_component_register(SRCS "main.cpp"
                             "util/async_web_server/http_response.cpp"
                             "http_ota/http.c"
                             "web_server/web_server.cpp"
+                            "operations/operations.cpp"
 
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support app_update esp_http_server esp-tls)

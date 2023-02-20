@@ -23,11 +23,10 @@ private:
     // handlers
     void handle_login(esp32::http_request *request);
     void handle_logout(esp32::http_request *request);
-    // static void wifi_update(esp32::http_request *request);
-    // static void web_login_update(esp32::http_request *request);
-    // static void other_settings_update(esp32::http_request *request);
-    // static void factory_reset(esp32::http_request *request);
-    // static void restart_device(esp32::http_request *request);
+    void handle_web_login_update(esp32::http_request *request);
+    void handle_other_settings_update(esp32::http_request *request);
+    void handle_factory_reset(esp32::http_request *request);
+    void handle_restart_device(esp32::http_request *request);
 
     // static void firmware_update_upload(esp32::http_request *request,
     //                                    const std::string &filename,
@@ -47,8 +46,6 @@ private:
     // static void handle_early_update_disconnect();
 
     // // ajax
-    // static void sensor_get(esp32::http_request *request);
-    // static void wifi_get(esp32::http_request *request);
     void handle_information_get(esp32::http_request *request);
     void handle_config_get(esp32::http_request *request);
 
@@ -56,11 +53,8 @@ private:
     bool is_authenticated(esp32::http_request *request);
 
     bool check_authenticated(esp32::http_request *request);
-    // static void handle_not_found(esp32::http_request *request);
-    // static void handle_file_read(esp32::http_request *request);
-    // static bool is_captive_portal_request(esp32::http_request *request);
-    // static void redirect_to_root(esp32::http_request *request);
-    // static void handle_error(esp32::http_request *request, const std::string &error, int code);
+    void redirect_to_root(esp32::http_request *request);
+
     // void on_event_connect(AsyncEventSourceClient *client);
     // void on_logging_connect(AsyncEventSourceClient *client);
     // bool filter_events(esp32::http_request *request);
@@ -82,8 +76,6 @@ private:
     // static std::string join_path(const std::string &part1, const std::string &part2);
     // static std::string get_file_md5(const std::string &path);
 
-    // static bool is_ip(const std::string &str);
-    // static std::string to_std::string_ip(const IPAddress &ip);
     template <class Array, class K, class T>
     static void add_key_value_object(Array &array, const K &key, const T &value);
     // template <class V, class T>
