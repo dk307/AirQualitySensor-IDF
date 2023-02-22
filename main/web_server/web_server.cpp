@@ -1,22 +1,18 @@
 #include "web_server.h"
 
-#include <ArduinoJson.h>
-
 #include "util/async_web_server/http_response.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_response.h"
-
-// #include <mbedtls/md.h>
 #include "util/psram_allocator.h"
 #include "util/helper.h"
-
-// #include "uwifi_manager.h"
+#include "util/filesystem/filesystem.h"
+#include "util/filesystem/file_info.h"
+#include "util/filesystem/file.h"
+#include "util/hash/hash.h"
 #include "config/config_manager.h"
-// #include "ui/ui_interface.h"
-
 #include "operations/operations.h"
 #include "hardware/hardware.h"
-// #include "logging/logging.h"
+#include "hardware/sdcard.h"
 #include "logging/logging_tags.h"
 #include "web/include/index.html.gz.h"
 #include "web/include/login.html.gz.h"
@@ -25,6 +21,11 @@
 
 #include <esp_log.h>
 #include <mbedtls/md.h>
+#include <filesystem>
+#include <sys/types.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <ArduinoJson.h>
 
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
@@ -34,9 +35,6 @@ static const char png_media_type[] = "image/png";
 static const char TextPlainMediaType[] = "text/plain";
 
 static const char SettingsUrl[] = "/media/settings.png";
-
-static const char DatatableJsUrl[] = "/js/datatables.min.js";
-static const char MomentJsUrl[] = "/js/moment.min.js";
 static constexpr char LogoutUrl[] = "/media/logout.png";
 
 static const char MD5Header[] = "md5";
@@ -48,8 +46,8 @@ static const char AuthCookieName[] = "ESPSESSIONID=";
 static constexpr char logo_url[] = "/media/logo.png";
 static constexpr char favicon_url[] = "/media/favicon.png";
 static constexpr char all_js_url[] = "/js/s.js";
-static constexpr char datatables_js_url[] = "/js/datatables.min.js";
-static constexpr char moment_js_url[] = "/js/moment.min.js";
+static constexpr char datatables_js_url[] = "/js/extra/datatables.min.js";
+static constexpr char moment_js_url[] = "/js/extra/moment.min.js";
 static constexpr char bootstrap_css_url[] = "/css/bootstrap.min.css";
 static constexpr char datatable_css_url[] = "/css/datatables.min.css";
 static constexpr char root_url[] = "/";
@@ -61,8 +59,8 @@ static constexpr char fs_url[] = "/fs.html";
 // sd card file paths
 static constexpr char logo_file_path[] = "/sd/web/logo.png";
 static constexpr char all_js_file_path[] = "/sd/web/s.js";
-static constexpr char datatable_js_file_path[] = "/sd/web/datatables.min.js";
-static constexpr char moment_js_file_path[] = "/sd/web/moment.min.js";
+static constexpr char datatable_js_file_path[] = "/sd/web/extra/datatables.min.js";
+static constexpr char moment_js_file_path[] = "/sd/web/extra/moment.min.js";
 static constexpr char bootstrap_css_file_path[] = "/sd/web/bootstrap.min.css";
 static constexpr char datatables_css_file_path[] = "/sd/web/datatables.min.css";
 
@@ -70,27 +68,12 @@ web_server web_server::instance;
 
 std::string create_hash(const std::string &user, const std::string &password, const std::string &host)
 {
-	uint8_t hmacResult[20];
-	mbedtls_md_context_t ctx;
-	mbedtls_md_type_t md_type = MBEDTLS_MD_SHA1;
-
-	mbedtls_md_init(&ctx);
-	try
-	{
-		CHECK_HTTP_REQUEST(mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0));
-		CHECK_HTTP_REQUEST(mbedtls_md_update(&ctx, reinterpret_cast<const unsigned char *>(user.c_str()), user.size()));
-		CHECK_HTTP_REQUEST(mbedtls_md_update(&ctx, reinterpret_cast<const unsigned char *>(password.c_str()), password.size()));
-		CHECK_HTTP_REQUEST(mbedtls_md_update(&ctx, reinterpret_cast<const unsigned char *>(host.c_str()), host.size()));
-		CHECK_HTTP_REQUEST(mbedtls_md_finish(&ctx, hmacResult));
-	}
-	catch (...)
-	{
-		mbedtls_md_free(&ctx);
-		throw;
-	}
-	mbedtls_md_free(&ctx);
-
-	return esp32::format_hex(&hmacResult[0], 20);
+	esp32::hash::hash<MBEDTLS_MD_SHA256> hasher;
+	hasher.update(user);
+	hasher.update(password);
+	hasher.update(host);
+	auto result = hasher.finish();
+	return esp32::format_hex(result);
 }
 
 template <const uint8_t data[], const auto len>
@@ -145,6 +128,23 @@ void web_server::begin()
 	add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
 	add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
 
+	// fs ajax
+	add_handler_ftn<web_server, &web_server::handle_dir_list>("/fs/list", HTTP_GET);
+	add_handler_ftn<web_server, &web_server::handle_dir_create>("/fs/mkdir", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_fs_download>("/fs/download", HTTP_GET);
+	add_handler_ftn<web_server, &web_server::handle_fs_rename>("/fs/rename", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_fs_delete>("/fs/delete", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_file_upload>("/fs/upload", HTTP_POST);
+
+	// http_server.on("/fs/mkdir", HTTP_POST, handle_dir_create);
+	// 	http_server.on("/fs/download", HTTP_GET, handle_fs_download);
+	// 	http_server.on("/fs/upload", HTTP_POST, handle_file_upload_complete,
+	// 				   std::bind(&web_server::handle_file_upload, this,
+	// 							 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+	// 							 std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
+	// 	http_server.on("/fs/delete", HTTP_POST, handle_fs_delete);
+	// 	http_server.on("/fs/rename", HTTP_POST, handle_fs_rename);
+
 	// 	http_server.on(("/othersettings.update.handler"), HTTP_POST, other_settings_update);
 	// 	http_server.on(("/factory.reset.handler"), HTTP_POST, factory_reset);
 
@@ -174,9 +174,7 @@ bool web_server::check_authenticated(esp32::http_request *request)
 {
 	if (!is_authenticated(request))
 	{
-		ESP_LOGW(WEBSERVER_TAG, "Auth Failed");
-		esp32::http_response response(request);
-		response.send_error(HTTPD_403_FORBIDDEN);
+		log_and_send_error(request, HTTPD_403_FORBIDDEN, "Auth Failed");
 		return false;
 	}
 	return true;
@@ -429,10 +427,9 @@ void web_server::handle_login(esp32::http_request *request)
 	auto &&user_name = arguments[0];
 	auto &&password = arguments[1];
 
-	esp32::http_response response(request);
-
 	if (user_name.has_value() && password.has_value())
 	{
+		esp32::http_response response(request);
 		const bool correct_credentials =
 			esp32::str_equals_case_insensitive(user_name.value(), config::instance.data.get_web_user_name()) &&
 			(password.value() == config::instance.data.get_web_password());
@@ -458,8 +455,7 @@ void web_server::handle_login(esp32::http_request *request)
 	}
 	else
 	{
-		ESP_LOGW(WEBSERVER_TAG, "Parameters not supplied for login");
-		response.send_error(HTTPD_400_BAD_REQUEST);
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameters not supplied for login");
 	}
 }
 
@@ -494,9 +490,7 @@ void web_server::handle_web_login_update(esp32::http_request *request)
 	}
 	else
 	{
-		ESP_LOGW(WEBSERVER_TAG, "Parameters not supplied for update");
-		esp32::http_response response(request);
-		response.send_error(HTTPD_400_BAD_REQUEST);
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameters not supplied for update");
 	}
 }
 
@@ -562,9 +556,7 @@ void web_server::handle_restart_device(esp32::http_request *request)
 		return;
 	}
 
-	esp32::http_response response(request);
-	response.send_empty_200();
-
+	send_empty_200(request);
 	operations::instance.reboot();
 }
 
@@ -576,10 +568,7 @@ void web_server::handle_factory_reset(esp32::http_request *request)
 	{
 		return;
 	}
-
-	esp32::http_response response(request);
-	response.send_empty_200();
-
+	send_empty_200(request);
 	operations::instance.factory_reset();
 }
 
@@ -601,7 +590,7 @@ void web_server::handle_factory_reset(esp32::http_request *request)
 // 	auto path = request->url();
 // 	ESP_LOGD(WEBSERVER_TAG, "handleFileRead: %s", path.c_str());
 
-// 	if (path.endsWith(("/")) || path.isEmpty())
+// 	if (path==("/")) || path.isEmpty())
 // 	{
 // 		ESP_LOGD(WEBSERVER_TAG, "Redirecting to index page");
 // 		path = (IndexUrl);
@@ -880,365 +869,355 @@ void web_server::redirect_to_root(esp32::http_request *request)
 // 	}
 // }
 
-// void web_server::handle_dir_list(esp32::http_request *request)
-// {
-// 	const auto dir_param = "dir";
+void web_server::handle_dir_list(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/fs/list");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	ESP_LOGI(WEBSERVER_TAG, "/fs/list");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	const auto arguments = request->get_url_arguments({"dir"});
+	auto &&dir_arg = arguments[0];
 
-// 	if (!request->hasArg(dir_param))
-// 	{
-// 		handle_error(request, "Bad Arguments", 500);
-// 		return;
-// 	}
+	if (!dir_arg)
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameters not supplied for dir list");
+		return;
+	}
 
-// 	const auto path = request->arg(dir_param);
+	const std::filesystem::path mount_path(sd_card::mount_point);
+	const std::filesystem::path path = (mount_path / std::filesystem::path(dir_arg.value()).lexically_relative("/")).lexically_normal();
 
-// 	auto dir = SD.open(path);
+	ESP_LOGD(WEBSERVER_TAG, "Dir listing for %s", path.c_str());
 
-// 	if (!dir)
-// 	{
-// 		handle_error(request, "Failed to open directory:" + path, 500);
-// 		return;
-// 	}
+	auto dir = opendir(path.c_str());
+	if (!dir)
+	{
+		const auto message = esp32::str_sprintf("Failed to opendir :%s", path.c_str());
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, message);
+		return;
+	}
+	else
+	{
+		ESP_LOGD(WEBSERVER_TAG, "Done opendir for %s", path.c_str());
+	}
 
-// 	if (!dir.isDirectory())
-// 	{
-// 		handle_error(request, "Not a directory:" + path, 500);
-// 		dir.close();
-// 		return;
-// 	}
+	BasicJsonDocument<esp32::psram::json_allocator> json_document(8196);
+	auto array = json_document.createNestedArray("data");
 
-// 	auto response = new AsyncJsonResponse(false, 1024 * 16);
-// 	auto root = response->getRoot();
-// 	auto array = root.createNestedArray("data");
-// 	auto entry = dir.openNextFile();
+	auto entry = readdir(dir);
+	while (entry)
+	{
+		auto nested_entry = array.createNestedObject();
+		const auto full_path = path / entry->d_name;
+		nested_entry["path"] = (std::filesystem::path("/") / full_path.lexically_relative(mount_path)).generic_string();
+		nested_entry["isDir"] = entry->d_type == DT_DIR;
+		nested_entry["name"] = entry->d_name;
 
-// 	const auto path_with_slash = path.endsWith("/") ? path : path + "/";
-// 	while (entry)
-// 	{
-// 		auto nested_entry = array.createNestedObject();
-// 		const auto name = std::string(entry.name());
-// 		nested_entry["path"] = path_with_slash + name;
-// 		nested_entry["isDir"] = entry.isDirectory();
-// 		nested_entry["name"] = name;
-// 		nested_entry["size"] = entry.size();
-// 		nested_entry["lastModified"] = entry.getLastWrite();
+		struct stat entry_stat
+		{
+		};
+		if (stat(full_path.c_str(), &entry_stat) == -1)
+		{
+			ESP_LOGW(WEBSERVER_TAG, "Failed to stat %s", full_path.c_str());
+		}
+		else
+		{
+			nested_entry["size"] = entry->d_type == DT_DIR ? 0 : entry_stat.st_size;
+			nested_entry["lastModified"] = entry_stat.st_mtim.tv_sec;
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
 
-// 		entry.close();
-// 		entry = dir.openNextFile();
-// 	}
+	std::string data_str;
+	data_str.reserve(8196);
+	serializeJson(json_document, data_str);
 
-// 	dir.close();
+	esp32::array_response::send_response(request, data_str, js_media_type);
+}
 
-// 	response->setLength();
-// 	request->send(response);
-// }
+void web_server::handle_fs_download(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/fs/download");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// void web_server::handle_fs_download(esp32::http_request *request)
-// {
-// 	const auto path_param = "path";
+	const auto arguments = request->get_url_arguments({"path"});
+	auto &&path_arg = arguments[0];
 
-// 	ESP_LOGI(WEBSERVER_TAG, "/fs/download");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	if (!path_arg)
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameter not supplied for path");
+		return;
+	}
 
-// 	if (!request->hasArg(path_param))
-// 	{
-// 		handle_error(request, "Bad Arguments", 500);
-// 		return;
-// 	}
+	const std::filesystem::path mount_path(sd_card::mount_point);
+	const std::filesystem::path path = (mount_path / std::filesystem::path(path_arg.value()).lexically_relative("/")).lexically_normal();
 
-// 	const auto path = request->arg(path_param);
+	ESP_LOGI(WEBSERVER_TAG, "Downloading %s", path.c_str());
 
-// 	auto file = SD.open(path);
+	const auto extension = esp32::str_lower_case(path.extension());
+	esp32::fs_card_file_response response(request, path.c_str(), get_content_type(extension), true);
+	response.send_response(); // this does all the checks
+}
 
-// 	if (!file)
-// 	{
-// 		handle_error(request, "Failed to open file:" + path, 500);
-// 		return;
-// 	}
+void web_server::handle_fs_delete(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/fs/delete");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	if (file.isDirectory())
-// 	{
-// 		handle_error(request, "Not a file:" + path, 500);
-// 		file.close();
-// 		return;
-// 	}
+	const auto arguments = request->get_form_url_encoded_arguments({"deleteFilePath"});
+	auto &&delete_path_arg = arguments[0];
 
-// 	const bool download = request->hasArg("download");
+	if (!delete_path_arg)
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameter not supplied for delete");
+		return;
+	}
 
-// 	const auto contentType = download ? "application/octet-stream" : get_content_type(path);
-// 	AsyncWebServerResponse *response = request->beginResponse(file, path, contentType, download);
-// 	request->send(response);
-// }
+	const std::filesystem::path mount_path(sd_card::mount_point);
+	const std::filesystem::path path = (mount_path / std::filesystem::path(delete_path_arg.value()).lexically_relative("/")).lexically_normal();
 
-// void web_server::handle_fs_delete(esp32::http_request *request)
-// {
-// 	const auto path_param = "deleteFilePath";
+	ESP_LOGI(WEBSERVER_TAG, "Deleting %s", path.c_str());
 
-// 	ESP_LOGI(WEBSERVER_TAG, "/fs/delete");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	esp32::filesystem::file_info file_info(path);
 
-// 	if (!request->hasArg(path_param))
-// 	{
-// 		handle_error(request, "Bad Arguments", 500);
-// 		return;
-// 	}
+	bool success = false;
+	if (file_info.exists())
+	{
+		if (file_info.is_directory())
+		{
+			success = esp32::filesystem::remove_directory(path);
+		}
+		else
+		{
+			success = esp32::filesystem::remove(path);
+		}
+	}
 
-// 	const auto path = request->arg(path_param);
+	if (!success)
+	{
+		const auto message = esp32::str_sprintf("Failed to delete %s", path.c_str());
+		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, message);
+	}
+	else
+	{
+		send_empty_200(request);
+	}
+}
 
-// 	ESP_LOGI(WEBSERVER_TAG, "Deleting %s", path.c_str());
+void web_server::handle_dir_create(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/fs/mkdir");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	auto file = SD.open(path);
-// 	if (!file)
-// 	{
-// 		handle_error(request, "Failed to open " + path, 500);
-// 		return;
-// 	}
+	const auto arguments = request->get_form_url_encoded_arguments({"dir"});
+	auto &&path_arg = arguments[0];
 
-// 	const bool isDirectory = file.isDirectory();
-// 	file.close();
+	if (!path_arg)
+	{
+		ESP_LOGW(WEBSERVER_TAG, "Parameter not supplied for dir");
+		esp32::http_response response(request);
+		response.send_error(HTTPD_400_BAD_REQUEST);
+		return;
+	}
 
-// 	const bool success = isDirectory ? SD.rmdir(path) : SD.remove(path);
+	const std::filesystem::path mount_path(sd_card::mount_point);
+	const std::filesystem::path path = (mount_path / std::filesystem::path(path_arg.value()).lexically_relative("/")).lexically_normal();
 
-// 	if (!success)
-// 	{
-// 		handle_error(request, "Failed to delete " + path, 500);
-// 		return;
-// 	}
+	ESP_LOGD(WEBSERVER_TAG, "mkdir for %s", path.c_str());
 
-// 	request->send(200);
-// }
+	if (!esp32::filesystem::create_directory(path))
+	{
+		const auto message = esp32::str_sprintf("Failed to create %s", path.c_str());
+		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, message);
+	}
+	else
+	{
+		send_empty_200(request);
+	}
+}
 
-// void web_server::handle_dir_create(esp32::http_request *request)
-// {
-// 	const auto path_param = "dir";
+void web_server::handle_fs_rename(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/fs/rename");
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	ESP_LOGI(WEBSERVER_TAG, "/fs/mkdir");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	const auto arguments = request->get_form_url_encoded_arguments({"oldPath", "newPath"});
+	auto &&old_path_arg = arguments[0];
+	auto &&new_path_arg = arguments[1];
 
-// 	if (!request->hasArg(path_param))
-// 	{
-// 		handle_error(request, "Bad Arguments", 500);
-// 		return;
-// 	}
+	if (!old_path_arg || !new_path_arg)
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameter not supplied for dir");
+		return;
+	}
 
-// 	const auto path = request->arg(path_param);
+	const std::filesystem::path mount_path(sd_card::mount_point);
+	const std::filesystem::path old_path = (mount_path / std::filesystem::path(old_path_arg.value()).lexically_relative("/")).lexically_normal();
+	const std::filesystem::path new_path = (mount_path / std::filesystem::path(new_path_arg.value()).lexically_relative("/")).lexically_normal();
 
-// 	ESP_LOGI(WEBSERVER_TAG, "mkdir %s", path.c_str());
-// 	if (!SD.mkdir(path))
-// 	{
-// 		handle_error(request, "Failed to create " + path, 500);
-// 		return;
-// 	}
+	ESP_LOGI(WEBSERVER_TAG, "rename from %s to %s", old_path.c_str(), new_path.c_str());
 
-// 	request->send(200);
-// }
+	if (!esp32::filesystem::rename(old_path, new_path))
+	{
+		const auto message = esp32::str_sprintf("Failed to rename %s", old_path.c_str());
+		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, message.c_str());
+	}
+	else
+	{
+		send_empty_200(request);
+	}
+}
 
-// void web_server::handle_fs_rename(esp32::http_request *request)
-// {
-// 	const auto path_original_path = "oldPath";
-// 	const auto path_dest_path = "newPath";
+void web_server::handle_file_upload(esp32::http_request *request)
+{
+	ESP_LOGI(WEBSERVER_TAG, "/fs/upload");
 
-// 	ESP_LOGI(WEBSERVER_TAG, "/fs/rename");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	if (!request->hasArg(path_original_path) || !request->hasArg(path_dest_path))
-// 	{
-// 		handle_error(request, "Bad Arguments", 500);
-// 		return;
-// 	}
+	const auto upload_dir_arg = request->get_header("uploadDir");
+	const auto hash_arg = request->get_header("sha256");
+	const auto file_name_arg = request->get_header("X-File-Name");
 
-// 	const auto original_path = request->arg(path_original_path);
-// 	const auto new_path = request->arg(path_dest_path);
+	if (!upload_dir_arg || !hash_arg || !file_name_arg)
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameters not supplied for upload");
+		return;
+	}
 
-// 	ESP_LOGI(WEBSERVER_TAG, "Renaming %s to %s", original_path.c_str(), new_path.c_str());
-// 	if (!SD.rename(original_path, new_path))
-// 	{
-// 		handle_error(request, "Failed to rename to " + new_path, 500);
-// 		return;
-// 	}
+	const std::filesystem::path mount_path(sd_card::mount_point);
+	const std::filesystem::path upload_file_name =
+		(mount_path / std::filesystem::path(upload_dir_arg.value()).lexically_relative("/") / file_name_arg.value()).lexically_normal();
 
-// 	request->send(200);
-// }
+	const auto temp_full_path = upload_file_name.generic_string() + ".temp";
+	ESP_LOGI(WEBSERVER_TAG, "Creating Temp File: %s", temp_full_path.c_str());
 
-// void web_server::handle_file_upload(esp32::http_request *request,
-// 									const std::string &filename,
-// 									size_t index,
-// 									uint8_t *data,
-// 									size_t len,
-// 									bool final)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "/fs/upload");
+	{
+		auto file = esp32::filesystem::file(temp_full_path.c_str(), "w+");
 
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+		const auto result = request->read_body([&file, &temp_full_path](const std::vector<uint8_t> &data)
+											   {
+		const auto bytesWritten = file.write(data.data(), 1, data.size());
+		if (bytesWritten != data.size()) {
+			ESP_LOGW(WEBSERVER_TAG, "Failed to write data to file :%s", temp_full_path.c_str());
+			return ESP_FAIL;
+		}
+		return ESP_OK; });
 
-// 	const auto uploadDirHeader = "uploadDir";
-// 	if (!index)
-// 	{
-// 		std::string uploadDir;
-// 		if (request->hasHeader(uploadDirHeader))
-// 		{
-// 			const auto dir = request->getHeader(uploadDirHeader)->value();
-// 			const auto full_path = join_path(dir, filename + ".tmp");
+		if (result != ESP_OK)
+		{
+			log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read body and write to file");
+			return;
+		}
+	}
 
-// 			ESP_LOGI(WEBSERVER_TAG, "Creating File: %s", full_path.c_str());
-// 			request->_tempFile = SD.open(full_path, "w+", true);
-// 			if (!request->_tempFile)
-// 			{
-// 				handle_error(request, "Failed to open the file", 500);
-// 				return;
-// 			}
-// 		}
-// 		else
-// 		{
-// 			handle_error(request, "Upload dir not specified", 500);
-// 			return;
-// 		}
-// 	}
+	const auto file_hash = get_file_sha256(temp_full_path.c_str());
 
-// 	if (request->_tempFile)
-// 	{
-// 		if (!request->_tempFile.seek(index))
-// 		{
-// 			handle_error(request, "Failed to seek the file", 500);
-// 			return;
-// 		}
-// 		if (request->_tempFile.write(data, len) != len)
-// 		{
-// 			const auto error = request->_tempFile.getWriteError();
-// 			handle_error(request, std::string("Failed to write to the file with error: ") + std::string(error, 10), 500);
-// 			return;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		handle_error(request, "No open file for upload", 500);
-// 		return;
-// 	}
+	ESP_LOGD(WEBSERVER_TAG, "Written file hash: %s", file_hash.c_str());
+	ESP_LOGD(WEBSERVER_TAG, "Expected file hash: %s", hash_arg.value().c_str());
 
-// 	if (final)
-// 	{
-// 		std::string md5;
-// 		if (request->hasHeader(MD5Header))
-// 		{
-// 			md5 = request->getHeader(MD5Header)->value();
-// 		}
+	// check hash is same as expected
+	if (!esp32::str_equals_case_insensitive(file_hash, hash_arg.value()))
+	{
+		esp32::filesystem::remove(temp_full_path);
+		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Written file hash does not match");
+		return;
+	}
 
-// 		ESP_LOGD(WEBSERVER_TAG, "Expected MD5:%s", md5.c_str());
+	if (!esp32::filesystem::rename(temp_full_path, upload_file_name))
+	{
+		esp32::filesystem::remove(temp_full_path);
+		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to rename temp file");
 
-// 		if (md5.length() != 32)
-// 		{
-// 			handle_error(request, "MD5 parameter invalid. Check file exists", 500);
-// 			return;
-// 		}
+		return;
+	}
 
-// 		request->_tempFile.close();
+	ESP_LOGI(WEBSERVER_TAG, "File Uploaded: %s", upload_file_name.c_str());
+	send_empty_200(request);
+}
 
-// 		const auto dir = request->getHeader(uploadDirHeader)->value();
-// 		const auto tmp_full_path = join_path(dir, filename + ".tmp");
+std::string web_server::get_file_sha256(const char *filename)
+{
+	esp32::hash::hash<MBEDTLS_MD_SHA256> hasher;
+	std::vector<uint8_t> buf;
+	buf.resize(8196);
 
-// 		// calculate hash of written file
-// 		md5.toUpperCase();
-// 		auto disk_md5 = get_file_md5(tmp_full_path);
-// 		disk_md5.toUpperCase();
+	auto file = esp32::filesystem::file(filename, "rb");
+	size_t bytes_read;
+	do
+	{
+		bytes_read = file.read(buf.data(), 1, buf.size());
+		if (bytes_read > 0)
+		{
+			hasher.update(buf.data(), bytes_read);
+		}
+	} while (bytes_read == buf.size());
 
-// 		if (md5 != disk_md5)
-// 		{
-// 			handle_error(request, "Md5 hash of written file does not match. Found: " + disk_md5, 500);
-// 			SD.remove(tmp_full_path);
-// 			return;
-// 		}
+	const auto hash = hasher.finish();
+	return esp32::format_hex(hash);
+}
 
-// 		const auto full_path = join_path(dir, filename);
-// 		if (!SD.rename(tmp_full_path, full_path))
-// 		{
-// 			handle_error(request, "Failed from rename temp file failed", 500);
-// 			return;
-// 		}
+const char *web_server::get_content_type(const std::string &extension)
+{
+	if (extension == ".htm")
+		return "text/html";
+	else if (extension == ".html")
+		return "text/html";
+	else if (extension == ".css")
+		return "text/css";
+	else if (extension == ".js")
+		return "application/javascript";
+	else if (extension == ".json")
+		return "application/json";
+	else if (extension == ".png")
+		return "image/png";
+	else if (extension == ".gif")
+		return "image/gif";
+	else if (extension == ".jpg")
+		return "image/jpeg";
+	else if (extension == ".ico")
+		return "image/x-icon";
+	else if (extension == ".xml")
+		return "text/xml";
+	else if (extension == ".pdf")
+		return "application/x-pdf";
+	else if (extension == ".zip")
+		return "application/x-zip";
+	else if (extension == ".gz")
+		return "application/x-gzip";
 
-// 		ESP_LOGI(WEBSERVER_TAG, "File Uploaded: %s", full_path.c_str());
-// 	}
-// }
+	return "text/plain";
+}
 
-// std::string web_server::get_file_md5(const std::string &path)
-// {
-// 	auto file = SD.open(path);
-// 	MD5Builder hashBuilder;
-// 	hashBuilder.begin();
+void web_server::log_and_send_error(const esp32::http_request *request, httpd_err_code_t code, const std::string &error)
+{
+	ESP_LOGW(WEBSERVER_TAG, "%s", error.c_str());
+	esp32::http_response response(request);
+	response.send_error(code, error.c_str());
+}
 
-// 	hashBuilder.addStream(file, file.size());
-// 	hashBuilder.calculate();
-// 	file.close();
-
-// 	return hashBuilder.tostd::string();
-// }
-
-// void web_server::handle_file_upload_complete(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "file upload complete");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
-
-// 	request->send(200);
-// }
-
-// const char *web_server::get_content_type(const std::string &filename)
-// {
-// 	if (filename.endsWith(".htm"))
-// 		return "text/html";
-// 	else if (filename.endsWith(".html"))
-// 		return "text/html";
-// 	else if (filename.endsWith(".css"))
-// 		return "text/css";
-// 	else if (filename.endsWith(".js"))
-// 		return "application/javascript";
-// 	else if (filename.endsWith(".json"))
-// 		return "application/json";
-// 	else if (filename.endsWith(".png"))
-// 		return "image/png";
-// 	else if (filename.endsWith(".gif"))
-// 		return "image/gif";
-// 	else if (filename.endsWith(".jpg"))
-// 		return "image/jpeg";
-// 	else if (filename.endsWith(".ico"))
-// 		return "image/x-icon";
-// 	else if (filename.endsWith(".xml"))
-// 		return "text/xml";
-// 	else if (filename.endsWith(".pdf"))
-// 		return "application/x-pdf";
-// 	else if (filename.endsWith(".zip"))
-// 		return "application/x-zip";
-// 	else if (filename.endsWith(".gz"))
-// 		return "application/x-gzip";
-// 	return "text/plain";
-// }
-
-// std::string web_server::join_path(const std::string &part1, const std::string &part2)
-// {
-// 	return part1 + (part1.endsWith("/") ? "" : "/") + part2;
-// }
+void web_server::send_empty_200(const esp32::http_request *request)
+{
+	esp32::http_response response(request);
+	response.send_empty_200();
+}
 
 // void web_server::send_log_data(const std::string &c)
 // {

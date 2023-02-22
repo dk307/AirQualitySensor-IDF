@@ -2,8 +2,11 @@
 
 #include "sensor/sensor.h"
 #include "util/async_web_server/http_server.h"
+#include "util/async_web_server/http_request.h"
 
 #include <vector>
+
+
 
 class web_server : esp32::http_server
 {
@@ -60,24 +63,24 @@ private:
     // bool filter_events(esp32::http_request *request);
 
     // // fs ajax
-    // static void handle_dir_list(esp32::http_request *request);
-    // static void handle_dir_create(esp32::http_request *request);
-    // static void handle_fs_download(esp32::http_request *request);
-    // static void handle_fs_delete(esp32::http_request *request);
-    // static void handle_fs_rename(esp32::http_request *request);
-    // void handle_file_upload(esp32::http_request *request,
-    //                         const std::string &filename,
-    //                         size_t index,
-    //                         uint8_t *data,
-    //                         size_t len,
-    //                         bool final);
+    void handle_dir_list(esp32::http_request *request);
+    void handle_dir_create(esp32::http_request *request);
+    void handle_fs_download(esp32::http_request *request);
+    void handle_fs_delete(esp32::http_request *request);
+    void handle_fs_rename(esp32::http_request *request);
+    void handle_file_upload(esp32::http_request *request);
+
     // static void handle_file_upload_complete(esp32::http_request *request);
-    // static const char *get_content_type(const std::string &filename);
+    static const char *get_content_type(const std::string &extension);
     // static std::string join_path(const std::string &part1, const std::string &part2);
     // static std::string get_file_md5(const std::string &path);
 
     template <class Array, class K, class T>
     static void add_key_value_object(Array &array, const K &key, const T &value);
+
+    static void log_and_send_error(const esp32::http_request *request, httpd_err_code_t code, const std::string &error);
+    static void send_empty_200(const esp32::http_request *request);
+    static std::string get_file_sha256(const char *filename);
     // template <class V, class T>
     // static void add_to_json_doc(V &doc, T id, float value);
     // void notify_sensor_change(sensor_id_index id);

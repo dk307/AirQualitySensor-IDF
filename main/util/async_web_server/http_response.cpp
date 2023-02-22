@@ -4,6 +4,8 @@
 
 #include "util/helper.h"
 #include "util/exceptions.h"
+#include "util/filesystem/filesystem.h"
+#include "util/filesystem/file_info.h"
 
 #include <esp_log.h>
 #include <esp_check.h>
@@ -43,7 +45,6 @@ namespace esp32
 
   void array_response::send_response()
   {
-
     ESP_LOGD(WEBSERVER_TAG, "Handling %s", req_->url().c_str());
     add_common_headers();
 
@@ -74,7 +75,7 @@ namespace esp32
 
     // Content encoding
     std::filesystem::path path;
-    if (!download_ && !std::filesystem::exists(path) && std::filesystem::exists(gz_path))
+    if (!download_ && !esp32::filesystem::exists(path) && esp32::filesystem::exists(gz_path))
     {
       path = gz_path;
       CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
@@ -84,11 +85,20 @@ namespace esp32
       path = file_path_;
     }
 
+    const esp32::filesystem::file_info file_info{path};
+
     // Check file exists
-    if (!std::filesystem::exists(path))
+    if (!file_info.exists())
     {
       ESP_LOGE(WEBSERVER_TAG, "Failed to find file : %s", path.c_str());
       httpd_resp_send_err(req_->req_, HTTPD_404_NOT_FOUND, "File does not exist");
+      return;
+    }
+
+    if (!file_info.is_regular_file())
+    {
+      ESP_LOGE(WEBSERVER_TAG, "Path is not a file : %s", path.c_str());
+      httpd_resp_send_err(req_->req_, HTTPD_404_NOT_FOUND, "Parh is not a file");
       return;
     }
 
@@ -102,7 +112,7 @@ namespace esp32
     CHECK_HTTP_REQUEST(httpd_resp_set_type(req_->req_, content_type_));
 
     // Content-Length
-    const auto size = std::to_string(std::filesystem::file_size(path));
+    const auto size = std::to_string(file_info.size());
     CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Length", size.c_str()));
 
     ESP_LOGD(WEBSERVER_TAG, "Sending file %s", path.c_str());

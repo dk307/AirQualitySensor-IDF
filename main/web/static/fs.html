@@ -60,7 +60,7 @@
   </div>
 
   <!-- Confirm Delete Modal Start-->
-  <form id="deleteActionForm" method="post" action="/fs/delete">
+  <form id="deleteActionForm">
     <div class="modal fade" id="deleteActionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
       aria-hidden="true">
       <div class="modal-dialog">
@@ -72,9 +72,9 @@
 
           <div class="modal-body">
             <div class="mb-4">
-              <span class="justify-left">Do you want to delete </span>
+              <span class="justify-left">Do you want to delete&nbsp;</span>
               <span class="justify-left" id="deleteFileName"></span>
-              <span class="justify-left">?</span>
+              <span class="justify-left">&nbsp;?</span>
             </div>
 
             <div class="mb-4">
@@ -95,7 +95,7 @@
   <!-- Confirm Delete Modal End -->
 
   <!-- Rename Modal -->
-  <form id="renameActionForm" method="post" action="/fs/rename">
+  <form class="needs-validation" id="renameActionForm">
     <div class="modal fade" id="renameModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
       role="dialog" aria-labelledby="renameModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -126,7 +126,7 @@
   </form>
 
   <!-- Mkdir Modal -->
-  <form id="mkdirActionForm" method="post" action="/fs/mkdir">
+  <form class="needs-validation" id="mkdirActionForm">
     <div class="modal fade" id="mkdirModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
       role="dialog" aria-labelledby="mkdirModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -154,8 +154,7 @@
   </form>
 
   <!-- File Update Modal Start-->
-  <form class="needs-validation" id="fileUploadUploadForm" method="post" enctype="multipart/form-data"
-    action="/fs/upload">
+  <form class="needs-validation" id="fileUploadUploadForm">
     <div class="modal fade" id="fileUploadUpdateModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -192,15 +191,14 @@
   <!-- File update Modal End -->
 
   <script src="js/s.js"></script>
-  <script src="js/datatables.min.js"></script>
-  <script src="js/moment.min.js"></script>
+  <script src="js/extra/datatables.min.js"></script>
+  <script src="js/extra/moment.min.js"></script>
 
   <script>
     var attempted_current_dir = "/";
     var current_dir = attempted_current_dir;
 
     function updateNavigator(dir) {
-
       const getCumulativePathSegments = (path) =>
         path
           .split('/')
@@ -235,15 +233,13 @@
 
     $("#deleteActionForm").on('submit', function (e) {
       e.preventDefault();
-      var form = $('#deleteActionForm');
+      var data = { 'deleteFilePath': $('#deleteFilePath').val() };
 
       $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: new FormData(this),
-        contentType: false,
+        type: 'POST',
+        url: '/fs/delete',
+        data: $.param(data),
         cache: false,
-        processData: false,
         beforeSend: function () {
           $('#deleteActionStatus').hide();
         },
@@ -290,6 +286,9 @@
           },
           rowId: "path",
           responsive: true,
+          oLanguage: {
+            "sEmptyTable": "No file or folder"
+          },
           columns: [
             {
               data: "name",
@@ -363,23 +362,21 @@
 
     $("#renameActionForm").on('submit', function (e) {
       e.preventDefault();
-      var form = $('#renameActionForm');
 
       var oldPath = $("#renameOldFilePath").val();
       var newName = $("#renameNewName").val();
       var parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
 
-      var formData = new FormData(this);
-      formData.append("oldPath", oldPath)
-      formData.append("newPath", parent + "/" + newName);
+      var formData = {
+        "oldPath": oldPath,
+        "newPath": parent + "/" + newName
+      };
 
       $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: formData,
-        contentType: false,
+        type: 'POST',
+        url: '/fs/rename',
+        data: $.param(formData),
         cache: false,
-        processData: false,
         beforeSend: function () {
           $('#renameActionStatus').hide();
         },
@@ -400,19 +397,16 @@
 
     $("#mkdirActionForm").on('submit', function (e) {
       e.preventDefault();
-      var form = $('#mkdirActionForm');
 
       var name = $("#mkdirName").val();
-      var formData = new FormData(this);
-      formData.append("dir", current_dir + "/" + name);
+      var formData = { "dir": current_dir + "/" + name };
 
       $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: formData,
-        contentType: false,
+        type: 'POST',
+        url: '/fs/mkdir',
+        data: $.param(formData),
         cache: false,
-        processData: false,
+
         beforeSend: function () {
           $('#mkdirActionStatus').hide();
         },
@@ -431,94 +425,86 @@
       });
     });
 
+
+    function calculateSHA256(file) {
+      return new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+          const hashObj = new jsSHA('SHA-256', 'ARRAYBUFFER');
+          hashObj.update(fileReader.result);
+          const hash = hashObj.getHash('HEX');
+          resolve(hash);
+        };
+        fileReader.onerror = () => {
+          reject(new Error('Error reading the file'));
+        };
+        fileReader.readAsArrayBuffer(file);
+      });
+    }
+
+    function uploadFile(file) {
+      calculateSHA256(file).then(hash => {
+        console.log(hash); // SHA256 hash of file
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          var fileData = reader.result;
+          uploadAjax = $.ajax({
+            xhr: function () {
+              var xhr = new window.XMLHttpRequest();
+              xhr.upload.addEventListener("progress", function (evt) {
+                if (evt.lengthComputable) {
+                  var percentComplete = ((evt.loaded / evt.total) * 100).toFixed();
+                  $("#fileUploadUploadProgressBar").width(percentComplete + '%');
+                  $("#fileUploadUploadProgressBar").html('<span class="text-center">' + percentComplete + '%</span>');
+                }
+              }, false);
+              return xhr;
+            },
+            type: 'POST',
+            url: '/fs/upload',
+            data: fileData,
+            processData: false,
+            contentType: 'application/octet-stream',
+            headers: { "uploadDir": current_dir, "X-File-Name": file.name, "sha256": hash },
+            beforeSend: function () {
+              $("#fileUploadUploadProgressBar").width('0%');
+              $('#fileUploadUploadStatus').html('');
+              $("#fileUploadUploadStatusWrapper").show();
+              $('#fileUploadButton').hide();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+              if (jqXHR.status == 500) {
+                $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUploadError"></div>');
+                $('#fileUploadUploadError').text(jqXHR.responseText);
+              } else {
+                $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert">File upload failed, please try again.</div>');
+              }
+              $('#fileUploadButton').show();
+            },
+            success: function (resp) {
+              $('#fileUploadUpdateModal').modal('hide');
+            }
+          });
+
+        };
+
+        reader.readAsArrayBuffer(file);
+      }).catch(
+        error => {
+          console.error(error);
+          $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUploadError"></div>');
+          $('#fileUploadUploadError').text(error);
+        });
+    }
+
+
     // File upload via Ajax
     var uploadAjax = null;
     $("#fileUploadUploadForm").on('submit', function (e) {
       e.preventDefault();
+      var file = $('#fileUploadFileUploadId')[0].files[0];
+      uploadFile(file);
 
-      var formData = new FormData(this);
-
-      var form = $('#fileUploadUploadForm');
-      uploadAjax = $.ajax({
-        xhr: function () {
-          var xhr = new window.XMLHttpRequest();
-          xhr.upload.addEventListener("progress", function (evt) {
-            if (evt.lengthComputable) {
-              var percentComplete = ((evt.loaded / evt.total) * 100).toFixed();
-              $("#fileUploadUploadProgressBar").width(percentComplete + '%');
-              $("#fileUploadUploadProgressBar").html('<span class="text-center">' + percentComplete + '%</span>');
-            }
-          }, false);
-          return xhr;
-        },
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: formData,
-        contentType: false,
-        cache: false,
-        processData: false,
-        headers: { "uploadDir": current_dir, "md5": fileUploadFileUploadMd5 },
-        oLanguage: {
-          "sEmptyTable": "No files or folder"
-        },
-        beforeSend: function () {
-          $("#fileUploadUploadProgressBar").width('0%');
-          $('#fileUploadUploadStatus').html('');
-          $("#fileUploadUploadStatusWrapper").show();
-          $('#fileUploadButton').hide();
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          if (jqXHR.status == 500) {
-            $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUpgradeError"></div>');
-            $('#fileUploadUpgradeError').text(jqXHR.responseText);
-          } else {
-            $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert">File upload failed, please try again.</div>');
-          }
-          $('#fileUploadButton').show();
-        },
-        success: function (resp) {
-          $('#fileUploadUpdateModal').modal('hide');
-        }
-      });
-    });
-
-    // md5
-    document.getElementById('fileUploadFileUploadId').addEventListener('change', function () {
-
-      $('#fileUploadUploadStatus').html('');
-      $("#fileUploadUploadStatusWrapper").hide();
-
-      var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
-        file = this.files[0],
-        chunkSize = 1024 * 1024,
-        chunks = Math.ceil(file.size / chunkSize),
-        currentChunk = 0,
-        spark = new SparkMD5.ArrayBuffer(),
-        fileReader = new FileReader();
-
-      fileReader.onload = function (e) {
-        spark.append(e.target.result);
-        currentChunk++;
-
-        if (currentChunk < chunks) {
-          loadNext();
-        } else {
-          fileUploadFileUploadMd5 = spark.end();
-          console.info('computed hash', fileUploadFileUploadMd5);
-        }
-      };
-
-      fileReader.onerror = function () {
-        console.warn('oops, something went wrong.');
-      };
-
-      function loadNext() {
-        var start = currentChunk * chunkSize,
-          end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
-
-        fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
-      }
-      loadNext();
     });
 
     document.getElementById('uploadButtonId').addEventListener('click', function () {

@@ -16,18 +16,17 @@ namespace esp32
 
   std::optional<std::string> http_request::get_header(const char *header)
   {
-    size_t buf_len = httpd_req_get_hdr_value_len(req_, header);
+    const size_t buf_len = httpd_req_get_hdr_value_len(req_, header);
     if (buf_len == 0)
     {
       return std::nullopt;
     }
-    auto buf = std::make_unique<char[]>(++buf_len);
-    if (!buf)
-    {
-      CHECK_HTTP_REQUEST(ESP_ERR_NO_MEM);
-    }
-    CHECK_HTTP_REQUEST(httpd_req_get_hdr_value_str(req_, header, buf.get(), buf_len));
-    return std::string(buf.get());
+
+    std::string buf;
+    buf.resize(buf_len);
+
+    CHECK_HTTP_REQUEST(httpd_req_get_hdr_value_str(req_, header, buf.data(), buf_len + 1));
+    return buf;
   }
 
   std::vector<std::optional<std::string>> http_request::get_url_arguments(const std::vector<std::string> &names)
@@ -84,17 +83,49 @@ namespace esp32
 
     std::vector<char> data;
     data.reserve(req_->content_len + 1);
-    data.resize(req_->content_len);
 
-    auto received = httpd_req_recv(req_, data.data(), data.size());
-    if (received < 0)
-    {
-      CHECK_HTTP_REQUEST(ESP_FAIL);
-    }
+    CHECK_HTTP_REQUEST(read_body([&data](const std::vector<uint8_t> &chunk)
+                                 {
+      data.insert(data.end(), chunk.cbegin(), chunk.cend());
+      return ESP_OK; }));
 
     data.resize(req_->content_len + 1);
     extract_parameters(data, names, result);
     return result;
+  }
+
+  esp_err_t http_request::read_body(const std::function<esp_err_t(const std::vector<uint8_t> &)> &callback)
+  {
+    const auto content_length = req_->content_len;
+    if (content_length == 0) {
+      return ESP_OK;
+    }
+    std::vector<uint8_t> data;
+    data.reserve(std::min<size_t>(8196, content_length));
+
+    size_t received = 0;
+    while (received < content_length)
+    {
+      data.resize(data.capacity());
+      auto len = httpd_req_recv(req_, reinterpret_cast<char *>(data.data()), data.size());
+      if (len <= 0)
+      {
+        if (len == HTTPD_SOCK_ERR_TIMEOUT)
+        {
+          ESP_LOGE(WEBSERVER_TAG, "HTTP receive timeout");
+        }
+        return ESP_FAIL;
+      }
+      data.resize(len);
+      const auto res = callback(data);
+      if (res != ESP_OK)
+      {
+        return res;
+      }
+      received += len;
+    }
+
+    return ESP_OK;
   }
 
   http_method http_request::method() const

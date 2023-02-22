@@ -43,6 +43,11 @@ namespace esp32
                 ESP_LOGI(WEBSERVER_TAG, "Failed to process request with:%s", ex.what());
                 return ex.get_error();
             }
+            catch (const std::exception &ex)
+            {
+                ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
+                return ESP_FAIL;
+            }
         }
 
         template <class T, void (T::*ftn)(esp32::http_request *)>
@@ -67,6 +72,11 @@ namespace esp32
                 ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
                 return ex.get_error();
             }
+            catch (const std::exception &ex)
+            {
+                ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
+                return ESP_FAIL;
+            }
         }
 
         template <const auto file_pathT, const auto content_typeT>
@@ -90,6 +100,11 @@ namespace esp32
             {
                 ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
                 return ex.get_error();
+            }
+            catch (const std::exception &ex)
+            {
+                ESP_LOGI(WEBSERVER_TAG, "Failed to process file request with:%s", ex.what());
+                return ESP_FAIL;
             }
         }
 

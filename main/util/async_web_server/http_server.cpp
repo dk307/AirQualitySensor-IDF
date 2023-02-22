@@ -17,7 +17,7 @@ namespace esp32
 
         httpd_config_t config = HTTPD_DEFAULT_CONFIG();
         config.server_port = port_;
-        config.max_uri_handlers = 25;
+        config.max_uri_handlers = 30;
         config.ctrl_port = 32760;
 
         ESP_ERROR_CHECK(httpd_start(&server_, &config));

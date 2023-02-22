@@ -22,6 +22,7 @@ const baseFolder = 'main/web/static/';
 const dataFolder = 'main/web/data/';
 const staticFolder = 'main/web/include/';
 const staticSDcardFolder = 'main/sdcard/web/';
+const staticJSExtraSDcardFolder = 'main/sdcard/web/extra/';
 
 var toHeader = function (name, debug) {
     return through.obj(function (source, encoding, callback) {
@@ -83,7 +84,6 @@ gulp.task('js', function () {
     return gulp.src(baseFolder + '/js/*.js').
         pipe(stripcomments()).
         pipe(concat("s.js")).
-        pipe(minify()).
         pipe(gzip({ gzipOptions: { level: 9 } })).
         pipe(gulp.dest(dataFolder)).
         pipe(gulp.dest(staticSDcardFolder));
@@ -92,10 +92,9 @@ gulp.task('js', function () {
 gulp.task('js-extra', function () {
     return gulp.src(baseFolder + '/js/extra/*.js').
         pipe(stripcomments()).
-        pipe(minify()).
         pipe(gzip({ gzipOptions: { level: 9 } })).
         pipe(gulp.dest(dataFolder)).
-        pipe(gulp.dest(staticSDcardFolder));
+        pipe(gulp.dest(staticJSExtraSDcardFolder));
 });
 
 gulp.task('css', function () {

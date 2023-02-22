@@ -1,35 +1,78 @@
 #include <mbedtls/md.h>
-#include <mbedtls/sha1.h>
-#include <mbedtls/sha256.h>
+#include <cstring>
+#include <stdexcept>
+#include <vector>
 
-namespace esp32
+namespace esp32::hash
 {
-    namespace hash
+    template <mbedtls_md_type_t hashType>
+    class hash
     {
-        template <mbedtls_md_type_t typeT, size_t hashLenT>
-        auto hash(const uint8_t *data, std::size_t len)
+    public:
+        hash()
         {
-            std::array<uint8_t, hashLenT> result;
-            mbedtls_md_context_t ctx;
-
-            mbedtls_md_init(&ctx);
-            mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(typeT), 0);
-            mbedtls_md_starts(&ctx);
-            mbedtls_md_update(&ctx, data, len);
-            mbedtls_md_finish(&ctx, result.data());
-            mbedtls_md_free(&ctx);
-
-            return result;
+            mbedtls_md_init(&ctx_);
+            auto ret = mbedtls_md_setup(&ctx_, mbedtls_md_info_from_type(hashType), 0);
+            if (ret != 0)
+            {
+                throw std::runtime_error("Failed to set up hash algorithm");
+            }
+            ret = mbedtls_md_starts(&ctx_);
+            if (ret != 0)
+            {
+                throw std::runtime_error("Failed to start hash calculation");
+            }
         }
 
-        auto md5(const uint8_t *data, std::size_t len)
+        ~hash()
         {
-            return hash<MBEDTLS_MD_MD5, 16>(data, len);
+            mbedtls_md_free(&ctx_);
         }
 
-        auto md5(const std::string& data)
+        void update(const std::string &input_string)
         {
-            return md5(reinterpret_cast<const uint8_t*>(data.c_str()), data.size());
+            update(reinterpret_cast<const uint8_t *>(input_string.c_str()), input_string.length());
         }
+
+        void update(const std::vector<uint8_t> &input_data)
+        {
+            update(input_data.data(), input_data.size());
+        }
+
+        void update(const uint8_t *input_data, size_t input_size)
+        {
+            int ret = mbedtls_md_update(&ctx_, input_data, input_size);
+            if (ret != 0)
+            {
+                throw std::runtime_error("Failed to update hash calculation");
+            }
+        }
+
+        void update(const void *input_data, size_t input_size)
+        {
+            update(static_cast<const uint8_t *>(input_data), input_size);
+        }
+
+        std::vector<uint8_t> finish()
+        {
+            std::vector<uint8_t> hash_result(mbedtls_md_get_size(mbedtls_md_info_from_type(hashType)));
+            int ret = mbedtls_md_finish(&ctx_, hash_result.data());
+            if (ret != 0)
+            {
+                throw std::runtime_error("Failed to finalize hash calculation");
+            }
+            return hash_result;
+        }
+
+    private:
+        mbedtls_md_context_t ctx_;
+    };
+
+    template <class... Args>
+    auto md5(Args... data)
+    {
+        esp32::hash::hash<MBEDTLS_MD_MD5> md5_hasher;
+        md5_hasher.update(std::forward<Args>(data)...);
+        return md5_hasher.finish();
     }
 }

@@ -49,7 +49,7 @@ sd_card card;
 
 extern "C" void app_main(void)
 {
-    esp_log_level_set("httpd_parse", ESP_LOG_DEBUG);
+    // esp_log_level_set("httpd_parse", ESP_LOG_DEBUG);
     esp_log_level_set(WEBSERVER_TAG, ESP_LOG_DEBUG);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
