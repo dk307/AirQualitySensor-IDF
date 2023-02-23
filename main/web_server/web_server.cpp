@@ -9,6 +9,7 @@
 #include "util/filesystem/file_info.h"
 #include "util/filesystem/file.h"
 #include "util/hash/hash.h"
+#include "util/finally.h"
 #include "config/config_manager.h"
 #include "operations/operations.h"
 #include "hardware/hardware.h"
@@ -124,6 +125,7 @@ void web_server::begin()
 	add_handler_ftn<web_server, &web_server::handle_web_login_update>("/weblogin.update.handler", HTTP_POST);
 	add_handler_ftn<web_server, &web_server::handle_restart_device>("/restart.handler", HTTP_POST);
 	add_handler_ftn<web_server, &web_server::handle_factory_reset>("/factory.reset.handler", HTTP_POST);
+	add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
 
 	add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
 	add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
@@ -135,20 +137,6 @@ void web_server::begin()
 	add_handler_ftn<web_server, &web_server::handle_fs_rename>("/fs/rename", HTTP_POST);
 	add_handler_ftn<web_server, &web_server::handle_fs_delete>("/fs/delete", HTTP_POST);
 	add_handler_ftn<web_server, &web_server::handle_file_upload>("/fs/upload", HTTP_POST);
-
-	// http_server.on("/fs/mkdir", HTTP_POST, handle_dir_create);
-	// 	http_server.on("/fs/download", HTTP_GET, handle_fs_download);
-	// 	http_server.on("/fs/upload", HTTP_POST, handle_file_upload_complete,
-	// 				   std::bind(&web_server::handle_file_upload, this,
-	// 							 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-	// 							 std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
-	// 	http_server.on("/fs/delete", HTTP_POST, handle_fs_delete);
-	// 	http_server.on("/fs/rename", HTTP_POST, handle_fs_rename);
-
-	// 	http_server.on(("/othersettings.update.handler"), HTTP_POST, other_settings_update);
-	// 	http_server.on(("/factory.reset.handler"), HTTP_POST, factory_reset);
-
-	// 	http_server.on(("/logout.handler"), HTTP_POST, handle_logout);
 
 	// events.onConnect(std::bind(&web_server::on_event_connec&t, this, std::placeholders::_1));
 	// events.setFilter(std::bind(&web_server::filter_events, this, std::placeholders::_1));
@@ -585,200 +573,45 @@ void web_server::handle_factory_reset(esp32::http_request *request)
 // 	operations::instance.reboot();
 // }
 
-// void web_server::handle_file_read(esp32::http_request *request)
-// {
-// 	auto path = request->url();
-// 	ESP_LOGD(WEBSERVER_TAG, "handleFileRead: %s", path.c_str());
-
-// 	if (path==("/")) || path.isEmpty())
-// 	{
-// 		ESP_LOGD(WEBSERVER_TAG, "Redirecting to index page");
-// 		path = (IndexUrl);
-// 	}
-
-// 	const bool worksWithoutAuth = path.startsWith(("/media/")) ||
-// 								  path.startsWith(("/js/")) ||
-// 								  path.startsWith(("/css/")) ||
-// 								  path.startsWith(("/font/")) ||
-// 								  path.equalsIgnoreCase((LoginUrl));
-
-// 	if (!worksWithoutAuth && !is_authenticated(request))
-// 	{
-// 		ESP_LOGD(WEBSERVER_TAG, "Redirecting to login page");
-// 		path = std::string(LoginUrl);
-// 	}
-
-// 	for (size_t i = 0; i < sizeof(static_files) / sizeof(static_files[0]); i++)
-// 	{
-// 		const auto entryPath = static_files[i].path;
-// 		if (path.equalsIgnoreCase(entryPath))
-// 		{
-// 			auto &&static_file = static_files[i];
-// 			const std::string mediaType(static_file.media_type);
-// 			AsyncWebServerResponse *response = nullptr;
-
-// 			switch (static_file.type)
-// 			{
-// 			case static_file_type::array_zipped:
-// 				response = request->beginResponse_P(200,
-// 													mediaType,
-// 													reinterpret_cast<const uint8_t *>(static_file.data),
-// 													static_file.size);
-// 				response->addHeader("Content-Encoding", "gzip");
-
-// 				break;
-// 			case static_file_type::sdcard:
-// 				response = request->beginResponse(SD,
-// 												  reinterpret_cast<const char *>(static_file.data),
-// 												  mediaType);
-// 			}
-
-// 			if (response)
-// 			{
-// 				if (worksWithoutAuth)
-// 				{
-// 					response->addHeader(CacheControlHeader, "public, max-age=31536000");
-// 				}
-
-// 				request->send(response);
-// 				ESP_LOGD(WEBSERVER_TAG, "Served path:%s mimeType: %s", path.c_str(), mediaType.c_str());
-// 				return;
-// 			}
-// 			else
-// 			{
-// 				ESP_LOGW(WEBSERVER_TAG, "File not found path:%s mimeType: %s", path.c_str(), mediaType.c_str());
-// 			}
-// 		}
-// 	}
-
-// 	handle_not_found(request);
-// }
-
-// /** Redirect to captive portal if we got a request for another domain.
-//  * Return true in that case so the page handler do not try to handle the request again. */
-// bool web_server::is_captive_portal_request(esp32::http_request *request)
-// {
-// 	if (!is_ip(request->host()))
-// 	{
-// 		ESP_LOGI(WEBSERVER_TAG, "Request redirected to captive portal");
-// 		AsyncWebServerResponse *response = request->beginResponse(302, std::string(TextPlainMediaType), std::string());
-// 		response->addHeader(("Location"), std::string("http://") + to_std::string_ip(request->client()->localIP()));
-// 		request->send(response);
-// 		return true;
-// 	}
-// 	return false;
-// }
-
-// void web_server::handle_not_found(esp32::http_request *request)
-// {
-// 	if (is_captive_portal_request(request))
-// 	{
-// 		// if captive portal redirect instead of displaying the error page
-// 		return;
-// 	}
-
-// 	std::string message = ("File Not Found\n\n");
-// 	message += ("URI: ");
-// 	message += request->url();
-// 	message += ("\nMethod: ");
-// 	message += (request->method() == HTTP_GET) ? ("GET") : ("POST");
-// 	message += ("\nArguments: ");
-// 	message += request->args();
-// 	message += ("\n");
-
-// 	for (unsigned int i = 0; i < request->args(); i++)
-// 	{
-// 		message += std::string((" ")) + request->argName(i) + (": ") + request->arg(i) + "\n";
-// 	}
-
-// 	handle_error(request, message, 404);
-// }
-
-// // is this an IP?
-// bool web_server::is_ip(const std::string &str)
-// {
-// 	for (unsigned int i = 0; i < str.length(); i++)
-// 	{
-// 		int c = str.charAt(i);
-// 		if (c != '.' && (c < '0' || c > '9'))
-// 		{
-// 			return false;
-// 		}
-// 	}
-// 	return true;
-// }
-
-// std::string web_server::to_std::string_ip(const IPAddress &ip)
-// {
-// 	return ip.tostd::string();
-// }
-
 void web_server::redirect_to_root(esp32::http_request *request)
 {
 	esp32::http_response response(request);
 	response.redirect("/");
 }
 
-// void web_server::firmware_update_upload(esp32::http_request *request,
-// 										const std::string &filename,
-// 										size_t index,
-// 										uint8_t *data,
-// 										size_t len,
-// 										bool final)
-// {
-// 	ESP_LOGD(WEBSERVER_TAG, "firmwareUpdateUpload");
+void web_server::handle_firmware_upload(esp32::http_request *request)
+{
+	ESP_LOGD(WEBSERVER_TAG, "firmwareUpdateUpload");
 
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
+	if (!check_authenticated(request))
+	{
+		return;
+	}
 
-// 	std::string error;
-// 	if (!index)
-// 	{
-// 		std::string md5;
+	const auto hash_arg = request->get_header("sha256");
 
-// 		if (request->hasHeader(MD5Header))
-// 		{
-// 			md5 = request->getHeader(MD5Header)->value();
-// 		}
+	if (!hash_arg)
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Hash not supplied for firmware");
+		return;
+	}
 
-// 		ESP_LOGI(WEBSERVER_TAG, "Expected MD5:%s", md5.c_str());
+	ESP_LOGD(WEBSERVER_TAG, "Expected firmware hash: %s", hash_arg.value().c_str());
 
-// 		if (md5.length() != 32)
-// 		{
-// 			handle_error(request, ("MD5 parameter invalid. Check file exists."), 500);
-// 			return;
-// 		}
+	const auto result = request->read_body([](const std::vector<uint8_t> &data)
+										   { return ESP_OK; });
 
-// 		if (operations::instance.start_update(request->contentLength(), md5, error))
-// 		{
-// 			// success, let's make sure we end the update if the client hangs up
-// 			request->onDisconnect(handle_early_update_disconnect);
-// 		}
-// 		else
-// 		{
-// 			handle_error(request, error, 500);
-// 			return;
-// 		}
-// 	}
+	if (result != ESP_OK)
+	{
+		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read body and OTA");
+		return;
+	}
 
-// 	if (operations::instance.is_update_in_progress())
-// 	{
-// 		if (!operations::instance.write_update(data, len, error))
-// 		{
-// 			handle_error(request, error, 500);
-// 		}
+	ESP_LOGD(WEBSERVER_TAG, "Expected firmware hash: %s", hash_arg.value().c_str());
 
-// 		if (final)
-// 		{
-// 			if (!operations::instance.end_update(error))
-// 			{
-// 				handle_error(request, error, 500);
-// 			}
-// 		}
-// 	}
-// }
+	ESP_LOGI(WEBSERVER_TAG, "Firnware updated");
+	send_empty_200(request);
+}
 
 // void web_server::restore_configuration_upload(esp32::http_request *request,
 // 											  const std::string &filename,
@@ -1095,6 +928,7 @@ void web_server::handle_file_upload(esp32::http_request *request)
 	const auto upload_dir_arg = request->get_header("uploadDir");
 	const auto hash_arg = request->get_header("sha256");
 	const auto file_name_arg = request->get_header("X-File-Name");
+	const auto last_modified_arg = request->get_header("X-Last-Modified");
 
 	if (!upload_dir_arg || !hash_arg || !file_name_arg)
 	{
@@ -1108,6 +942,11 @@ void web_server::handle_file_upload(esp32::http_request *request)
 
 	const auto temp_full_path = upload_file_name.generic_string() + ".temp";
 	ESP_LOGI(WEBSERVER_TAG, "Creating Temp File: %s", temp_full_path.c_str());
+
+	auto _ = esp32::finally([&temp_full_path]
+							{
+								esp32::filesystem::remove(temp_full_path);
+							});
 
 	{
 		auto file = esp32::filesystem::file(temp_full_path.c_str(), "w+");
@@ -1136,17 +975,32 @@ void web_server::handle_file_upload(esp32::http_request *request)
 	// check hash is same as expected
 	if (!esp32::str_equals_case_insensitive(file_hash, hash_arg.value()))
 	{
-		esp32::filesystem::remove(temp_full_path);
 		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Written file hash does not match");
 		return;
 	}
 
 	if (!esp32::filesystem::rename(temp_full_path, upload_file_name))
 	{
-		esp32::filesystem::remove(temp_full_path);
 		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to rename temp file");
-
 		return;
+	}
+
+	// try setting last modified time
+	if (last_modified_arg.has_value())
+	{
+		const auto last_modified = esp32::parse_number<time_t>(last_modified_arg.value());
+		if (last_modified.has_value())
+		{
+			if (!esp32::filesystem::set_last_modified_time(upload_file_name, last_modified.value()))
+			{
+				ESP_LOGW(WEBSERVER_TAG, "Failed to set last modified time for %s", upload_file_name.c_str());
+			}
+		}
+		else
+		{
+			ESP_LOGW(WEBSERVER_TAG, "Invalid last modified time specfied for %s, value:%s",
+					 upload_file_name.c_str(), last_modified_arg.value().c_str());
+		}
 	}
 
 	ESP_LOGI(WEBSERVER_TAG, "File Uploaded: %s", upload_file_name.c_str());

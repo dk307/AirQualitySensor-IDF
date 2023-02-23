@@ -1,6 +1,9 @@
 #include "util/filesystem/file_info.h"
 #include "util/filesystem/filesystem.h"
 
+#include <sys/utime.h>
+#include <sys/stat.h>
+
 namespace esp32::filesystem
 {
     bool create_directory(const std::filesystem::path &path)
@@ -52,5 +55,13 @@ namespace esp32::filesystem
     {
         const file_info fi{path};
         return fi.exists() && fi.is_directory();
+    }
+
+    bool set_last_modified_time(const std::filesystem::path &path, time_t modtime)
+    {
+        struct utimbuf new_times;
+        new_times.actime = modtime;
+        new_times.modtime = new_times.actime;
+        return utime(path.c_str(), &new_times) == 0;
     }
 }

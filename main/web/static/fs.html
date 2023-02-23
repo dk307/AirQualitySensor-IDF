@@ -197,6 +197,8 @@
   <script>
     var attempted_current_dir = "/";
     var current_dir = attempted_current_dir;
+    var fs_table = null;
+    var uploadAjax = null;
 
     function updateNavigator(dir) {
       const getCumulativePathSegments = (path) =>
@@ -230,35 +232,6 @@
         $("#pathBreadCrumb").append(child);
       }
     }
-
-    $("#deleteActionForm").on('submit', function (e) {
-      e.preventDefault();
-      var data = { 'deleteFilePath': $('#deleteFilePath').val() };
-
-      $.ajax({
-        type: 'POST',
-        url: '/fs/delete',
-        data: $.param(data),
-        cache: false,
-        beforeSend: function () {
-          $('#deleteActionStatus').hide();
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          if (jqXHR.status == 500) {
-            $('#deleteActionStatus').text(jqXHR.responseText);
-          } else {
-            $('#deleteActionStatus').text('Delete operation failed');
-          }
-          $('#deleteActionStatus').show();
-        },
-        success: function (resp) {
-          $('#deleteActionModal').modal('hide');
-          refreshCurrent();
-        }
-      });
-    });
-
-    var fs_table = null;
 
     function refreshCurrent() {
       fs_table.ajax.reload();
@@ -353,78 +326,11 @@
     }
 
     function renameNode(filePath, name) {
-
       $('#renameOldFilePath').val(filePath);
       $('#renameNewName').val(name);
       $('#renameActionStatus').hide();
       $('#renameModal').modal('show');
     }
-
-    $("#renameActionForm").on('submit', function (e) {
-      e.preventDefault();
-
-      var oldPath = $("#renameOldFilePath").val();
-      var newName = $("#renameNewName").val();
-      var parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
-
-      var formData = {
-        "oldPath": oldPath,
-        "newPath": parent + "/" + newName
-      };
-
-      $.ajax({
-        type: 'POST',
-        url: '/fs/rename',
-        data: $.param(formData),
-        cache: false,
-        beforeSend: function () {
-          $('#renameActionStatus').hide();
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          if (jqXHR.status == 500) {
-            $('#renameActionStatus').text(jqXHR.responseText);
-          } else {
-            $('#renameActionStatus').text('Rename operation failed');
-          }
-          $('#renameActionStatus').show();
-        },
-        success: function (resp) {
-          $('#renameModal').modal('hide');
-          refreshCurrent();
-        }
-      });
-    });
-
-    $("#mkdirActionForm").on('submit', function (e) {
-      e.preventDefault();
-
-      var name = $("#mkdirName").val();
-      var formData = { "dir": current_dir + "/" + name };
-
-      $.ajax({
-        type: 'POST',
-        url: '/fs/mkdir',
-        data: $.param(formData),
-        cache: false,
-
-        beforeSend: function () {
-          $('#mkdirActionStatus').hide();
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          if (jqXHR.status == 500) {
-            $('#mkdirActionStatus').text(jqXHR.responseText);
-          } else {
-            $('#mkdirActionStatus').text('Create operation failed');
-          }
-          $('#mkdirActionStatus').show();
-        },
-        success: function (resp) {
-          $('#mkdirModal').modal('hide');
-          refreshCurrent();
-        }
-      });
-    });
-
 
     function calculateSHA256(file) {
       return new Promise((resolve, reject) => {
@@ -465,7 +371,7 @@
             data: fileData,
             processData: false,
             contentType: 'application/octet-stream',
-            headers: { "uploadDir": current_dir, "X-File-Name": file.name, "sha256": hash },
+            headers: { "uploadDir": current_dir, "X-File-Name": file.name, "X-Last-Modified": Math.floor(file.lastModified / 1000), "sha256": hash },
             beforeSend: function () {
               $("#fileUploadUploadProgressBar").width('0%');
               $('#fileUploadUploadStatus').html('');
@@ -497,49 +403,140 @@
         });
     }
 
+    $(document).ready(function () {
+      $("#deleteActionForm").on('submit', function (e) {
+        e.preventDefault();
+        var data = { 'deleteFilePath': $('#deleteFilePath').val() };
 
-    // File upload via Ajax
-    var uploadAjax = null;
-    $("#fileUploadUploadForm").on('submit', function (e) {
-      e.preventDefault();
-      var file = $('#fileUploadFileUploadId')[0].files[0];
-      uploadFile(file);
+        $.ajax({
+          type: 'POST',
+          url: '/fs/delete',
+          data: $.param(data),
+          cache: false,
+          beforeSend: function () {
+            $('#deleteActionStatus').hide();
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 500) {
+              $('#deleteActionStatus').text(jqXHR.responseText);
+            } else {
+              $('#deleteActionStatus').text('Delete operation failed');
+            }
+            $('#deleteActionStatus').show();
+          },
+          success: function (resp) {
+            $('#deleteActionModal').modal('hide');
+            refreshCurrent();
+          }
+        });
+      });
 
+      $("#renameActionForm").on('submit', function (e) {
+        e.preventDefault();
+
+        var oldPath = $("#renameOldFilePath").val();
+        var newName = $("#renameNewName").val();
+        var parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
+
+        var formData = {
+          "oldPath": oldPath,
+          "newPath": parent + "/" + newName
+        };
+
+        $.ajax({
+          type: 'POST',
+          url: '/fs/rename',
+          data: $.param(formData),
+          cache: false,
+          beforeSend: function () {
+            $('#renameActionStatus').hide();
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 500) {
+              $('#renameActionStatus').text(jqXHR.responseText);
+            } else {
+              $('#renameActionStatus').text('Rename operation failed');
+            }
+            $('#renameActionStatus').show();
+          },
+          success: function (resp) {
+            $('#renameModal').modal('hide');
+            refreshCurrent();
+          }
+        });
+      });
+
+      $("#mkdirActionForm").on('submit', function (e) {
+        e.preventDefault();
+
+        var name = $("#mkdirName").val();
+        var formData = { "dir": current_dir + "/" + name };
+
+        $.ajax({
+          type: 'POST',
+          url: '/fs/mkdir',
+          data: $.param(formData),
+          cache: false,
+
+          beforeSend: function () {
+            $('#mkdirActionStatus').hide();
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 500) {
+              $('#mkdirActionStatus').text(jqXHR.responseText);
+            } else {
+              $('#mkdirActionStatus').text('Create operation failed');
+            }
+            $('#mkdirActionStatus').show();
+          },
+          success: function (resp) {
+            $('#mkdirModal').modal('hide');
+            refreshCurrent();
+          }
+        });
+      });
+
+      // File upload via Ajax
+      $("#fileUploadUploadForm").on('submit', function (e) {
+        e.preventDefault();
+        var file = $('#fileUploadFileUploadId')[0].files[0];
+        uploadFile(file);
+
+      });
+
+      document.getElementById('uploadButtonId').addEventListener('click', function () {
+        $("#fileUploadFileUploadId").val('');
+        $("#fileUploadUploadStatusWrapper").hide();
+        $('#fileUploadButton').show();
+        $('#fileUploadUpdateModal').modal('show');
+      });
+
+      document.getElementById('mkdirButtonId').addEventListener('click', function () {
+        $('#mkdirName').val('');
+        $('#mkdirActionStatus').hide();
+        $('#mkdirModal').modal('show');
+      });
+
+      document.getElementById('fileUploadUpdateModal').addEventListener('hide.bs.modal', (e) => {
+        if (uploadAjax) {
+          uploadAjax.abort();
+          uploadAjax = null;
+          console.log("Cancelled upload");
+          refreshCurrent();
+        }
+      });
+
+      // focus
+      $('#mkdirModal').on('shown.bs.modal', function () {
+        $("#mkdirName").focus();
+      });
+
+      $('#renameModal').on('shown.bs.modal', function () {
+        $("#renameNewName").focus();
+      })
+
+      loadDir(attempted_current_dir);
     });
-
-    document.getElementById('uploadButtonId').addEventListener('click', function () {
-      $("#fileUploadFileUploadId").val('');
-      $("#fileUploadUploadStatusWrapper").hide();
-      $('#fileUploadButton').show();
-      $('#fileUploadUpdateModal').modal('show');
-    });
-
-    document.getElementById('mkdirButtonId').addEventListener('click', function () {
-      $('#mkdirName').val('');
-      $('#mkdirActionStatus').hide();
-      $('#mkdirModal').modal('show');
-    });
-
-    document.getElementById('fileUploadUpdateModal').addEventListener('hide.bs.modal', (e) => {
-      if (uploadAjax) {
-        uploadAjax.abort();
-        uploadAjax = null;
-        console.log("Cancelled upload");
-        refreshCurrent();
-      }
-    });
-
-
-    // focus
-    $('#mkdirModal').on('shown.bs.modal', function () {
-      $("#mkdirName").focus();
-    });
-
-    $('#renameModal').on('shown.bs.modal', function () {
-      $("#renameNewName").focus();
-    })
-
-    loadDir(attempted_current_dir);
   </script>
 </body>
 

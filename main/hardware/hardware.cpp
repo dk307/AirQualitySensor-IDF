@@ -16,6 +16,8 @@
 #include <esp_mac.h>
 #include <esp_wifi.h>
 #include <esp_netif_types.h>
+#include <esp_chip_info.h>
+#include <esp_flash.h>
 
 hardware hardware::instance;
 
@@ -51,9 +53,52 @@ std::string get_heap_info_str(uint32_t caps)
 {
     multi_heap_info_t info;
     heap_caps_get_info(&info, caps);
-    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes),
+    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes , 1),
                                  " free out of ",
-                                 esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes));
+                                 esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes, 1));
+}
+
+std::string get_chip_details()
+{
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+
+    std::stringstream details;
+    switch (chip_info.model)
+    {
+    case CHIP_ESP32:
+        details << "ESP32";
+        break;
+    case CHIP_ESP32S2:
+        details << "ESP32-S2";
+        break;
+    case CHIP_ESP32S3:
+        details << "ESP32-S3";
+        break;
+    case CHIP_ESP32C3:
+        details << "ESP32-C3";
+        break;
+    default:
+        details << "Unknown";
+    }
+
+    details << " (Rev. " << chip_info.revision << ")  ";
+    details << "Cores: " << static_cast<int>(chip_info.cores) << ". ";
+
+    uint32_t flash_size = 0;
+    if (esp_flash_get_size(NULL, &flash_size) != ESP_OK)
+    {
+        ESP_LOGE(OPERATIONS_TAG, "Get flash size failed");
+        details << "Flash Size: Unknown. ";
+    }
+    else
+    {
+        details << "Flash Size: " << esp32::stringify_size(flash_size) << ". ";
+    }
+
+    // details << "CPU Freq: " << std::setprecision(2) << std::fixed << (esp_clk_cpu_freq() / 1000000.0) << " MHz. ";
+
+    return details.str();
 }
 
 ui_interface::information_table_type hardware::get_information_table(information_type type)
@@ -64,7 +109,7 @@ ui_interface::information_table_type hardware::get_information_table(information
         return {
             // {"Firmware Version", to_string(VERSION)},
             {"IDF Version", std::string(esp_get_idf_version())},
-            //{"Chip", to_string(ESP.getChipModel(), "\nRev: ", ESP.getChipRevision(), "\nFlash: ", stringify_size(ESP.getFlashChipSize()))},
+            {"Chip", get_chip_details()},
             {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},
             {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
             {"Uptime", get_up_time()},

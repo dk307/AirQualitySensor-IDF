@@ -18,7 +18,6 @@ void operations::factory_reset()
 
 void operations::begin()
 {
-	 
 }
 
 void operations::reboot()

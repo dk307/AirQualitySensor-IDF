@@ -14,8 +14,6 @@ var stripcomments = require('gulp-strip-comments');
 var htmlminify = require('gulp-html-minifier-terser');
 var minify = require('gulp-minify');
 
-
-
 var log = require('fancy-log');
 
 const baseFolder = 'main/web/static/';
@@ -58,6 +56,7 @@ var toHeader = function (name, debug) {
 gulp.task('html', function () {
     return gulp.src(baseFolder + '*.html').
         pipe(htmlvalidate()).
+        
         pipe(htmlminify({
             collapseWhitespace: true,
             minifyJS: true,

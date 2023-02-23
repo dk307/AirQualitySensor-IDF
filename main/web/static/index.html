@@ -55,7 +55,8 @@
 
             <!-- Right elements -->
             <div class="d-flex align-items-center">
-                <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#settingsModal" title="Settings">
+                <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#settingsModal"
+                    title="Settings">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-gear me-1" viewBox="0 0 16 16">
                         <path
@@ -65,7 +66,8 @@
                     </svg>
                     Settings
                 </button>
-                <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#logoutModal" title="Logout">
+                <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#logoutModal"
+                    title="Logout">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-box-arrow-left me-1" viewBox="0 0 16 16">
                         <path fill-rule="evenodd"
@@ -413,7 +415,7 @@
         <!-- Information Modal End -->
 
         <!-- File Update Modal Start-->
-        <form class="needs-validation" id="fileUploadUploadForm" method="post" enctype="multipart/form-data">
+        <form class="needs-validation" id="fileUploadUploadForm">
             <div class="modal fade" id="fileUploadUpdateModal" tabindex="-1" data-bs-backdrop="static"
                 data-bs-keyboard="false">
                 <div class="modal-dialog">
@@ -455,6 +457,11 @@
     <script src="js/s.js"></script>
 
     <script>
+        var eventsSource = new EventSource('/events');
+        var informationUpdateRefreshInterval;
+        var sensorsData = new Map();
+        var uploadAjax = null;
+
         function updateHostName() {
             $.ajax({
                 type: "GET",
@@ -530,10 +537,77 @@
             $('#fileUploadUpdateModal').modal('show');
         }
 
-        var eventsSource = new EventSource('/events');
-        var informationUpdateRefreshInterval;
-        var fileUploadFileUploadMd5;
-        var sensorsData = new Map();
+        function calculateSHA256(file) {
+            return new Promise((resolve, reject) => {
+                const fileReader = new FileReader();
+                fileReader.onload = () => {
+                    const hashObj = new jsSHA('SHA-256', 'ARRAYBUFFER');
+                    hashObj.update(fileReader.result);
+                    const hash = hashObj.getHash('HEX');
+                    resolve(hash);
+                };
+                fileReader.onerror = () => {
+                    reject(new Error('Error reading the file'));
+                };
+                fileReader.readAsArrayBuffer(file);
+            });
+        }
+
+        function uploadFile(form, file) {
+            calculateSHA256(file).then(hash => {
+                console.log(hash); // SHA256 hash of file
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    var fileData = reader.result;
+                    uploadAjax = $.ajax({
+                        xhr: function () {
+                            var xhr = new window.XMLHttpRequest();
+                            xhr.upload.addEventListener("progress", function (evt) {
+                                if (evt.lengthComputable) {
+                                    var percentComplete = ((evt.loaded / evt.total) * 100).toFixed();
+                                    $("#fileUploadUploadProgressBar").width(percentComplete + '%');
+                                    $("#fileUploadUploadProgressBar").html('<span class="text-center">' + percentComplete + '%</span>');
+                                }
+                            }, false);
+                            return xhr;
+                        },
+                        type: 'POST',
+                        url: form.attr('action'),
+                        data: fileData,
+                        processData: false,
+                        contentType: 'application/octet-stream',
+                        headers: { "sha256": hash },
+                        beforeSend: function () {
+                            $("#fileUploadUploadProgressBar").width('0%');
+                            $('#fileUploadUploadStatus').html('');
+                            $("#fileUploadUploadStatusWrapper").show();
+                            $('#fileUploadButton').hide();
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            if (jqXHR.status == 500) {
+                                $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUploadError"></div>');
+                                $('#fileUploadUploadError').text(jqXHR.responseText);
+                            } else {
+                                $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert">File upload failed, please try again.</div>');
+                            }
+                            $('#fileUploadButton').show();
+                        },
+                        success: function (resp) {
+                            $('#fileUploadUpdateModal').modal('hide');
+                            $('#redirectingModal').modal('show');
+                            setTimeout(function () { $('#confirmActionModalRedirecting').trigger('click'); }, 7000);
+                        }
+                    });
+                };
+
+                reader.readAsArrayBuffer(file);
+            }).catch(
+                error => {
+                    console.error(error);
+                    $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUploadError"></div>');
+                    $('#fileUploadUploadError').text(error);
+                });
+        }
 
         $(document).ready(function () {
             // Wifi Password toggle
@@ -688,131 +762,42 @@
                 });
             });
 
-            // File upload via Ajax
-            var uploadAjax = null;
             $("#fileUploadUploadForm").on('submit', function (e) {
                 e.preventDefault();
                 var form = $('#fileUploadUploadForm');
-                uploadAjax = $.ajax({
-                    xhr: function () {
-                        var xhr = new window.XMLHttpRequest();
-                        xhr.upload.addEventListener("progress", function (evt) {
-                            if (evt.lengthComputable) {
-                                var percentComplete = ((evt.loaded / evt.total) * 100).toFixed();
-                                $("#fileUploadUploadProgressBar").width(percentComplete + '%');
-                                $("#fileUploadUploadProgressBar").html('<span class="text-center">' + percentComplete + '%</span>');
-                            }
-                        }, false);
-                        return xhr;
-                    },
-                    type: form.attr('method'),
-                    url: form.attr('action'),
-                    data: new FormData(this),
-                    contentType: false,
-                    cache: false,
-                    processData: false,
-                    headers: { 'md5': fileUploadFileUploadMd5 },
-                    beforeSend: function () {
-                        $("#fileUploadUploadProgressBar").width('0%');
-                        $('#fileUploadUploadStatus').html('');
-                        $("#fileUploadUploadStatusWrapper").show();
-                        $('#fileUploadButton').hide();
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        if (jqXHR.status == 500) {
-                            $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert" id="fileUploadUpgradeError"></div>');
-                            $('#fileUploadUpgradeError').text(jqXHR.responseText);
-                        } else {
-                            $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert">File upload failed, please try again.</div>');
-                        }
-                        $('#fileUploadButton').show();
-                    },
-                    success: function (resp) {
-                        $('#reloadLoadingMessageId').html('Upload successful. Loading...');
-                        $('#fileUploadUpdateModal').modal('hide');
-                        $('#redirectingModal').modal('show');
-                        setTimeout(function () {
-                            $('#confirmActionModalRedirecting').trigger('click');
-                        }, 7000);
-                    }
-                });
+                var file = $('#fileUploadFileUploadId')[0].files[0];
+                uploadFile(form, file);
             });
 
-            // md5
-            document.getElementById('fileUploadFileUploadId').addEventListener('change', function () {
-                if (this.files[0].size > 4 * 1024 * 1024) {
-                    $('#fileUploadUploadStatus').html('<div class="alert alert-danger" role="alert">File is too big.</div>');
-                    $("#fileUploadUploadStatusWrapper").show();
-                    this.value = "";
-                    return;
+            $("#autoScreenBrightness").on('change', function (event, state) {
+                if (event.target.checked) {
+                    $('#screenBrightness').attr('disabled', true);
                 } else {
-                    $('#fileUploadUploadStatus').html('');
-                    $("#fileUploadUploadStatusWrapper").hide();
+                    $('#screenBrightness').removeAttr('disabled');
                 }
-
-                var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice,
-                    file = this.files[0],
-                    chunkSize = 1024 * 1024,
-                    chunks = Math.ceil(file.size / chunkSize),
-                    currentChunk = 0,
-                    spark = new SparkMD5.ArrayBuffer(),
-                    fileReader = new FileReader();
-
-                fileReader.onload = function (e) {
-                    spark.append(e.target.result);
-                    currentChunk++;
-
-                    if (currentChunk < chunks) {
-                        loadNext();
-                    } else {
-                        fileUploadFileUploadMd5 = spark.end();
-                        console.info('computed hash', fileUploadFileUploadMd5);
-                    }
-                };
-
-                fileReader.onerror = function () {
-                    console.warn('oops, something went wrong.');
-                };
-
-                function loadNext() {
-                    var start = currentChunk * chunkSize,
-                        end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
-
-                    fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
-                }
-                loadNext();
             });
-        });
 
-        $(document).ready(function () {
+            //focus
+            $('#wifiSettingsModal').on('shown.bs.modal', function () {
+                $("#ssid").focus();
+            });
+
+            $('#websiteLoginModal').on('shown.bs.modal', function () {
+                $("#webUserName").focus();
+            });
+
+            $('#otherSettingsModal').on('shown.bs.modal', function () {
+                $("#hostName").focus();
+            });
+
+            $('#fileUploadUpdateModal').on('shown.bs.modal', function () {
+                $("#fileUploadFileUploadId").focus();
+            });
+
             eventsSource.addEventListener("sensor", updateSensorValue);
             updateHostName();
         });
 
-        $("#autoScreenBrightness").on('change', function (event, state) {
-            if (event.target.checked) {
-                $('#screenBrightness').attr('disabled', true);
-            } else {
-                $('#screenBrightness').removeAttr('disabled');
-            }
-        });
-
-        //focus
-        $('#wifiSettingsModal').on('shown.bs.modal', function () {
-            $("#ssid").focus();
-        });
-
-        $('#websiteLoginModal').on('shown.bs.modal', function () {
-            $("#webUserName").focus();
-        });
-
-        $('#otherSettingsModal').on('shown.bs.modal', function () {
-            $("#hostName").focus();
-        });
-
-        $('#fileUploadUpdateModal').on('shown.bs.modal', function () {
-            $("#fileUploadFileUploadId").focus();
-        });
     </script>
 </body>
 

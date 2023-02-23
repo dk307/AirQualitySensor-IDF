@@ -53,7 +53,6 @@ namespace esp32
                                         const std::vector<std::string> &names,
                                         std::vector<std::optional<std::string>> &result)
   {
-    ESP_LOGD(WEBSERVER_TAG, "[%s]", query_str.data());
     auto query_val = std::make_unique<char[]>(query_str.size());
 
     for (auto i = 0; i < names.size(); i++)
@@ -62,9 +61,7 @@ namespace esp32
       if (res == ESP_OK)
       {
         result[i] = std::string(query_val.get());
-        ESP_LOGD(WEBSERVER_TAG, "[%s]", result[i].value().c_str());
         url_decode_in_place(result[i].value());
-        ESP_LOGD(WEBSERVER_TAG, "[%s]", result[i].value().c_str());
       }
     }
   }

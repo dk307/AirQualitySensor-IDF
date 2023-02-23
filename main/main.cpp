@@ -86,7 +86,7 @@ extern "C" void app_main(void)
 
         ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
     }
-    catch (const esp32::init_failure_exception &ex)
+    catch (const std::exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
         fflush(stdout);

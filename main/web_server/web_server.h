@@ -31,22 +31,8 @@ private:
     void handle_factory_reset(esp32::http_request *request);
     void handle_restart_device(esp32::http_request *request);
 
-    // static void firmware_update_upload(esp32::http_request *request,
-    //                                    const std::string &filename,
-    //                                    size_t index,
-    //                                    uint8_t *data,
-    //                                    size_t len,
-    //                                    bool final);
-    // static void reboot_on_upload_complete(esp32::http_request *request);
-
-    // void restore_configuration_upload(esp32::http_request *request,
-    //                                   const std::string &filename,
-    //                                   size_t index,
-    //                                   uint8_t *data,
-    //                                   size_t len,
-    //                                   bool final);
-
-    // static void handle_early_update_disconnect();
+    void handle_firmware_upload(esp32::http_request *request);
+    void restore_configuration_upload(esp32::http_request *request);
 
     // // ajax
     void handle_information_get(esp32::http_request *request);
@@ -70,10 +56,7 @@ private:
     void handle_fs_rename(esp32::http_request *request);
     void handle_file_upload(esp32::http_request *request);
 
-    // static void handle_file_upload_complete(esp32::http_request *request);
     static const char *get_content_type(const std::string &extension);
-    // static std::string join_path(const std::string &part1, const std::string &part2);
-    // static std::string get_file_md5(const std::string &path);
 
     template <class Array, class K, class T>
     static void add_key_value_object(Array &array, const K &key, const T &value);
@@ -81,8 +64,7 @@ private:
     static void log_and_send_error(const esp32::http_request *request, httpd_err_code_t code, const std::string &error);
     static void send_empty_200(const esp32::http_request *request);
     static std::string get_file_sha256(const char *filename);
-    // template <class V, class T>
-    // static void add_to_json_doc(V &doc, T id, float value);
+
     // void notify_sensor_change(sensor_id_index id);
 
     // void send_log_data(const std::string& c);

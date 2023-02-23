@@ -10,4 +10,5 @@ namespace esp32::filesystem
     bool remove(const std::filesystem::path &path);
     bool exists(const std::filesystem::path &path);
     bool is_directory(const std::filesystem::path &path);
+    bool set_last_modified_time(const std::filesystem::path &path, time_t modtime);
 }
