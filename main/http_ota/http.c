@@ -1,15 +1,15 @@
+#include <errno.h>
 #include <esp_flash_partitions.h>
+#include <esp_http_server.h>
 #include <esp_ota_ops.h>
 #include <esp_partition.h>
-#include <errno.h>
-#include <esp_http_server.h>
 #include <esp_system.h>
+#include <esp_tls_crypto.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
 #include <stdio.h>
 #include <string.h>
-#include <esp_tls_crypto.h>
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
@@ -21,10 +21,9 @@ typedef struct
 
 #define HTTPD_401 "401 UNAUTHORIZED" /*!< HTTP Response 401 */
 
-static basic_auth_info_t auth_info =
-    {
-        .username = "deepak",
-        .password = "deepak",
+static basic_auth_info_t auth_info = {
+    .username = "deepak",
+    .password = "deepak",
 };
 
 static char *_http_auth_basic(const char *username, const char *password);
@@ -59,32 +58,30 @@ static char *_http_auth_basic(const char *username, const char *password)
     return digest;
 }
 
-char const * application_get_html( const char *p_custom_header )
+char const *application_get_html(const char *p_custom_header)
 {
-  static char buffer[2048] = { 0 };
-  char *p_buffer = buffer;
-  
-  if ( p_custom_header )
-  {
-    p_buffer += sprintf(p_buffer, "%s", p_custom_header);
-  }
-  
-//   p_buffer += sprintf(p_buffer, "<h1>System Info</h1>");
-//   p_buffer += sprintf(p_buffer, "System Time: %s<br>", get_system_time_str());
-//   p_buffer += sprintf(p_buffer, "Firmware Build: %s %s, Boot Count: %i<br>", __DATE__, __TIME__, nvm_get_param_int32( NVM_PARAM_RESET_COUNTER ));
-//   p_buffer += sprintf(p_buffer, "Up-time: ");
-//   p_buffer += add_formatted_duration_str( p_buffer, system_uptime_s() );
-//   p_buffer += sprintf(p_buffer, "<br>");
-  
-  return buffer;
+    static char buffer[2048] = {0};
+    char *p_buffer = buffer;
+
+    if (p_custom_header)
+    {
+        p_buffer += sprintf(p_buffer, "%s", p_custom_header);
+    }
+
+    //   p_buffer += sprintf(p_buffer, "<h1>System Info</h1>");
+    //   p_buffer += sprintf(p_buffer, "System Time: %s<br>", get_system_time_str());
+    //   p_buffer += sprintf(p_buffer, "Firmware Build: %s %s, Boot Count: %i<br>", __DATE__, __TIME__, nvm_get_param_int32( NVM_PARAM_RESET_COUNTER
+    //   )); p_buffer += sprintf(p_buffer, "Up-time: "); p_buffer += add_formatted_duration_str( p_buffer, system_uptime_s() ); p_buffer +=
+    //   sprintf(p_buffer, "<br>");
+
+    return buffer;
 }
 
 //-----------------------------------------------------------------------------
-char const * application_post_html(const char *p_post_data)
+char const *application_post_html(const char *p_post_data)
 {
-  return application_get_html( NULL );
+    return application_get_html(NULL);
 }
-
 
 //-----------------------------------------------------------------------------
 static esp_err_t _root_get_handler(httpd_req_t *req)
@@ -245,8 +242,7 @@ static esp_err_t _ota_post_handler(httpd_req_t *req)
     printf("Receiving done\n");
 
     // End response
-    if ((esp_ota_end(update_handle) == ESP_OK) &&
-        (esp_ota_set_boot_partition(update_partition) == ESP_OK))
+    if ((esp_ota_end(update_handle) == ESP_OK) && (esp_ota_set_boot_partition(update_partition) == ESP_OK))
     {
         printf("OTA Success?!\n Rebooting\n");
         fflush(stdout);
@@ -361,56 +357,42 @@ void http_start_webserver(httpd_handle_t *p_server)
 
     if (httpd_start(p_server, &config) == ESP_OK)
     {
-        static const httpd_uri_t root_post =
-            {
-                .uri = "/",
-                .method = HTTP_POST,
-                .handler = _root_post_handler,
-                .user_ctx = NULL};
+        static const httpd_uri_t root_post = {.uri = "/", .method = HTTP_POST, .handler = _root_post_handler, .user_ctx = NULL};
         httpd_register_uri_handler(*p_server, &root_post);
 
-        static httpd_uri_t root_get =
-            {
-                .uri = "/",
-                .method = HTTP_GET,
-                .handler = _root_get_handler,
-                .user_ctx = &auth_info,
-            };
+        static httpd_uri_t root_get = {
+            .uri = "/",
+            .method = HTTP_GET,
+            .handler = _root_get_handler,
+            .user_ctx = &auth_info,
+        };
         httpd_register_uri_handler(*p_server, &root_get);
 
-        static const httpd_uri_t ota_post =
-            {
-                .uri = "/ota",
-                .method = HTTP_POST,
-                .handler = _ota_post_handler,
-                .user_ctx = NULL};
+        static const httpd_uri_t ota_post = {.uri = "/ota", .method = HTTP_POST, .handler = _ota_post_handler, .user_ctx = NULL};
         httpd_register_uri_handler(*p_server, &ota_post);
 
-        static httpd_uri_t ota_get =
-            {
-                .uri = "/ota",
-                .method = HTTP_GET,
-                .handler = _ota_get_handler,
-                .user_ctx = &auth_info,
-            };
+        static httpd_uri_t ota_get = {
+            .uri = "/ota",
+            .method = HTTP_GET,
+            .handler = _ota_get_handler,
+            .user_ctx = &auth_info,
+        };
         httpd_register_uri_handler(*p_server, &ota_get);
 
-        static httpd_uri_t reset_post =
-            {
-                .uri = "/reset",
-                .method = HTTP_POST,
-                .handler = _reset_post_handler,
-                .user_ctx = NULL,
-            };
+        static httpd_uri_t reset_post = {
+            .uri = "/reset",
+            .method = HTTP_POST,
+            .handler = _reset_post_handler,
+            .user_ctx = NULL,
+        };
         httpd_register_uri_handler(*p_server, &reset_post);
 
-        static httpd_uri_t reset_get =
-            {
-                .uri = "/reset",
-                .method = HTTP_GET,
-                .handler = _reset_get_handler,
-                .user_ctx = &auth_info,
-            };
+        static httpd_uri_t reset_get = {
+            .uri = "/reset",
+            .method = HTTP_GET,
+            .handler = _reset_get_handler,
+            .user_ctx = &auth_info,
+        };
         httpd_register_uri_handler(*p_server, &reset_get);
     }
 }

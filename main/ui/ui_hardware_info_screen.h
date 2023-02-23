@@ -6,7 +6,7 @@
 
 class ui_hardware_info_screen : public ui_screen
 {
-public:
+  public:
     using ui_screen::ui_screen;
     void init() override
     {
@@ -16,8 +16,7 @@ public:
         lv_obj_add_event_cb(screen_, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::screen_callback>, LV_EVENT_ALL, this);
 
         // baseline
-        auto btn_clean = create_btn("Clean SPS 30",
-                                    event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::clean_sps_30>);
+        auto btn_clean = create_btn("Clean SPS 30", event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::clean_sps_30>);
 
         lv_obj_align(btn_clean, LV_ALIGN_TOP_MID, 0, 25);
 
@@ -31,7 +30,7 @@ public:
         lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
-private:
+  private:
     lv_obj_t *win_status_;
     lv_obj_t *win_status_label_;
 
@@ -73,9 +72,7 @@ private:
         lv_label_set_text_static(btn_close_label, "Close");
         lv_obj_center(btn_close_label);
 
-        lv_obj_add_event_cb(btn_close,
-                            event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::close_win_confirm>,
-                            LV_EVENT_CLICKED, this);
+        lv_obj_add_event_cb(btn_close, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::close_win_confirm>, LV_EVENT_CLICKED, this);
 
         lv_obj_center(win_status_);
         lv_obj_align(win_status_label_, LV_ALIGN_TOP_MID, 0, 5);

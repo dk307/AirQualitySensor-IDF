@@ -2,22 +2,19 @@
 #pragma once
 
 #include "util/semaphore_lockable.h"
-#include <string>
 #include <array>
 #include <atomic>
-#include <esp_wifi.h>
-#include <esp_netif.h>
 #include <esp_event.h>
+#include <esp_netif.h>
+#include <esp_wifi.h>
 #include <freertos\event_groups.h>
+#include <string>
 
 /// Wifi sta class
 class wifi_sta
 {
-public:
-    wifi_sta(bool auto_connect_to_ap,
-             const std::string &host_name,
-             const std::string &ssid,
-             const std::string &password);
+  public:
+    wifi_sta(bool auto_connect_to_ap, const std::string &host_name, const std::string &ssid, const std::string &password);
 
     wifi_sta(const wifi_sta &) = delete;
     wifi_sta(wifi_sta &&) = delete;
@@ -57,18 +54,13 @@ public:
     bool wait_for_connect(TickType_t time);
     bool wait_for_disconnect(TickType_t time);
 
-private:
+  private:
     void connect() const;
     void close_if();
 
-    static void wifi_event_callback(void *event_handler_arg,
-                                    esp_event_base_t event_base,
-                                    int32_t event_id,
-                                    void *event_data);
+    static void wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 
-    void wifi_event_callback_impl(esp_event_base_t event_base,
-                                  int32_t event_id,
-                                  void *event_data);
+    void wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data);
 
     static std::string get_disconnect_reason_str(uint8_t reason);
 
@@ -79,9 +71,7 @@ private:
 
     EventGroupHandle_t wifi_event_group_;
 
-    esp_netif_t *interface_ {
-        nullptr
-    };
+    esp_netif_t *interface_{nullptr};
 
     esp_event_handler_instance_t instance_wifi_event_{};
     esp_event_handler_instance_t instance_ip_event_{};

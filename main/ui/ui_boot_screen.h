@@ -4,9 +4,9 @@
 
 class ui_boot_screen final : public ui_screen
 {
-public:
+  public:
     using ui_screen::ui_screen;
-    
+
     void init() override
     {
         ui_screen::init();
@@ -44,7 +44,7 @@ public:
         lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
-private:
+  private:
     lv_obj_t *boot_message_;
     lv_obj_t *boot_logo_;
 };

@@ -1,27 +1,23 @@
 #pragma once
 
-#include "sensor/sensor.h"
-#include "util/async_web_server/http_server.h"
-#include "util/async_web_server/http_request.h"
-
 #include <vector>
 
-
+#include "sensor/sensor.h"
+#include "util/async_web_server/http_request.h"
+#include "util/async_web_server/http_server.h"
 
 class web_server : esp32::http_server
 {
-public:
+  public:
     void begin() override;
     static web_server instance;
 
-private:
-    web_server()
-        : esp32::http_server(80)
+  private:
+    web_server() : esp32::http_server(80)
     {
     }
 
-    template <const uint8_t data[], const auto len>
-    void handle_array_page_with_auth(esp32::http_request *request);
+    template <const uint8_t data[], const auto len> void handle_array_page_with_auth(esp32::http_request *request);
 
     // handlers
     void handle_login(esp32::http_request *request);
@@ -58,8 +54,7 @@ private:
 
     static const char *get_content_type(const std::string &extension);
 
-    template <class Array, class K, class T>
-    static void add_key_value_object(Array &array, const K &key, const T &value);
+    template <class Array, class K, class T> static void add_key_value_object(Array &array, const K &key, const T &value);
 
     static void log_and_send_error(const esp32::http_request *request, httpd_err_code_t code, const std::string &error);
     static void send_empty_200(const esp32::http_request *request);

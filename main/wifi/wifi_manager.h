@@ -1,22 +1,22 @@
 #pragma once
 
-#include "wifi_sta.h"
 #include "util\change_callback.h"
 #include "util\task_wrapper.h"
+#include "wifi_sta.h"
 
-#include <string>
 #include <memory>
+#include <string>
 
 class wifi_manager : public esp32::change_callback
 {
-public:
+  public:
     void begin();
 
     bool is_wifi_connected();
     std::string get_wifi_status();
     static wifi_manager instance;
 
-private:
+  private:
     wifi_manager() : wifi_task_(std::bind(&wifi_manager::wifi_task_ftn, this))
     {
     }

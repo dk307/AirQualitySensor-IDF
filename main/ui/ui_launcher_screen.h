@@ -6,7 +6,7 @@
 
 class ui_launcher_screen : public ui_screen
 {
-public:
+  public:
     using ui_screen::ui_screen;
     void init() override
     {
@@ -22,22 +22,18 @@ public:
 
         lv_style_init(&button_style_pressed_);
         lv_style_set_img_recolor_opa(&button_style_pressed_, LV_OPA_30);
-        lv_style_set_img_recolor(&button_style_pressed_,  text_color);
+        lv_style_set_img_recolor(&button_style_pressed_, text_color);
         lv_style_set_text_color(&button_style_pressed_, lv_color_lighten(text_color, LV_OPA_50));
         lv_style_set_text_font(&button_style_pressed_, &lv_font_montserrat_16);
 
         int pad = 30;
-        create_button(LV_ALIGN_TOP_LEFT, pad, pad,
-                      "S:display/image/restart.png", "Restart",
+        create_button(LV_ALIGN_TOP_LEFT, pad, pad, "S:display/image/restart.png", "Restart",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::restart>);
-        create_button(LV_ALIGN_TOP_MID, 0, pad,
-                      "S:display/image/factory-reset.png", "Factory\nReset",
+        create_button(LV_ALIGN_TOP_MID, 0, pad, "S:display/image/factory-reset.png", "Factory\nReset",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::factory_reset>);
-        create_button(LV_ALIGN_TOP_RIGHT, -pad, pad,
-                      "S:display/image/info.png", "Information",
+        create_button(LV_ALIGN_TOP_RIGHT, -pad, pad, "S:display/image/info.png", "Information",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::show_information>);
-        create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25,
-                      "S:display/image/hardware.png", "Hardware",
+        create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25, "S:display/image/hardware.png", "Hardware",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::hardware_info>);
 
         init_confirm_win();
@@ -50,7 +46,7 @@ public:
         lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
-private:
+  private:
     lv_style_t button_style_default_;
     lv_style_t button_style_pressed_;
     lv_obj_t *win_confirm_;
@@ -66,9 +62,7 @@ private:
         }
     }
 
-    lv_obj_t *create_button(lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs,
-                            const char *src, const char *label_str,
-                            lv_event_cb_t event_cb)
+    lv_obj_t *create_button(lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, const char *src, const char *label_str, lv_event_cb_t event_cb)
     {
         auto btn = lv_imgbtn_create(screen_);
         lv_obj_set_size(btn, LV_SIZE_CONTENT, LV_SIZE_CONTENT);

@@ -1,11 +1,13 @@
 #include "config_manager.h"
 #include "logging/logging_tags.h"
-#include "util/psram_allocator.h"
 #include "util/hash/hash.h"
 #include "util/helper.h"
+#include "util/psram_allocator.h"
 
-#include <filesystem>
+
 #include <esp_log.h>
+#include <filesystem>
+
 
 static const char ConfigFilePath[] = "/sd/config.json";
 static const char ConfigChecksumFilePath[] = "/sd/config_checksum.json";
@@ -170,7 +172,6 @@ void config::save_config()
     call_change_listeners();
 }
 
-
 std::string config::read_file(const char *file_name)
 {
     std::error_code ec;
@@ -237,8 +238,7 @@ bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const 
     return true;
 }
 
-template <class T, class JDoc>
-bool config::deserialize_to_json(const T &data, JDoc &jsonDocument)
+template <class T, class JDoc> bool config::deserialize_to_json(const T &data, JDoc &jsonDocument)
 {
     DeserializationError error = deserializeJson(jsonDocument, data);
 

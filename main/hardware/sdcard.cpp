@@ -2,8 +2,8 @@
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 
-#include <esp_vfs_fat.h>
 #include <esp_log.h>
+#include <esp_vfs_fat.h>
 
 #define SD_MISO GPIO_NUM_38
 #define SD_MOSI GPIO_NUM_40

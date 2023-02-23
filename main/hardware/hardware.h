@@ -4,15 +4,14 @@
 // #include <sps30.h>
 // #include <BH1750.h>
 
-#include "sensor/sensor.h"
-// #include "task_wrapper.h"
-#include "util/psram_allocator.h"
 #include "display.h"
+#include "sensor/sensor.h"
 #include "ui/ui_interface.h"
+#include "util/psram_allocator.h"
 
 class hardware final : ui_interface
 {
-public:
+  public:
     void pre_begin();
     void begin();
 
@@ -27,7 +26,7 @@ public:
     {
         return (*sensors_history)[static_cast<uint8_t>(index)];
     }
-   
+
     void set_main_screen()
     {
         display_instance_.set_main_screen();
@@ -42,8 +41,8 @@ public:
     std::string get_wifi_status() override;
     bool clean_sps_30() override;
 
-private:
-    hardware() = default; 
+  private:
+    hardware() = default;
 
     display display_instance_{*this};
     uint8_t current_brightness_{0};

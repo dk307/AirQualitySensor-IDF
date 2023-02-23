@@ -1,20 +1,20 @@
-#include <stdio.h>
-#include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "sdkconfig.h"
+#include <stdio.h>
 
-#include "logging/logging_tags.h"
-#include "hardware/sdcard.h"
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
-#include "wifi/wifi_manager.h"
-#include "web_server/web_server.h"
-#include "util/exceptions.h"
+#include "hardware/sdcard.h"
 #include "http_ota/http.h"
+#include "logging/logging_tags.h"
+#include "util/exceptions.h"
+#include "web_server/web_server.h"
+#include "wifi/wifi_manager.h"
 
-#include <esp_log.h>
 #include <esp_chip_info.h>
 #include <esp_flash.h>
+#include <esp_log.h>
 #include <nvs_flash.h>
 
 bool log_chip_details()
@@ -22,11 +22,8 @@ bool log_chip_details()
     esp_chip_info_t chip_info;
     uint32_t flash_size;
     esp_chip_info(&chip_info);
-    ESP_LOGI(OPERATIONS_TAG, "This is %s chip with %d CPU core(s), WiFi%s%s, ",
-             CONFIG_IDF_TARGET,
-             chip_info.cores,
-             (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-             (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
+    ESP_LOGI(OPERATIONS_TAG, "This is %s chip with %d CPU core(s), WiFi%s%s, ", CONFIG_IDF_TARGET, chip_info.cores,
+             (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "", (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
 
     unsigned major_rev = chip_info.revision / 100;
     unsigned minor_rev = chip_info.revision % 100;

@@ -1,33 +1,42 @@
 #pragma once
 
-#include "util/change_callback.h"
-#include "util/semaphore_lockable.h"
-#include "util/psram_allocator.h"
 #include "sensor/sensor_id.h"
+#include "util/change_callback.h"
 #include "util/circular_buffer.h"
+#include "util/psram_allocator.h"
+#include "util/semaphore_lockable.h"
 
-#include <math.h>
 #include <atomic>
+#include <math.h>
 #include <mutex>
 #include <optional>
 
 class sensor_definition_display
 {
-public:
+  public:
     sensor_definition_display(double range_min, double range_max, sensor_level level) : range_min(range_min), range_max(range_max), level(level)
     {
     }
 
-    double get_range_min() const { return range_min; }
-    double get_range_max() const { return range_max; }
-    sensor_level get_level() const { return level; }
+    double get_range_min() const
+    {
+        return range_min;
+    }
+    double get_range_max() const
+    {
+        return range_max;
+    }
+    sensor_level get_level() const
+    {
+        return level;
+    }
 
     bool is_in_range(double value) const
     {
         return range_min <= value && value < range_max;
     }
 
-private:
+  private:
     const double range_min;
     const double range_max;
     const sensor_level level;
@@ -35,7 +44,7 @@ private:
 
 class sensor_definition
 {
-public:
+  public:
     sensor_definition(const char *name, const char *unit, const sensor_definition_display *display_definitions, size_t display_definitions_count)
         : name_(name), unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count)
     {
@@ -53,20 +62,25 @@ public:
         return display_definitions_[0].get_level();
     }
 
-    const char *get_unit() const { return unit_; }
-    const char *get_name() const { return name_; }
+    const char *get_unit() const
+    {
+        return unit_;
+    }
+    const char *get_name() const
+    {
+        return name_;
+    }
 
-private:
+  private:
     const char *name_;
     const char *unit_;
     const sensor_definition_display *display_definitions_;
     const uint8_t display_definitions_count_;
 };
 
-template <class T>
-class sensor_value_t : public esp32::change_callback
+template <class T> class sensor_value_t : public esp32::change_callback
 {
-public:
+  public:
     typedef T value_type;
 
     std::optional<value_type> get_value() const
@@ -84,7 +98,7 @@ public:
         set_value_(std::nullopt);
     }
 
-private:
+  private:
     std::atomic<std::optional<T>> value;
 
     void set_value_(std::optional<value_type> value_)
@@ -98,10 +112,9 @@ private:
 
 using sensor_value = sensor_value_t<int16_t>;
 
-template <class T, uint16_t countT>
-class sensor_history_t
+template <class T, uint16_t countT> class sensor_history_t
 {
-public:
+  public:
     typedef struct
     {
         T mean;
@@ -132,7 +145,6 @@ public:
     sensor_history_snapshot get_snapshot(uint8_t group_by_count) const
     {
         vector_history_t return_values;
-
 
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
         const auto size = last_x_values_.size();
@@ -171,7 +183,7 @@ public:
             return {std::nullopt, return_values};
         };
     }
-   
+
     std::optional<T> get_average() const
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
@@ -191,7 +203,7 @@ public:
         }
     }
 
-private:
+  private:
     mutable esp32::semaphore data_mutex_;
     circular_buffer<T, countT> last_x_values_;
 };
@@ -199,7 +211,7 @@ private:
 template <class T, uint8_t reads_per_minuteT, uint16_t minutesT>
 class sensor_history_minute_t : public sensor_history_t<T, reads_per_minuteT * minutesT>
 {
-public:
+  public:
     static constexpr auto total_minutes = minutesT;
     static constexpr auto reads_per_minute = reads_per_minuteT;
     static constexpr auto sensor_interval = (60 * 1000 / reads_per_minute);

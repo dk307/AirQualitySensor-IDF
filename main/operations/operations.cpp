@@ -1,19 +1,21 @@
 #include "operations.h"
 
-#include "logging/logging_tags.h"
 #include "config/config_manager.h"
+#include "logging/logging_tags.h"
 
-#include <nvs_flash.h>
+
 #include <esp_log.h>
+#include <nvs_flash.h>
+
 
 operations operations::instance;
 
 void operations::factory_reset()
 {
-	ESP_LOGW(OPERATIONS_TAG, "Doing Factory Reset");
-	nvs_flash_erase();
-	config::erase();
-	reset();
+    ESP_LOGW(OPERATIONS_TAG, "Doing Factory Reset");
+    nvs_flash_erase();
+    config::erase();
+    reset();
 }
 
 void operations::begin()
@@ -22,7 +24,7 @@ void operations::begin()
 
 void operations::reboot()
 {
-	reset();
+    reset();
 }
 
 // bool operations::start_update(size_t length, const std::string &md5, std::string &error)
@@ -116,8 +118,8 @@ void operations::reboot()
 
 [[noreturn]] void operations::reset()
 {
-	ESP_LOGI(OPERATIONS_TAG, "Restarting...");
-	vTaskDelay(pdMS_TO_TICKS(2000));
-	; // for http response, etc to finish
-	esp_restart();
+    ESP_LOGI(OPERATIONS_TAG, "Restarting...");
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    ; // for http response, etc to finish
+    esp_restart();
 }

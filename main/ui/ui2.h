@@ -2,21 +2,23 @@
 
 #include <lvgl.h>
 
-#include "sensor\sensor_id.h"
 #include "sensor\sensor.h"
+#include "sensor\sensor_id.h"
 #include "ui_interface.h"
 
+
 #include "ui_boot_screen.h"
-#include "ui_main_screen.h"
-#include "ui_sensor_detail_screen.h"
+#include "ui_hardware_info_screen.h"
 #include "ui_information_screen.h"
 #include "ui_inter_screen_interface.h"
 #include "ui_launcher_screen.h"
-#include "ui_hardware_info_screen.h"
+#include "ui_main_screen.h"
+#include "ui_sensor_detail_screen.h"
+
 
 class ui : public ui_inter_screen_interface
 {
-public:
+  public:
     ui(ui_interface &ui_interface_) : ui_interface_instance_(ui_interface_)
     {
     }
@@ -54,7 +56,7 @@ public:
         hardware_info_screen.show_screen();
     }
 
-private:
+  private:
     ui_interface &ui_interface_instance_;
 
     static const uint32_t top_message_timer_period = 10000;
@@ -82,5 +84,5 @@ private:
     void init_top_message();
     static void no_wifi_img_animation_cb(void *var, int32_t v);
     static void top_message_timer_cb(lv_timer_t *e);
-    static lv_font_t * lv_font_from_sd_card(const char *path);
+    static lv_font_t *lv_font_from_sd_card(const char *path);
 };

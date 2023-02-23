@@ -31,7 +31,8 @@ LGFX::LGFX()
         cfg.pin_rst = 4;   // pin number where RST is connected (-1 = disable)
         cfg.pin_busy = -1; // pin number to which BUSY is connected (-1 = disable)
 
-        // * The following setting values ​​are set to general default values ​​for each panel, and the pin number (-1 = disable) to which BUSY is connected, so please try commenting out any unknown items.
+        // * The following setting values ​​are set to general default values ​​for each panel, and the pin number (-1 = disable) to which
+        // BUSY is connected, so please try commenting out any unknown items.
 
         cfg.memory_width = LGFX::Width;   // Maximum width supported by driver IC
         cfg.memory_height = LGFX::Height; // Maximum height supported by driver IC

@@ -1,6 +1,6 @@
- 
+
 #pragma once
- 
+
 #define TFT_RST 4
 #define TFT_CS -1
 #define TFT_BL 45
@@ -18,4 +18,3 @@
 #define I2S_DOUT 37
 #define I2S_BCLK 36
 #define I2S_LRC 35
-

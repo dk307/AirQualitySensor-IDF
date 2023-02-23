@@ -1,17 +1,17 @@
 #pragma once
 
 #include "lgfx_device.h"
-#include "util/task_wrapper.h"
-#include "util/semaphore_lockable.h"
-#include "ui/ui_interface.h"
 #include "ui/ui2.h"
+#include "ui/ui_interface.h"
+#include "util/semaphore_lockable.h"
+#include "util/task_wrapper.h"
+
 
 #include <lvgl.h>
 class display
 {
-public:
-    display(ui_interface &ui_interface_) : lvgl_task_(std::bind(&display::gui_task, this)),
-                                           ui_instance_(ui_interface_)
+  public:
+    display(ui_interface &ui_interface_) : lvgl_task_(std::bind(&display::gui_task, this)), ui_instance_(ui_interface_)
     {
     }
 
@@ -22,7 +22,7 @@ public:
     uint8_t get_brightness();
     void set_brightness(uint8_t value);
 
-private:
+  private:
     LGFX display_device_;
     esp32::task lvgl_task_;
     esp_timer_handle_t lv_periodic_timer_{nullptr};

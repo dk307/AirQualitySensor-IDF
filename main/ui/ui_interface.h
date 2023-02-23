@@ -1,15 +1,17 @@
 #pragma once
 
-#include "util/psram_allocator.h"
-#include "sensor/sensor_id.h"
 #include "sensor/sensor.h"
+#include "sensor/sensor_id.h"
+#include "util/psram_allocator.h"
 
-#include <vector>
+
 #include <string>
+#include <vector>
+
 
 class ui_interface
 {
-public:
+  public:
     enum class information_type
     {
         network,

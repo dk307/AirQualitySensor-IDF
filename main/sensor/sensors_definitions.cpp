@@ -43,11 +43,8 @@ const std::array<sensor_definition_display, 3> co2_definition_display{
 };
 
 const std::array<sensor_definition_display, 5> temperature_definition_display{
-    sensor_definition_display{-99, 32, 2},
-    sensor_definition_display{32, 60, 1},
-    sensor_definition_display{60, 80, 0},
-    sensor_definition_display{80, 100, 1},
-    sensor_definition_display{100, 999, 2},
+    sensor_definition_display{-99, 32, 2}, sensor_definition_display{32, 60, 1},   sensor_definition_display{60, 80, 0},
+    sensor_definition_display{80, 100, 1}, sensor_definition_display{100, 999, 2},
 };
 
 const std::array<sensor_definition_display, 4> humidity_definition_display{

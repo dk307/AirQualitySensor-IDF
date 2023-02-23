@@ -1,11 +1,12 @@
 #pragma once
 
-#include "ui_screen.h"
 #include "sensor/sensor.h"
+#include "ui_screen.h"
+
 
 class ui_screen_with_sensor_panel : public ui_screen
 {
-public:
+  public:
     using ui_screen::ui_screen;
 
     typedef struct
@@ -25,7 +26,7 @@ public:
         set_default_screen();
     }
 
-protected:
+  protected:
     const static uint8_t no_value_label_ = std::numeric_limits<uint8_t>::max();
 
     static void set_default_value_in_panel(const panel_and_label &pair)

@@ -139,7 +139,7 @@ struct config_data
         time_zone_ = time_zone;
     }
 
-private:
+  private:
     std::string host_name_;
     std::string web_user_name_;
     std::string web_password_;
@@ -157,7 +157,7 @@ private:
 
 class config : public esp32::change_callback
 {
-public:
+  public:
     bool pre_begin();
     void save();
     void reset();
@@ -168,20 +168,16 @@ public:
     std::string get_all_config_as_json();
 
     // does not restore to memory, needs reboot
-    bool restore_all_config_as_json(const std::vector<uint8_t> &json,
-                                    const std::string &md5);
+    bool restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &md5);
 
     config_data data;
 
-private:
+  private:
     config() = default;
     static std::string read_file(const char *file_name);
-    size_t write_to_file(const char *fileName,
-                         const void *data,
-                         size_t _size);
+    size_t write_to_file(const char *fileName, const void *data, size_t _size);
 
-    template <class T, class JDoc>
-    bool deserialize_to_json(const T &data, JDoc &jsonDocument);
+    template <class T, class JDoc> bool deserialize_to_json(const T &data, JDoc &jsonDocument);
 
     static std::string md5_hash(const std::string &data);
 

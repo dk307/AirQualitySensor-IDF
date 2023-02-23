@@ -1,11 +1,13 @@
 #pragma once
 
-#include <lvgl.h>
 #include <esp_log.h>
+#include <lvgl.h>
 
-#include "ui_interface.h"
-#include "ui_inter_screen_interface.h"
+
 #include "logging/logging_tags.h"
+#include "ui_inter_screen_interface.h"
+#include "ui_interface.h"
+
 
 struct ui_common_fonts
 {
@@ -20,7 +22,7 @@ struct ui_common_fonts
 
 class ui_screen
 {
-public:
+  public:
     ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface_, const ui_common_fonts *fonts_)
         : ui_interface_instance_(ui_interface_instance_), inter_screen_interface(ui_inter_screen_interface_), fonts_(fonts_)
     {
@@ -36,7 +38,7 @@ public:
         return lv_scr_act() == screen_;
     }
 
-protected:
+  protected:
     const static int screen_width = 480;
     const static int screen_height = 320;
     const lv_color_t off_black_color = lv_color_hex(0x1E1E1E);
@@ -55,23 +57,20 @@ protected:
         lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-    template <class T, void (T::*ftn)(lv_event_t *)>
-    static void event_callback(lv_event_t *e)
+    template <class T, void (T::*ftn)(lv_event_t *)> static void event_callback(lv_event_t *e)
     {
         auto p_this = reinterpret_cast<T *>(lv_event_get_user_data(e));
         (p_this->*ftn)(e);
     }
 
-    template <class T, void (T::*ftn)(lv_timer_t *)>
-    static void timer_callback(lv_timer_t *e)
+    template <class T, void (T::*ftn)(lv_timer_t *)> static void timer_callback(lv_timer_t *e)
     {
         auto p_this = reinterpret_cast<T *>(e->user_data);
         (p_this->*ftn)(e);
     }
 
     // do not call this in loop, only for first time init
-    static struct _lv_event_dsc_t *add_event_callback(lv_obj_t *obj,
-                                                      const std::function<void(lv_event_t *)> &ftn,
+    static struct _lv_event_dsc_t *add_event_callback(lv_obj_t *obj, const std::function<void(lv_event_t *)> &ftn,
                                                       lv_event_code_t filter = LV_EVENT_ALL)
     {
         auto param = new std::function<void(lv_event_t *)>(ftn); // never freed
@@ -102,7 +101,7 @@ protected:
         lv_obj_set_style_bg_grad_color(screen_, lv_color_hex(0x111210), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-private:
+  private:
     static void event_callback_ftn(lv_event_t *e)
     {
         auto p_ftn = reinterpret_cast<std::function<void(lv_event_t * e)> *>(lv_event_get_user_data(e));

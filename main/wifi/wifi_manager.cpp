@@ -3,11 +3,11 @@
 #include "logging/logging_tags.h"
 #include "util/helper.h"
 
+#include <esp_log.h>
+#include <esp_mac.h>
+#include <esp_timer.h>
 #include <memory>
 #include <sstream>
-#include <esp_log.h>
-#include <esp_timer.h>
-#include <esp_mac.h>
 
 wifi_manager wifi_manager::instance;
 
@@ -54,7 +54,7 @@ void wifi_manager::wifi_task_ftn()
             call_change_listeners();
         }
 
-        vTaskDelay(pdMS_TO_TICKS(30000)); //30s before retry to connect
+        vTaskDelay(pdMS_TO_TICKS(30000)); // 30s before retry to connect
 
     } while (true);
 

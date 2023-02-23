@@ -7,7 +7,7 @@
 
 class ui_main_screen final : public ui_screen_with_sensor_panel
 {
-public:
+  public:
     using ui_screen_with_sensor_panel::ui_screen_with_sensor_panel;
 
     void init() override
@@ -23,10 +23,8 @@ public:
         panel_and_labels_[static_cast<size_t>(sensor_id_index::pm_2_5)] =
             create_big_panel(sensor_id_index::pm_2_5, (screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h);
 
-        panel_and_labels_[static_cast<size_t>(sensor_id_index::temperatureF)] =
-            create_temperature_panel(sensor_id_index::temperatureF, 10, -10);
-        panel_and_labels_[static_cast<size_t>(sensor_id_index::humidity)] =
-            create_humidity_panel(sensor_id_index::humidity, -10, -10);
+        panel_and_labels_[static_cast<size_t>(sensor_id_index::temperatureF)] = create_temperature_panel(sensor_id_index::temperatureF, 10, -10);
+        panel_and_labels_[static_cast<size_t>(sensor_id_index::humidity)] = create_humidity_panel(sensor_id_index::humidity, -10, -10);
 
         lv_obj_add_event_cb(screen_, event_callback<ui_main_screen, &ui_main_screen::screen_callback>, LV_EVENT_ALL, this);
         ESP_LOGD(UI_TAG, "Main screen init done");
@@ -48,11 +46,10 @@ public:
         lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
-private:
+  private:
     std::array<panel_and_label, total_sensors> panel_and_labels_;
 
-    panel_and_label create_big_panel(sensor_id_index index,
-                                     lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
+    panel_and_label create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
     {
         auto panel = create_panel(x_ofs, y_ofs, w, h, 40);
 
@@ -104,8 +101,7 @@ private:
         return panel;
     }
 
-    panel_and_label create_temperature_panel(sensor_id_index index,
-                                             lv_coord_t x_ofs, lv_coord_t y_ofs)
+    panel_and_label create_temperature_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs)
     {
         auto panel = lv_obj_create(screen_);
         lv_obj_set_size(panel, screen_width / 2, 72);
@@ -134,8 +130,7 @@ private:
         return {nullptr, value_label};
     }
 
-    panel_and_label create_humidity_panel(sensor_id_index index,
-                                          lv_coord_t x_ofs, lv_coord_t y_ofs)
+    panel_and_label create_humidity_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs)
     {
         auto panel = lv_obj_create(screen_);
         lv_obj_set_size(panel, screen_width / 2, 72);
@@ -198,12 +193,14 @@ private:
     void add_panel_callback_event(lv_obj_t *panel, sensor_id_index index)
     {
         add_event_callback(
-            panel, [this, index](lv_event_t *e)
-            { 
+            panel,
+            [this, index](lv_event_t *e) {
                 const auto code = lv_event_get_code(e);
-                if (code == LV_EVENT_SHORT_CLICKED) {
+                if (code == LV_EVENT_SHORT_CLICKED)
+                {
                     inter_screen_interface.show_sensor_detail_screen(index);
-                } },
+                }
+            },
             LV_EVENT_SHORT_CLICKED);
     }
 };

@@ -1,10 +1,10 @@
 #include "wifi_sta.h"
 #include "logging/logging_tags.h"
 
-#include <sstream>
-#include <mutex>
 #include <cstring>
 #include <esp_log.h>
+#include <mutex>
+#include <sstream>
 
 const int CONNECTED_BIT = BIT0;
 const int DISCONNECTED_BIT = BIT1;
@@ -19,26 +19,14 @@ void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[siz
     std::copy_n(source, to_copy, target);
 }
 
-wifi_sta::wifi_sta(bool auto_connect_to_ap,
-                   const std::string &host_name,
-                   const std::string &ssid,
-                   const std::string &password)
+wifi_sta::wifi_sta(bool auto_connect_to_ap, const std::string &host_name, const std::string &ssid, const std::string &password)
     : auto_connect_to_ap_(auto_connect_to_ap), host_name_(host_name), ssid_(ssid), password_(password)
 {
     wifi_event_group_ = xEventGroupCreate();
     configASSERT(wifi_event_group_);
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_sta::wifi_event_callback,
-                                                        this,
-                                                        &instance_wifi_event_));
-
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_sta::wifi_event_callback,
-                                                        this,
-                                                        &instance_ip_event_));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_wifi_event_));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_ip_event_));
 }
 
 wifi_sta::~wifi_sta()
@@ -87,18 +75,13 @@ void wifi_sta::connect() const
     ESP_ERROR_CHECK(esp_wifi_connect());
 }
 
-void wifi_sta::wifi_event_callback(void *event_handler_arg,
-                                   esp_event_base_t event_base,
-                                   int32_t event_id,
-                                   void *event_data)
+void wifi_sta::wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     auto instance = reinterpret_cast<wifi_sta *>(event_handler_arg);
     instance->wifi_event_callback_impl(event_base, event_id, event_data);
 }
 
-void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base,
-                                        int32_t event_id,
-                                        void *event_data)
+void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT)
     {
@@ -180,7 +163,7 @@ std::string wifi_sta::get_mac_address()
 bool wifi_sta::get_local_mac_address(std::array<uint8_t, 6> &m)
 {
     wifi_mode_t mode;
-     auto err = esp_wifi_get_mode(&mode);
+    auto err = esp_wifi_get_mode(&mode);
 
     if (err == ESP_OK)
     {
@@ -231,8 +214,7 @@ std::string wifi_sta::get_gateway()
 
 bool wifi_sta::wait_for_connect(TickType_t time)
 {
-    return xEventGroupWaitBits(wifi_event_group_,
-                               CONNECTED_BIT | GOTIP_BIT,
+    return xEventGroupWaitBits(wifi_event_group_, CONNECTED_BIT | GOTIP_BIT,
                                pdTRUE, // clear before return
                                pdTRUE, // wait for both
                                time) == (CONNECTED_BIT | GOTIP_BIT);
@@ -240,9 +222,8 @@ bool wifi_sta::wait_for_connect(TickType_t time)
 
 bool wifi_sta::wait_for_disconnect(TickType_t time)
 {
-    return xEventGroupWaitBits(wifi_event_group_,
-                               DISCONNECTED_BIT | LOSTIP_BIT,
-                               pdTRUE, // clear before return
+    return xEventGroupWaitBits(wifi_event_group_, DISCONNECTED_BIT | LOSTIP_BIT,
+                               pdTRUE,  // clear before return
                                pdFALSE, // wait for any
                                time) != (0);
 }

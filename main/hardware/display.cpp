@@ -1,12 +1,12 @@
 #include "display.h"
 
-#include <lvgl.h>
-#include "lvgl_fs/lvgl_fs_sd_card.h"
-#include "util/exceptions.h"
-#include "ui/ui2.h"
 #include "config/config_manager.h"
-#include "wifi/wifi_manager.h"
 #include "hardware/hardware.h"
+#include "lvgl_fs/lvgl_fs_sd_card.h"
+#include "ui/ui2.h"
+#include "util/exceptions.h"
+#include "wifi/wifi_manager.h"
+#include <lvgl.h>
 
 #include "logging/logging_tags.h"
 
@@ -26,8 +26,7 @@ void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color
         display_device_->endWrite();
     }
 
-    display_device_->pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1,
-                                  (lgfx::swap565_t *)&color_p->full);
+    display_device_->pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::swap565_t *)&color_p->full);
 
     lv_disp_flush_ready(disp); /* tell lvgl that flushing is done */
 }
@@ -134,25 +133,17 @@ void display::begin()
     for (auto i = 0; i < total_sensors; i++)
     {
         const auto id = static_cast<sensor_id_index>(i);
-        hardware::instance.get_sensor(id).add_callback([i, this]
-                                                       { xTaskNotify(lvgl_task_.handle(),
-                                                                     BIT(i + 1),
-                                                                     eSetBits); });
+        hardware::instance.get_sensor(id).add_callback([i, this] { xTaskNotify(lvgl_task_.handle(), BIT(i + 1), eSetBits); });
     }
 
-    wifi_manager::instance.add_callback([this]
-                                        { xTaskNotify(lvgl_task_.handle(),
-                                                      task_notify_wifi_changed_bit,
-                                                      eSetBits); });
+    wifi_manager::instance.add_callback([this] { xTaskNotify(lvgl_task_.handle(), task_notify_wifi_changed_bit, eSetBits); });
 
     ESP_LOGI(DISPLAY_TAG, "Display Ready");
 }
 
 void display::set_main_screen()
 {
-    xTaskNotify(lvgl_task_.handle(),
-                set_main_screen_changed_bit,
-                eSetBits);
+    xTaskNotify(lvgl_task_.handle(), set_main_screen_changed_bit, eSetBits);
 }
 
 uint8_t display::get_brightness()

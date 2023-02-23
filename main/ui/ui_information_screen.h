@@ -2,10 +2,10 @@
 
 #include "ui_screen.h"
 // #include "config_manager.h"
- 
+
 class ui_information_screen : public ui_screen
 {
-public:
+  public:
     using ui_screen::ui_screen;
     void init() override
     {
@@ -61,7 +61,7 @@ public:
         lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
     }
 
-private:
+  private:
     lv_obj_t *tab_view_;
     lv_obj_t *network_table_;
     lv_obj_t *config_table_;

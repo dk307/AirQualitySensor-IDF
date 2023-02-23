@@ -1,32 +1,25 @@
 #include "hardware/hardware.h"
-#include "hardware/display.h"
-
-// #include "hardware/sdcard.h"
-#include "wifi/wifi_sta.h"
-#include "wifi/wifi_manager.h"
 #include "config/config_manager.h"
 #include "hardware/display.h"
 #include "logging/logging_tags.h"
 #include "util/helper.h"
+#include "wifi/wifi_manager.h"
+#include "wifi/wifi_sta.h"
 
-#include <memory>
-#include <sstream>
-#include <iomanip>
-#include <esp_timer.h>
-#include <esp_mac.h>
-#include <esp_wifi.h>
-#include <esp_netif_types.h>
 #include <esp_chip_info.h>
 #include <esp_flash.h>
+#include <esp_mac.h>
+#include <esp_netif_types.h>
+#include <esp_timer.h>
+#include <esp_wifi.h>
+#include <iomanip>
+#include <memory>
+#include <sstream>
 
 hardware hardware::instance;
 
 static const char *timezone_strings[5]{
-    "USA Eastern",
-    "USA Central",
-    "USA Mountain time",
-    "USA Arizona",
-    "USA Pacific",
+    "USA Eastern", "USA Central", "USA Mountain time", "USA Arizona", "USA Pacific",
 };
 
 std::string hardware::get_up_time()
@@ -53,8 +46,7 @@ std::string get_heap_info_str(uint32_t caps)
 {
     multi_heap_info_t info;
     heap_caps_get_info(&info, caps);
-    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes , 1),
-                                 " free out of ",
+    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes, 1), " free out of ",
                                  esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes, 1));
 }
 
@@ -119,8 +111,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             // {"SPS30 sensor status", get_sps30_error_register_status()},
         };
 
-    case information_type::network:
-    {
+    case information_type::network: {
         ui_interface::information_table_type table;
 
         table.push_back({"Mode", "STA Mode"});

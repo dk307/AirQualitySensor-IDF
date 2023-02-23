@@ -4,7 +4,7 @@
 
 class operations
 {
-public:
+  public:
     void reboot();
     void begin();
 
@@ -19,8 +19,10 @@ public:
 
     static operations instance;
 
-private:
-    operations() {}
+  private:
+    operations()
+    {
+    }
     // void get_update_error(std::string &error);
     [[noreturn]] static void reset();
 };
