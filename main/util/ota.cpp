@@ -1,73 +1,103 @@
 #include "util/ota.h"
 
+#include "logging/logging_tags.h"
 
+#include <cstring>
+#include <stdexcept>
+#include <esp_err.h>
+#include <esp_log.h>
+#include <esp_partition.h>
+#include <esp_ota_ops.h>
+#include <esp_partition.h>
 #include <esp_partition.h>
 
 namespace esp32
 {
 
-    bool OTA::begin(int image_size)
+#define CHECK_THROW_OTA(error_, message)               \
+    do                                                 \
+    {                                                  \
+        const esp_err_t result = (error_);             \
+        if (result != ESP_OK)                          \
+        {                                              \
+            ota_exception ex(message, result);         \
+            ESP_LOGE(OPERATIONS_TAG, "%s", ex.what()); \
+            throw ex;                                  \
+        }                                              \
+    } while (0)
+
+    ota_updator::ota_updator(const std::array<uint8_t, 32> &expected_sha256)
+        : expected_sha256_(expected_sha256)
     {
-        if (this->is_running())
+        ESP_LOGI(OPERATIONS_TAG, "OTA update started");
+
+        update_partition_ = esp_ota_get_next_update_partition(NULL);
+        if (update_partition_ == NULL)
         {
-            this->abort();
+            CHECK_THROW_OTA(ESP_FAIL, "Failed to get OTA update partition");
         }
-        this->partition_ = esp_ota_get_next_update_partition(nullptr);
-        if (this->partition_ == nullptr)
-        {
-            this->error_ = ESP_FAIL;
-            return false;
-        }
-        ESP_LOGD(TAG, "Begin with image size %u at partition address 0x%X", image_size, this->partition_->address);
-        this->error_ = esp_ota_begin(this->partition_, image_size, &this->handle_);
-        if (this->error_ == ESP_OK)
-        {
-            return true;
-        }
-        this->abort();
-        return false;
+
+        ESP_LOGI(OPERATIONS_TAG, "Writing partition: type %d, subtype %d, offset 0x%lx\n",
+                 update_partition_->type, update_partition_->subtype, update_partition_->address);
+
+        auto ret = esp_ota_begin(update_partition_, OTA_SIZE_UNKNOWN, &handle_);
+        CHECK_THROW_OTA(ret, "Failed to begin OTA update");
     }
 
-    void OTA::abort()
+    void ota_updator::write(const uint8_t *data, size_t size)
     {
-        esp_ota_abort(this->handle_);
-        this->handle_ = {};
+        if (!handle_)
+        {
+            CHECK_THROW_OTA(ESP_ERR_NOT_SUPPORTED, "No OTA in progress");
+        }
+
+        const esp_err_t ret = esp_ota_write(handle_, data, size);
+        CHECK_THROW_OTA(ret, "Failed to write OTA data");
     }
 
-    bool OTA::write(const uint8_t *data, int size)
+    void ota_updator::end()
     {
-        if (!this->handle_)
+        if (!handle_)
         {
-            if (this->error_ == ESP_OK)
-            {
-                this->error_ = ESP_FAIL;
-            }
-            return false;
+            CHECK_THROW_OTA(ESP_ERR_NOT_SUPPORTED, "No OTA in progress");
         }
-        ESP_LOGD(TAG, "Write %u bytes", size);
-        this->error_ = esp_ota_write(this->handle_, data, size);
-        return this->error_ == ESP_OK;
+
+        ESP_LOGI(OPERATIONS_TAG, "OTA update completed");
+
+        esp_err_t ret = esp_ota_end(handle_);
+        CHECK_THROW_OTA(ret, "Failed to end OTA update");
+        handle_ = 0;
+
+        uint8_t actual_sha256[32]{};
+        ret = esp_partition_get_sha256(update_partition_, actual_sha256);
+        CHECK_THROW_OTA(ret, "Getting SHA-256 of update failed");
+
+        if (memcmp(expected_sha256_.data(), actual_sha256, 32) != 0)
+        {
+            CHECK_THROW_OTA(ESP_FAIL, "SHA-256 does not match as expected");
+        }
+        else
+        {
+            ESP_LOGI(OPERATIONS_TAG, "SHA256 match after ota");
+        }
+
+        // ret = esp_ota_set_boot_partition(updated_partition_);
+        // CHECK_THROW_OTA(ret, "Setting bootable partition failed");
+
+        ESP_LOGI(OPERATIONS_TAG, "OTA update successfully installed");
     }
 
-    bool OTA::end(bool unused)
+    void ota_updator::abort()
     {
-        if (!this->handle_)
-        {
-            if (this->error_ == ESP_OK)
-            {
-                this->error_ = ESP_FAIL;
-            }
-            return false;
-        }
-        ESP_LOGD(TAG, "Finished");
-        this->error_ = esp_ota_end(this->handle_);
-        this->handle_ = {};
-        if (this->error_ == ESP_OK)
-        {
-            this->error_ = esp_ota_set_boot_partition(this->partition_);
-        }
-        return this->error_ == ESP_OK;
+        ESP_LOGI(OPERATIONS_TAG, "OTA update aborted");
+
+        esp_err_t ret = esp_ota_abort(handle_);
+        CHECK_THROW_OTA(ret, "Failed to abort update");
+        handle_ = 0;
     }
 
-} // namespace esphome
-#endif // !defined(USE_ESP_IDF)
+    bool ota_updator::is_running()
+    {
+        return handle_ != 0;
+    }
+}

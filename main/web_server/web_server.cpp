@@ -10,6 +10,7 @@
 #include "util/filesystem/file.h"
 #include "util/hash/hash.h"
 #include "util/finally.h"
+#include "util/ota.h"
 #include "config/config_manager.h"
 #include "operations/operations.h"
 #include "hardware/hardware.h"
@@ -598,19 +599,33 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
 
 	ESP_LOGD(WEBSERVER_TAG, "Expected firmware hash: %s", hash_arg.value().c_str());
 
-	const auto result = request->read_body([](const std::vector<uint8_t> &data)
-										   { return ESP_OK; });
+	std::array<uint8_t, 32> hash_binary{};
+	if (!esp32::parse_hex(hash_arg.value(), hash_binary.data(), hash_binary.size()))
+	{
+		log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Hash supplied for firmware is not valid");
+		return;
+	}
+
+	esp32::ota_updator ota(hash_binary);
+
+	const auto result = request->read_body([&ota](const std::vector<uint8_t> &data)
+										   { 
+											
+											ota.write(data.data(), data.size());
+											return ESP_OK; });
 
 	if (result != ESP_OK)
 	{
+		ota.abort();
 		log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read body and OTA");
 		return;
 	}
 
-	ESP_LOGD(WEBSERVER_TAG, "Expected firmware hash: %s", hash_arg.value().c_str());
+	ota.end();
 
-	ESP_LOGI(WEBSERVER_TAG, "Firnware updated");
+	ESP_LOGI(WEBSERVER_TAG, "Firmware updated");
 	send_empty_200(request);
+	operations::instance.reboot();
 }
 
 // void web_server::restore_configuration_upload(esp32::http_request *request,
@@ -944,9 +959,7 @@ void web_server::handle_file_upload(esp32::http_request *request)
 	ESP_LOGI(WEBSERVER_TAG, "Creating Temp File: %s", temp_full_path.c_str());
 
 	auto _ = esp32::finally([&temp_full_path]
-							{
-								esp32::filesystem::remove(temp_full_path);
-							});
+							{ esp32::filesystem::remove(temp_full_path); });
 
 	{
 		auto file = esp32::filesystem::file(temp_full_path.c_str(), "w+");

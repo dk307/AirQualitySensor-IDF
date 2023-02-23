@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 #include <string>
+#include <esp_err.h>
+
 namespace esp32
 {
     class esp_exception : public std::exception
