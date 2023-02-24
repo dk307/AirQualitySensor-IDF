@@ -756,7 +756,7 @@ void web_server::handle_dir_list(esp32::http_request *request)
     auto dir = opendir(path.c_str());
     if (!dir)
     {
-        const auto message = esp32::str_sprintf("Failed to opendir :%s", path.c_str());
+        const auto message = esp32::string::sprintf("Failed to opendir :%s", path.c_str());
         log_and_send_error(request, HTTPD_400_BAD_REQUEST, message);
         return;
     }
@@ -866,7 +866,7 @@ void web_server::handle_fs_delete(esp32::http_request *request)
 
     if (!success)
     {
-        const auto message = esp32::str_sprintf("Failed to delete %s", path.c_str());
+        const auto message = esp32::string::sprintf("Failed to delete %s", path.c_str());
         log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, message);
     }
     else
@@ -901,7 +901,7 @@ void web_server::handle_dir_create(esp32::http_request *request)
 
     if (!esp32::filesystem::create_directory(path))
     {
-        const auto message = esp32::str_sprintf("Failed to create %s", path.c_str());
+        const auto message = esp32::string::sprintf("Failed to create %s", path.c_str());
         log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, message);
     }
     else
@@ -936,7 +936,7 @@ void web_server::handle_fs_rename(esp32::http_request *request)
 
     if (!esp32::filesystem::rename(old_path, new_path))
     {
-        const auto message = esp32::str_sprintf("Failed to rename %s", old_path.c_str());
+        const auto message = esp32::string::sprintf("Failed to rename %s", old_path.c_str());
         log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, message.c_str());
     }
     else

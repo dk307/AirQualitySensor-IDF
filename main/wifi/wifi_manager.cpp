@@ -123,7 +123,7 @@ std::string wifi_manager::get_wifi_status()
     {
         if ((wifi_instance_->get_local_ip() != 0))
         {
-            return esp32::str_sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
+            return esp32::string::sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
                                       wifi_instance_->get_local_ip_address().c_str());
         }
         else

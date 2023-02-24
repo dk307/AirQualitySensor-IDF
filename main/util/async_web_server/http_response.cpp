@@ -104,15 +104,15 @@ void fs_card_file_response::send_response()
 
     // Content dispostion
     const auto filename = path.filename();
-    const auto content_disposition_header = download_ ? esp32::str_sprintf("attachment; filename=\"%s\"", filename.c_str())
-                                                      : esp32::str_sprintf("inline; filename=\"%s\"", filename.c_str());
+    const auto content_disposition_header = download_ ? esp32::string::sprintf("attachment; filename=\"%s\"", filename.c_str())
+                                                      : esp32::string::sprintf("inline; filename=\"%s\"", filename.c_str());
     CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Disposition", content_disposition_header.c_str()));
 
     // content type
     CHECK_HTTP_REQUEST(httpd_resp_set_type(req_->req_, content_type_));
 
     // Content-Length
-    const auto size = std::to_string(file_info.size());
+    const auto size = esp32::string::to_string(file_info.size());
     CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Length", size.c_str()));
 
     ESP_LOGD(WEBSERVER_TAG, "Sending file %s", path.c_str());

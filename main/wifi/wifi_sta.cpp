@@ -1,5 +1,6 @@
 #include "wifi_sta.h"
 #include "logging/logging_tags.h"
+#include "util/helper.h"
 
 #include <cstring>
 #include <esp_log.h>
@@ -239,6 +240,6 @@ std::string wifi_sta::get_disconnect_reason_str(uint8_t reason)
         return "Connection Failed";
     case WIFI_REASON_UNSPECIFIED:
     default:
-        return std::to_string(reason);
+        return esp32::string::to_string(reason);
     }
 }

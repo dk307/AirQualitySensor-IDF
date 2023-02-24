@@ -17,7 +17,6 @@
 #include <memory>
 #include <sstream>
 
-
 hardware hardware::instance;
 
 static const char *timezone_strings[5]{
@@ -31,7 +30,7 @@ std::string hardware::get_up_time()
     const uint8_t mins = (now % 3600) / 60;
     const uint8_t sec = (now % 3600) % 60;
 
-    return esp32::str_sprintf("%02d hours %02d mins %02d secs", hour, mins, sec);
+    return esp32::string::sprintf("%02d hours %02d mins %02d secs", hour, mins, sec);
 }
 
 void hardware::set_screen_brightness(uint8_t value)
@@ -48,8 +47,8 @@ std::string get_heap_info_str(uint32_t caps)
 {
     multi_heap_info_t info;
     heap_caps_get_info(&info, caps);
-    return esp32::to_string_join(esp32::stringify_size(info.total_free_bytes, 1), " free out of ",
-                                 esp32::stringify_size(info.total_allocated_bytes + info.total_free_bytes, 1));
+    return esp32::string::sprintf("%s free out of %s", esp32::string::stringify_size(info.total_free_bytes, 1).c_str(),
+                                  esp32::string::stringify_size(info.total_allocated_bytes + info.total_free_bytes, 1).c_str());
 }
 
 std::string get_chip_details()
@@ -57,45 +56,42 @@ std::string get_chip_details()
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
 
-    std::ostringstream details;
+    std::string model;
     switch (chip_info.model)
     {
     case CHIP_ESP32:
-        details << "ESP32";
+        model = "ESP32";
         break;
     case CHIP_ESP32S2:
-        details << "ESP32-S2";
+        model = "ESP32-S2";
         break;
     case CHIP_ESP32S3:
-        details << "ESP32-S3";
+        model = "ESP32-S3";
         break;
     case CHIP_ESP32C3:
-        details << "ESP32-C3";
+        model = "ESP32-C3";
         break;
     default:
-        details << "Unknown";
+        model = "Unknown";
     }
 
-    details << " (Rev. " << chip_info.revision << ")  ";
-    details << "Cores: " << static_cast<int>(chip_info.cores) << ". ";
-
+    std::string flash_size_str;
     uint32_t flash_size = 0;
     if (esp_flash_get_size(NULL, &flash_size) != ESP_OK)
     {
         ESP_LOGE(OPERATIONS_TAG, "Get flash size failed");
-        details << "Flash Size: Unknown. ";
+        flash_size_str = "Unknown";
     }
     else
     {
-        details << "Flash Size: " << esp32::stringify_size(flash_size) << ". ";
+        flash_size_str = esp32::string::stringify_size(flash_size);
     }
 
-    // details << "CPU Freq: " << std::setprecision(2) << std::fixed << (esp_clk_cpu_freq() / 1000000.0) << " MHz. ";
-
-    return details.str();
+    return esp32::string::sprintf("%s Rev. (%d) Cores: %d Flash size: %s", model.c_str(), chip_info.revision, static_cast<int>(chip_info.cores),
+                                   flash_size_str.c_str());
 }
 
- std::string get_reset_reason_string()
+std::string get_reset_reason_string()
 {
     const auto reset_reason = esp_reset_reason();
     std::string reset_reason_string;
@@ -164,7 +160,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             {"Reset Reason", get_reset_reason_string()},
             {"Mac Address", get_default_mac_address()},
             //{"SD Card Size", to_string(SD.cardSize() / (1024 * 1024), " MB")},
-            {"Screen Brightness", esp32::to_string_join((display_instance_.get_brightness() * 100) / 256, " %")},
+            {"Screen Brightness", esp32::string::sprintf("%d %%", (display_instance_.get_brightness() * 100) / 256)},
             // {"SHT31 sensor status", get_sht31_status()},
             // {"SPS30 sensor status", get_sps30_error_register_status()},
         };
@@ -178,7 +174,7 @@ ui_interface::information_table_type hardware::get_information_table(information
         const auto result_info = esp_wifi_sta_get_ap_info(&info);
         if (result_info != ESP_OK)
         {
-            table.push_back({"Error", esp32::to_string_join("failed to get info with error", result_info)});
+            table.push_back({"Error", esp32::string::sprintf("failed to get info with error:%d", result_info)});
         }
         else
         {
@@ -186,7 +182,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             // table.push_back({"Hostname", WiFi.getHostname()});
             // table.push_back({"IP address(wifi)", WiFi.localIP().toString()});
             table.push_back({"Ssid", std::string(reinterpret_cast<char *>(&info.ssid[0]))});
-            table.push_back({"RSSI", esp32::to_string_join(info.rssi, " db")});
+            table.push_back({"RSSI", esp32::string::sprintf("%d db", info.rssi)});
             // table.push_back({"Gateway address", WiFi.gatewayIP().toString()});
             // table.push_back({"Subnet", WiFi.subnetMask().toString()});
             // table.push_back({"DNS", WiFi.dnsIP().toString()});
@@ -213,11 +209,12 @@ ui_interface::information_table_type hardware::get_information_table(information
         return {
             {"Hostname", config::instance.instance.data.get_host_name()},
             {"NTP server", config::instance.instance.data.get_ntp_server()},
-            {"NTP server refresh interval", std::to_string(config::instance.instance.data.get_ntp_server_refresh_interval())},
+            {"NTP server refresh interval", esp32::string::to_string(config::instance.instance.data.get_ntp_server_refresh_interval())},
             {"Time zone", timezone_strings[static_cast<size_t>(config::instance.instance.data.get_timezone())]},
             {"SSID", config::instance.instance.data.get_wifi_ssid()},
             {"Web user name", config::instance.instance.data.get_web_user_name()},
-            {"Screen brightness (%)", std::to_string((100 * config::instance.instance.data.get_manual_screen_brightness().value_or(0)) / 256)},
+            {"Screen brightness (%)",
+             esp32::string::to_string((100 * config::instance.instance.data.get_manual_screen_brightness().value_or(0)) / 256)},
         };
         break;
     }

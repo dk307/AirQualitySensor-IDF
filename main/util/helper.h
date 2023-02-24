@@ -13,6 +13,59 @@
 
 namespace esp32
 {
+
+namespace string
+{
+
+/// snprintf-like function returning std::string of maximum length \p len
+/// (excluding null terminator).
+std::string __attribute__((format(printf, 1, 3))) snprintf(const char *fmt, size_t len, ...);
+
+/// sprintf-like function returning std::string.
+std::string __attribute__((format(printf, 1, 2))) sprintf(const char *fmt, ...);
+
+inline std::string to_string(int value)
+{
+    return snprintf("%d", 32, value);
+}
+inline std::string to_string(long value)
+{
+    return snprintf("%ld", 32, value);
+}
+inline std::string to_string(long long value)
+{
+    return snprintf("%lld", 32, value);
+}
+inline std::string to_string(unsigned value)
+{
+    return snprintf("%u", 32, value);
+}
+inline std::string to_string(unsigned long value)
+{
+    return snprintf("%lu", 32, value);
+}
+inline std::string to_string(unsigned long long value)
+{
+    return snprintf("%llu", 32, value);
+}
+inline std::string to_string(float value)
+{
+    return snprintf("%f", 32, value);
+}
+inline std::string to_string(double value)
+{
+    return snprintf("%f", 32, value);
+}
+inline std::string to_string(long double value)
+{
+    return snprintf("%Lf", 32, value);
+}
+
+std::string stringify_size(uint64_t bytes, int max_unit = 128);
+
+
+} // namespace string
+
 // std::byteswap from C++23
 template <typename T> constexpr T byteswap(T n)
 {
@@ -76,33 +129,8 @@ template <typename T> constexpr T convert_little_endian(T val)
 #endif
 }
 
-template <class... Args> 
-std::string to_string_join(Args &&...args)
-{
-    std::ostringstream stream;
-    (stream << ... << std::forward<Args>(args));
-    return stream.str();
-}
+ 
 
-inline std::string stringify_size(uint64_t bytes, int max_unit = 128)
-{
-    constexpr char suffix[3][3] = {"B", "KB", "MB"};
-    constexpr char length = sizeof(suffix) / sizeof(suffix[0]);
-
-    uint16_t i = 0;
-    double dblBytes = bytes;
-
-    if (bytes > 1024)
-    {
-        for (i = 0; (bytes / 1024) > 0 && i < length - 1 && (max_unit > 0); i++, bytes /= 1024)
-        {
-            dblBytes = bytes / 1024.0;
-            max_unit--;
-        }
-    }
-
-    return to_string_join(static_cast<uint64_t>(std::round(dblBytes)), ' ', suffix[i]);
-}
 
 inline void ltrim(std::string &s)
 {
@@ -165,13 +193,6 @@ std::string str_snake_case(const std::string &str);
 /// dashes and underscores.
 std::string str_sanitize(const std::string &str);
 
-/// snprintf-like function returning std::string of maximum length \p len
-/// (excluding null terminator).
-std::string __attribute__((format(printf, 1, 3))) str_snprintf(const char *fmt, size_t len, ...);
-
-/// sprintf-like function returning std::string.
-std::string __attribute__((format(printf, 1, 2))) str_sprintf(const char *fmt, ...);
-
 ///@}
 
 /// @name Parsing & formatting
@@ -182,7 +203,7 @@ template <typename T, std::enable_if_t<(std::is_integral<T>::value && std::is_un
 std::optional<T> parse_number(const char *str)
 {
     char *end = nullptr;
-    unsigned long value = ::strtoul(str, &end, 10); // NOLINT(google-runtime-int)
+    unsigned long value = ::strtoul(str, &end, 10);
     if (end == str || *end != '\0' || value > std::numeric_limits<T>::max())
         return {};
     return value;
@@ -198,7 +219,7 @@ template <typename T, std::enable_if_t<(std::is_integral<T>::value && std::is_si
 std::optional<T> parse_number(const char *str)
 {
     char *end = nullptr;
-    signed long value = ::strtol(str, &end, 10); // NOLINT(google-runtime-int)
+    signed long value = ::strtol(str, &end, 10);
     if (end == str || *end != '\0' || value < std::numeric_limits<T>::min() || value > std::numeric_limits<T>::max())
         return {};
     return value;

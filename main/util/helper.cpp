@@ -13,6 +13,64 @@
 
 namespace esp32
 {
+
+namespace string
+{
+std::string snprintf(const char *fmt, size_t len, ...)
+{
+    std::string str;
+    va_list args;
+
+    str.resize(len);
+    va_start(args, len);
+    size_t out_length = vsnprintf(&str[0], len + 1, fmt, args);
+    va_end(args);
+
+    if (out_length < len)
+        str.resize(out_length);
+
+    return str;
+}
+
+std::string sprintf(const char *fmt, ...)
+{
+    std::string str;
+    va_list args;
+
+    va_start(args, fmt);
+    size_t length = vsnprintf(nullptr, 0, fmt, args);
+    va_end(args);
+
+    str.resize(length);
+    va_start(args, fmt);
+    vsnprintf(&str[0], length + 1, fmt, args);
+    va_end(args);
+
+    return str;
+}
+
+std::string stringify_size(uint64_t bytes, int max_unit)
+{
+    constexpr char suffix[3][3] = {"B", "KB", "MB"};
+    constexpr char length = sizeof(suffix) / sizeof(suffix[0]);
+
+    uint16_t i = 0;
+    double dblBytes = bytes;
+
+    if (bytes > 1024)
+    {
+        for (i = 0; (bytes / 1024) > 0 && i < length - 1 && (max_unit > 0); i++, bytes /= 1024)
+        {
+            dblBytes = bytes / 1024.0;
+            max_unit--;
+        }
+    }
+
+    return sprintf("%llu %s", static_cast<uint64_t>(std::round(dblBytes)), suffix[i]);
+}
+
+} // namespace string
+
 bool str_equals_case_insensitive(const std::string &a, const std::string &b)
 {
     return strcasecmp(a.c_str(), b.c_str()) == 0;
@@ -76,38 +134,6 @@ std::string str_sanitize(const std::string &str)
     std::copy_if(str.begin(), str.end(), std::back_inserter(out),
                  [](const char &c) { return c == '-' || c == '_' || (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); });
     return out;
-}
-
-std::string str_snprintf(const char *fmt, size_t len, ...)
-{
-    std::string str;
-    va_list args;
-
-    str.resize(len);
-    va_start(args, len);
-    size_t out_length = vsnprintf(&str[0], len + 1, fmt, args);
-    va_end(args);
-
-    if (out_length < len)
-        str.resize(out_length);
-
-    return str;
-}
-std::string str_sprintf(const char *fmt, ...)
-{
-    std::string str;
-    va_list args;
-
-    va_start(args, fmt);
-    size_t length = vsnprintf(nullptr, 0, fmt, args);
-    va_end(args);
-
-    str.resize(length);
-    va_start(args, fmt);
-    vsnprintf(&str[0], length + 1, fmt, args);
-    va_end(args);
-
-    return str;
 }
 
 // Parsing & formatting
@@ -177,7 +203,7 @@ std::string format_hex_pretty(const uint8_t *data, size_t length)
             ret[3 * i + 2] = '.';
     }
     if (length > 4)
-        return ret + " (" + std::to_string(length) + ")";
+        return ret + " (" + esp32::string::to_string(length) + ")";
     return ret;
 }
 std::string format_hex_pretty(const std::vector<uint8_t> &data)
@@ -201,7 +227,7 @@ std::string format_hex_pretty(const uint16_t *data, size_t length)
             ret[5 * i + 2] = '.';
     }
     if (length > 4)
-        return ret + " (" + std::to_string(length) + ")";
+        return ret + " (" + esp32::string::to_string(length) + ")";
     return ret;
 }
 std::string format_hex_pretty(const std::vector<uint16_t> &data)
