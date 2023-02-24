@@ -11,11 +11,10 @@
 #include <esp_flash.h>
 #include <esp_mac.h>
 #include <esp_netif_types.h>
+#include <esp_ota_ops.h>
 #include <esp_timer.h>
 #include <esp_wifi.h>
-#include <iomanip>
 #include <memory>
-#include <sstream>
 
 hardware hardware::instance;
 
@@ -88,7 +87,7 @@ std::string get_chip_details()
     }
 
     return esp32::string::sprintf("%s Rev. (%d) Cores: %d Flash size: %s", model.c_str(), chip_info.revision, static_cast<int>(chip_info.cores),
-                                   flash_size_str.c_str());
+                                  flash_size_str.c_str());
 }
 
 std::string get_reset_reason_string()
@@ -131,9 +130,10 @@ std::string get_reset_reason_string()
     return reset_reason_string;
 }
 
-const char *get_build_datetime()
+std::string get_version()
 {
-    return __DATE__ " " __TIME__;
+    auto desc = esp_ota_get_app_description();
+    return esp32::string::sprintf("%s %s %s", desc->date, desc->time, desc->version);
 }
 
 std::string get_default_mac_address()
@@ -151,7 +151,7 @@ ui_interface::information_table_type hardware::get_information_table(information
     {
     case information_type::system:
         return {
-            {"Build Date", get_build_datetime()},
+            {"Version", get_version()},
             {"IDF Version", std::string(esp_get_idf_version())},
             {"Chip", get_chip_details()},
             {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},

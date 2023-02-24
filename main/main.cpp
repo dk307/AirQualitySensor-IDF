@@ -34,10 +34,10 @@ extern "C" void app_main(void)
 
         card.pre_begin();
         config::instance.pre_begin();
-
         hardware::instance.pre_begin();
 
         wifi_manager::instance.begin();
+        web_server::instance.begin();
 
         while (!wifi_manager::instance.is_wifi_connected())
         {
@@ -48,10 +48,7 @@ extern "C" void app_main(void)
         httpd_handle_t http_server;
         http_start_webserver(&http_server);
 
-        web_server::instance.begin();
-
         hardware::instance.begin();
-
         hardware::instance.set_main_screen();
 
         ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
