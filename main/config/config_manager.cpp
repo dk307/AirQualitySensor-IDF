@@ -1,13 +1,13 @@
 #include "config_manager.h"
 #include "logging/logging_tags.h"
+#include "util/filesystem/file_info.h"
+#include "util/filesystem/filesystem.h"
 #include "util/hash/hash.h"
 #include "util/helper.h"
 #include "util/psram_allocator.h"
 
-
 #include <esp_log.h>
 #include <filesystem>
-
 
 static const char ConfigFilePath[] = "/sd/config.json";
 static const char ConfigChecksumFilePath[] = "/sd/config_checksum.json";
@@ -38,15 +38,13 @@ size_t config::write_to_file(const char *file_name, const void *data, size_t siz
 
 void config::erase()
 {
-    std::error_code ec;
-    std::filesystem::remove(std::filesystem::path(ConfigChecksumFilePath), ec);
-    std::filesystem::remove(std::filesystem::path(ConfigFilePath), ec);
+    esp32::filesystem::remove(ConfigChecksumFilePath);
+    esp32::filesystem::remove(ConfigFilePath);
 }
 
 bool config::pre_begin()
 {
     ESP_LOGD(CONFIG_TAG, "Loading Configuration");
-
     const auto config_data = read_file(ConfigFilePath);
 
     ESP_LOGD(CONFIG_TAG, "Config File:[%s]", config_data.c_str());
@@ -59,7 +57,7 @@ bool config::pre_begin()
     }
 
     // read checksum from file
-    const auto read_checksum = read_file((ConfigChecksumFilePath));
+    const auto read_checksum = read_file(ConfigChecksumFilePath);
 
     ESP_LOGD(CONFIG_TAG, "Checksum File:[%s]", read_checksum.c_str());
 
@@ -174,11 +172,11 @@ void config::save_config()
 
 std::string config::read_file(const char *file_name)
 {
-    std::error_code ec;
-    const auto size = std::filesystem::file_size(file_name, ec);
+    esp32::filesystem::file_info file_info(file_name);
 
-    if (!ec)
+    if (file_info.exists())
     {
+        const auto size = file_info.size();
         auto file = fopen(file_name, "r");
         if (file)
         {
@@ -198,7 +196,7 @@ std::string config::read_file(const char *file_name)
     }
     else
     {
-        ESP_LOGI(CONFIG_TAG, "File error:%s Error:%s", file_name, ec.message().c_str());
+        ESP_LOGI(CONFIG_TAG, "File not found %s", file_name);
     }
 
     return std::string();

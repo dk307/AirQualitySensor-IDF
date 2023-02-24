@@ -138,57 +138,6 @@ void wifi_sta::close_if()
     }
 }
 
-std::string wifi_sta::get_mac_address()
-{
-    std::stringstream mac;
-    std::array<uint8_t, 6> m;
-    bool ret = get_local_mac_address(m);
-
-    if (ret)
-    {
-        for (const auto &v : m)
-        {
-            if (mac.tellp() > 0)
-            {
-                mac << ":";
-            }
-
-            mac << std::hex << static_cast<int>(v);
-        }
-    }
-
-    return mac.str();
-}
-
-bool wifi_sta::get_local_mac_address(std::array<uint8_t, 6> &m)
-{
-    wifi_mode_t mode;
-    auto err = esp_wifi_get_mode(&mode);
-
-    if (err == ESP_OK)
-    {
-        if (mode == WIFI_MODE_STA)
-        {
-            err = esp_wifi_get_mac(WIFI_IF_STA, m.data());
-        }
-        else if (mode == WIFI_MODE_AP)
-        {
-            err = esp_wifi_get_mac(WIFI_IF_AP, m.data());
-        }
-        else
-        {
-            err = ESP_FAIL;
-        }
-    }
-
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(WIFI_TAG, "get_local_mac_address(): %s", esp_err_to_name(err));
-    }
-
-    return err == ESP_OK;
-}
-
 uint32_t wifi_sta::get_local_ip()
 {
     return ip_info_.ip.addr;

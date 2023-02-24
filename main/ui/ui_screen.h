@@ -3,11 +3,9 @@
 #include <esp_log.h>
 #include <lvgl.h>
 
-
 #include "logging/logging_tags.h"
 #include "ui_inter_screen_interface.h"
 #include "ui_interface.h"
-
 
 struct ui_common_fonts
 {

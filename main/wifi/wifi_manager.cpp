@@ -16,6 +16,7 @@ const int IP_BIT = BIT1;
 
 void wifi_manager::begin()
 {
+    ESP_ERROR_CHECK(esp_netif_init());
     wifi_task_.spawn_same("wifi task", 4096, esp32::task::default_priority);
 }
 
@@ -41,7 +42,6 @@ bool wifi_manager::connect_saved_wifi()
 void wifi_manager::wifi_task_ftn()
 {
     ESP_LOGI(WIFI_TAG, "Started Wifi Task");
-    ESP_ERROR_CHECK(esp_netif_init());
     do
     {
         connected_to_ap_ = connect_saved_wifi();
@@ -118,22 +118,21 @@ bool wifi_manager::is_wifi_connected()
 std::string wifi_manager::get_wifi_status()
 {
     std::lock_guard<esp32::semaphore> lock(data_mutex_);
-    std::stringstream stream;
+
     if (connected_to_ap_)
     {
         if ((wifi_instance_->get_local_ip() != 0))
         {
-            stream << "Connected to " << wifi_instance_->get_ssid() << " with IP " << wifi_instance_->get_local_ip_address();
+            return esp32::str_sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
+                                      wifi_instance_->get_local_ip_address().c_str());
         }
         else
         {
-            stream << "Not connected to Wifi";
+            return "Not connected to Wifi";
         }
     }
     else
     {
-        stream << "Not connected to Wifi";
+        return "Not connected to Wifi";
     }
-
-    return stream.str();
 }

@@ -6,7 +6,6 @@
 #include "sensor\sensor_id.h"
 #include "ui_interface.h"
 
-
 #include "ui_boot_screen.h"
 #include "ui_hardware_info_screen.h"
 #include "ui_information_screen.h"
@@ -14,7 +13,6 @@
 #include "ui_launcher_screen.h"
 #include "ui_main_screen.h"
 #include "ui_sensor_detail_screen.h"
-
 
 class ui : public ui_inter_screen_interface
 {

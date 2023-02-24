@@ -1,10 +1,8 @@
 #include "util/filesystem/filesystem.h"
 #include "util/filesystem/file_info.h"
 
-
 #include <sys/stat.h>
 #include <sys/utime.h>
-
 
 namespace esp32::filesystem
 {

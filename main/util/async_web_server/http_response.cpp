@@ -7,11 +7,9 @@
 #include "util/filesystem/filesystem.h"
 #include "util/helper.h"
 
-
 #include "logging/logging_tags.h"
 #include <esp_check.h>
 #include <esp_log.h>
-
 
 namespace esp32
 {

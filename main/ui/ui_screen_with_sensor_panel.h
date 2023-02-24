@@ -3,7 +3,6 @@
 #include "sensor/sensor.h"
 #include "ui_screen.h"
 
-
 class ui_screen_with_sensor_panel : public ui_screen
 {
   public:

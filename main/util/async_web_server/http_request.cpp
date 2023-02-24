@@ -3,11 +3,9 @@
 #include "util/exceptions.h"
 #include "util/helper.h"
 
-
 #include <esp_log.h>
 #include <memory>
 #include <sys/socket.h>
-
 
 namespace esp32
 {

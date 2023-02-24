@@ -76,7 +76,8 @@ template <typename T> constexpr T convert_little_endian(T val)
 #endif
 }
 
-template <class... Args> std::string to_string_join(Args &&...args)
+template <class... Args> 
+std::string to_string_join(Args &&...args)
 {
     std::ostringstream stream;
     (stream << ... << std::forward<Args>(args));

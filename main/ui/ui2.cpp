@@ -6,7 +6,6 @@
 #include <memory>
 #include <tuple>
 
-
 void lv_logger(const char *dsc)
 {
     ESP_LOGI(UI_TAG, "%s", dsc);

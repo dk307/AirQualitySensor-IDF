@@ -7,6 +7,7 @@
 #include "wifi/wifi_sta.h"
 
 #include <esp_chip_info.h>
+#include <esp_efuse.h>
 #include <esp_flash.h>
 #include <esp_mac.h>
 #include <esp_netif_types.h>
@@ -15,6 +16,7 @@
 #include <iomanip>
 #include <memory>
 #include <sstream>
+
 
 hardware hardware::instance;
 
@@ -55,7 +57,7 @@ std::string get_chip_details()
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
 
-    std::stringstream details;
+    std::ostringstream details;
     switch (chip_info.model)
     {
     case CHIP_ESP32:
@@ -93,18 +95,74 @@ std::string get_chip_details()
     return details.str();
 }
 
+ std::string get_reset_reason_string()
+{
+    const auto reset_reason = esp_reset_reason();
+    std::string reset_reason_string;
+    switch (reset_reason)
+    {
+    case ESP_RST_POWERON:
+        reset_reason_string = "Power-on reset";
+        break;
+    case ESP_RST_EXT:
+        reset_reason_string = "Reset caused by external pin";
+        break;
+    case ESP_RST_SW:
+        reset_reason_string = "Software reset";
+        break;
+    case ESP_RST_PANIC:
+        reset_reason_string = "Watchdog timer expired or exception occurred";
+        break;
+    case ESP_RST_INT_WDT:
+        reset_reason_string = "Internal Watchdog Timer expired";
+        break;
+    case ESP_RST_TASK_WDT:
+        reset_reason_string = "Task Watchdog Timer expired";
+        break;
+    case ESP_RST_DEEPSLEEP:
+        reset_reason_string = "Wakeup from deep sleep";
+        break;
+    case ESP_RST_BROWNOUT:
+        reset_reason_string = "Brownout reset";
+        break;
+    case ESP_RST_SDIO:
+        reset_reason_string = "Reset caused by SDIO";
+        break;
+    default:
+        reset_reason_string = "Unknown reset reason";
+        break;
+    }
+    return reset_reason_string;
+}
+
+const char *get_build_datetime()
+{
+    return __DATE__ " " __TIME__;
+}
+
+std::string get_default_mac_address()
+{
+    uint8_t mac[6];
+    esp_efuse_mac_get_default(mac);
+    char mac_address[18];
+    sprintf(mac_address, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    return std::string(mac_address);
+}
+
 ui_interface::information_table_type hardware::get_information_table(information_type type)
 {
     switch (type)
     {
     case information_type::system:
         return {
-            // {"Firmware Version", to_string(VERSION)},
+            {"Build Date", get_build_datetime()},
             {"IDF Version", std::string(esp_get_idf_version())},
             {"Chip", get_chip_details()},
             {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},
             {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
             {"Uptime", get_up_time()},
+            {"Reset Reason", get_reset_reason_string()},
+            {"Mac Address", get_default_mac_address()},
             //{"SD Card Size", to_string(SD.cardSize() / (1024 * 1024), " MB")},
             {"Screen Brightness", esp32::to_string_join((display_instance_.get_brightness() * 100) / 256, " %")},
             // {"SHT31 sensor status", get_sht31_status()},
@@ -134,7 +192,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             // table.push_back({"DNS", WiFi.dnsIP().toString()});
         }
 
-        table.push_back({"Mac Address", wifi_sta::get_mac_address()});
+        // table.push_back({"Mac Address", wifi_sta::get_mac_address()});
 
         // auto local_time_now = ntp_time::instance.get_local_time();
         // if (local_time_now.has_value())

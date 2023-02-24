@@ -1,8 +1,6 @@
 #pragma once
 
 #include "ui_screen.h"
-// #include "config_manager.h"
-// #include "operations.h"
 
 class ui_launcher_screen : public ui_screen
 {

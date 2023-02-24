@@ -34,10 +34,6 @@ class wifi_sta
     /// \return
     [[nodiscard]] bool is_connected_to_ap() const;
 
-    [[nodiscard]] static std::string get_mac_address();
-
-    [[nodiscard]] static bool get_local_mac_address(std::array<uint8_t, 6> &m);
-
     [[nodiscard]] uint32_t get_local_ip();
 
     [[nodiscard]] std::string get_local_ip_address();

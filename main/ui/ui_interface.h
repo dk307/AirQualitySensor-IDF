@@ -4,10 +4,8 @@
 #include "sensor/sensor_id.h"
 #include "util/psram_allocator.h"
 
-
 #include <string>
 #include <vector>
-
 
 class ui_interface
 {
