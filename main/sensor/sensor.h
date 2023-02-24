@@ -10,6 +10,7 @@
 #include <math.h>
 #include <mutex>
 #include <optional>
+#include <optional>
 
 class sensor_definition_display
 {

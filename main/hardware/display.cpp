@@ -62,8 +62,8 @@ void display::pre_begin()
     {
         CHECK_THROW(ESP_FAIL, "Failed to init display", esp32::init_failure_exception);
     }
-    display_device_.setRotation(1);
 
+    display_device_.setRotation(1);
     display_device_.initDMA();
     display_device_.startWrite();
 
@@ -111,7 +111,7 @@ void display::pre_begin()
 
     create_timer();
 
-    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 4, 1, 1);
+    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 8, 1, 1);
 
     if (err != ESP_OK)
     {
@@ -121,8 +121,6 @@ void display::pre_begin()
         }
         CHECK_THROW(err, "Create task for LVGL failed", esp32::init_failure_exception);
     }
-
-    ui_instance_.init();
 
     display_device_.setBrightness(128);
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
@@ -173,39 +171,53 @@ void display::lv_tick_task(void *)
 
 void display::gui_task()
 {
-    ESP_LOGI(DISPLAY_TAG, "Start to run LVGL Task");
-    do
+    ESP_LOGI(DISPLAY_TAG, "Start to run LVGL Task on core:%d", xPortGetCoreID());
+
+    try
     {
+        ui_instance_.load_boot_screen();
         lv_task_handler();
+        ui_instance_.init();
 
-        uint32_t notification_value = 0;
-        const auto result = xTaskNotifyWait(pdFALSE,             /* Don't clear bits on entry. */
-                                            ULONG_MAX,           /* Clear all bits on exit. */
-                                            &notification_value, /* Stores the notified value. */
-                                            pdMS_TO_TICKS(10));
-
-        if (result == pdPASS)
+        do
         {
-            if (notification_value & task_notify_wifi_changed_bit)
-            {
-                ui_instance_.wifi_changed();
-            }
+            lv_task_handler();
 
-            if (notification_value & set_main_screen_changed_bit)
-            {
-                ui_instance_.set_main_screen();
-            }
+            uint32_t notification_value = 0;
+            const auto result = xTaskNotifyWait(pdFALSE,             /* Don't clear bits on entry. */
+                                                ULONG_MAX,           /* Clear all bits on exit. */
+                                                &notification_value, /* Stores the notified value. */
+                                                pdMS_TO_TICKS(10));
 
-            for (auto i = 1; i <= total_sensors; i++)
+            if (result == pdPASS)
             {
-                if (notification_value & BIT(i))
+                if (notification_value & task_notify_wifi_changed_bit)
                 {
-                    const auto id = static_cast<sensor_id_index>(i - 1);
-                    const auto &sensor = hardware::instance.get_sensor(id);
-                    const auto value = sensor.get_value();
-                    ui_instance_.set_sensor_value(id, value);
+                    ui_instance_.wifi_changed();
+                }
+
+                if (notification_value & set_main_screen_changed_bit)
+                {
+                    ui_instance_.set_main_screen();
+                }
+
+                for (auto i = 1; i <= total_sensors; i++)
+                {
+                    if (notification_value & BIT(i))
+                    {
+                        const auto id = static_cast<sensor_id_index>(i - 1);
+                        const auto &sensor = hardware::instance.get_sensor(id);
+                        const auto value = sensor.get_value();
+                        ui_instance_.set_sensor_value(id, value);
+                    }
                 }
             }
-        }
-    } while (true);
+        } while (true);
+    }
+    catch (const std::exception &ex)
+    {
+        ESP_LOGI(OPERATIONS_TAG, "UI Init Failure:%s", ex.what());
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        esp_restart();
+    }
 }

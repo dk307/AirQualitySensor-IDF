@@ -31,7 +31,7 @@ bool wifi_manager::connect_saved_wifi()
         ESP_LOGI(WIFI_TAG, "Hostname is %s", rfc_name.c_str());
         {
             std::lock_guard<esp32::semaphore> lock(data_mutex_);
-            wifi_instance_ = std::make_unique<wifi_sta>(true, rfc_name, ssid, pwd);
+            wifi_instance_ = std::make_unique<wifi_sta>(rfc_name, ssid, pwd);
         }
         wifi_instance_->connect_to_ap();
         return wifi_instance_->wait_for_connect(pdMS_TO_TICKS(30000));
@@ -41,7 +41,7 @@ bool wifi_manager::connect_saved_wifi()
 
 void wifi_manager::wifi_task_ftn()
 {
-    ESP_LOGI(WIFI_TAG, "Started Wifi Task");
+    ESP_LOGI(WIFI_TAG, "Started Wifi Task on Core:%d", xPortGetCoreID());
     do
     {
         connected_to_ap_ = connect_saved_wifi();
@@ -57,8 +57,6 @@ void wifi_manager::wifi_task_ftn()
         vTaskDelay(pdMS_TO_TICKS(30000)); // 30s before retry to connect
 
     } while (true);
-
-    vTaskDelete(NULL);
 }
 
 std::string wifi_manager::get_rfc_952_host_name(const std::string &name)
@@ -124,7 +122,7 @@ std::string wifi_manager::get_wifi_status()
         if ((wifi_instance_->get_local_ip() != 0))
         {
             return esp32::string::sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
-                                      wifi_instance_->get_local_ip_address().c_str());
+                                          wifi_instance_->get_local_ip_address().c_str());
         }
         else
         {

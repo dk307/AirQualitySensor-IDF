@@ -14,7 +14,7 @@
 class wifi_sta
 {
   public:
-    wifi_sta(bool auto_connect_to_ap, const std::string &host_name, const std::string &ssid, const std::string &password);
+    wifi_sta(const std::string &host_name, const std::string &ssid, const std::string &password);
 
     wifi_sta(const wifi_sta &) = delete;
     wifi_sta(wifi_sta &&) = delete;
@@ -60,7 +60,6 @@ class wifi_sta
 
     static std::string get_disconnect_reason_str(uint8_t reason);
 
-    const bool auto_connect_to_ap_;
     std::string host_name_;
     const std::string ssid_;
     const std::string password_;

@@ -67,14 +67,6 @@ class ui_screen
         (p_this->*ftn)(e);
     }
 
-    // do not call this in loop, only for first time init
-    static struct _lv_event_dsc_t *add_event_callback(lv_obj_t *obj, const std::function<void(lv_event_t *)> &ftn,
-                                                      lv_event_code_t filter = LV_EVENT_ALL)
-    {
-        auto param = new std::function<void(lv_event_t *)>(ftn); // never freed
-        return lv_obj_add_event_cb(obj, event_callback_ftn, filter, param);
-    }
-
     void create_close_button_to_main_screen(lv_obj_t *parent, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs)
     {
         lv_obj_t *close_button = lv_btn_create(parent);
@@ -92,7 +84,7 @@ class ui_screen
         lv_obj_add_event_cb(close_button, event_callback<ui_screen, &ui_screen::close_button_callback>, LV_EVENT_SHORT_CLICKED, this);
     }
 
-    void set_default_screen()
+    void set_default_screen_color()
     {
         lv_obj_set_style_bg_grad_dir(screen_, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(screen_, lv_color_hex(0x0C0D0C), LV_PART_MAIN | LV_STATE_DEFAULT);

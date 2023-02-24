@@ -63,7 +63,6 @@ inline std::string to_string(long double value)
 
 std::string stringify_size(uint64_t bytes, int max_unit = 128);
 
-
 } // namespace string
 
 // std::byteswap from C++23
@@ -128,9 +127,6 @@ template <typename T> constexpr T convert_little_endian(T val)
     return byteswap(val);
 #endif
 }
-
- 
-
 
 inline void ltrim(std::string &s)
 {

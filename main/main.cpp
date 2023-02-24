@@ -21,21 +21,21 @@ sd_card card;
 
 extern "C" void app_main(void)
 {
-    // esp_log_level_set("httpd_parse", ESP_LOG_DEBUG);
     esp_log_level_set(WEBSERVER_TAG, ESP_LOG_DEBUG);
+    esp_log_level_set(DISPLAY_TAG, ESP_LOG_DEBUG);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_LOGD(OPERATIONS_TAG, "Starting ....");
 
     try
     {
-        ESP_LOGD(WEBSERVER_TAG, "Starting ...");
         ESP_ERROR_CHECK(nvs_flash_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
 
         card.pre_begin();
         config::instance.pre_begin();
 
-        // // hardware::instance.pre_begin();
+        hardware::instance.pre_begin();
 
         wifi_manager::instance.begin();
 
@@ -50,16 +50,15 @@ extern "C" void app_main(void)
 
         web_server::instance.begin();
 
-        // hardware::instance.begin();
+        hardware::instance.begin();
 
-        // hardware::instance.set_main_screen();
+        hardware::instance.set_main_screen();
 
         ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
     }
     catch (const std::exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
-        fflush(stdout);
         vTaskDelay(pdMS_TO_TICKS(5000));
         esp_restart();
     }

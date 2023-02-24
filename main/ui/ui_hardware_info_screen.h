@@ -9,7 +9,7 @@ class ui_hardware_info_screen : public ui_screen
     void init() override
     {
         ui_screen::init();
-        set_default_screen();
+        set_default_screen_color();
 
         lv_obj_add_event_cb(screen_, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::screen_callback>, LV_EVENT_ALL, this);
 

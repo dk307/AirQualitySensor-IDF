@@ -4,7 +4,6 @@
 #include <stdexcept>
 #include <string>
 
-
 namespace esp32
 {
 class esp_exception : public std::exception

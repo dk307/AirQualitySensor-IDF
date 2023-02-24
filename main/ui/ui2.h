@@ -20,6 +20,7 @@ class ui : public ui_inter_screen_interface
     ui(ui_interface &ui_interface_) : ui_interface_instance_(ui_interface_)
     {
     }
+    void load_boot_screen();
     void init();
     void update_boot_message(const std::string &message);
     void show_top_level_message(const std::string &message, uint32_t period = top_message_timer_period);

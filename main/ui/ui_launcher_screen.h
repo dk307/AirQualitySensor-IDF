@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui_screen.h"
+#include "operations/operations.h"
 
 class ui_launcher_screen : public ui_screen
 {
@@ -9,7 +10,7 @@ class ui_launcher_screen : public ui_screen
     void init() override
     {
         ui_screen::init();
-        set_default_screen();
+        set_default_screen_color();
 
         lv_obj_add_event_cb(screen_, event_callback<ui_launcher_screen, &ui_launcher_screen::screen_callback>, LV_EVENT_ALL, this);
 
@@ -150,11 +151,11 @@ class ui_launcher_screen : public ui_screen
         {
         case confirm_type::restart:
             inter_screen_interface.show_top_level_message("Restarting", 60000);
-            // operations::instance.reboot();
+            operations::instance.reboot();
             break;
         case confirm_type::factory_reset:
             inter_screen_interface.show_top_level_message("Factory Reseting", 60000);
-            // operations::instance.factory_reset();
+            operations::instance.factory_reset();
             break;
         }
     }

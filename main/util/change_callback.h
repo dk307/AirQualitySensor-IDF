@@ -6,7 +6,6 @@
 #include <mutex>
 #include <vector>
 
-
 namespace esp32
 {
 class change_callback

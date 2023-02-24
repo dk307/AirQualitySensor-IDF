@@ -9,7 +9,7 @@ class ui_information_screen : public ui_screen
     void init() override
     {
         ui_screen::init();
-        set_default_screen();
+        set_default_screen_color();
 
         tab_view_ = lv_tabview_create(screen_, LV_DIR_LEFT, tab_width);
         lv_obj_set_style_text_font(screen_, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);

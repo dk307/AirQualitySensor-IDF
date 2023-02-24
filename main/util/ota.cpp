@@ -79,10 +79,10 @@ void ota_updator::end()
         ESP_LOGI(OPERATIONS_TAG, "SHA256 match after ota");
     }
 
-    // ret = esp_ota_set_boot_partition(updated_partition_);
-    // CHECK_THROW_OTA(ret, "Setting bootable partition failed");
+    ret = esp_ota_set_boot_partition(update_partition_);
+    CHECK_THROW_OTA(ret, "Setting bootable partition failed");
 
-    ESP_LOGI(OPERATIONS_TAG, "OTA update successfully installed");
+    ESP_LOGI(OPERATIONS_TAG, "OTA update successfully updated");
 }
 
 void ota_updator::abort()

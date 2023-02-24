@@ -17,7 +17,6 @@ class ota_updator
     void end();
     void abort();
     bool is_running();
-    bool has_errored();
 
   private:
     esp_ota_handle_t handle_{0};

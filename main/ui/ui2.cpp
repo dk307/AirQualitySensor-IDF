@@ -64,12 +64,12 @@ void ui::no_wifi_img_animation_cb(void *var, int32_t v)
     lv_obj_refresh_style(pThis->no_wifi_image_, LV_PART_ANY, LV_STYLE_PROP_ANY);
 }
 
-void ui::init()
+void ui::load_boot_screen()
 {
     // lv_log_register_print_cb(&lv_logger);
     lv_disp_t *dispp = lv_disp_get_default();
 
-    lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_LIME), true, LV_FONT_DEFAULT);
+    lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_LIME), false, LV_FONT_DEFAULT);
 
     lv_disp_set_theme(dispp, theme);
 
@@ -77,12 +77,11 @@ void ui::init()
     boot_screen_.show_screen();
 
     ESP_LOGI(UI_TAG, "Loaded boot screen");
+}
 
-    boot_screen_.set_boot_message("Loading from SD Card");
-
+void ui::init()
+{
     load_from_sd_card(); // might take some time
-
-    boot_screen_.set_boot_message("Loaded from SD Card");
 
     init_top_message();
     init_no_wifi_image();

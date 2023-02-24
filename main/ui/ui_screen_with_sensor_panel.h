@@ -22,7 +22,7 @@ class ui_screen_with_sensor_panel : public ui_screen
     void init() override
     {
         ui_screen::init();
-        set_default_screen();
+        set_default_screen_color();
     }
 
   protected:
