@@ -16,9 +16,6 @@ static const char WebUserNameId[] = "webusername";
 static const char WebPasswordId[] = "webpassword";
 static const char SsidId[] = "ssid";
 static const char SsidPasswordId[] = "ssidpassword";
-static const char NtpServerId[] = "ntpserver";
-static const char NtpServerRefreshIntervalId[] = "ntpserverrefreshinterval";
-static const char TimeZoneId[] = "timezone";
 static const char ScreenBrightnessId[] = "screenbrightness";
 
 config config::instance;
@@ -87,9 +84,6 @@ bool config::pre_begin()
     data.set_web_password(json_document[(WebPasswordId)].as<std::string>());
     data.set_wifi_ssid(json_document[(SsidId)].as<std::string>());
     data.set_wifi_password(json_document[(SsidPasswordId)].as<std::string>());
-    data.set_ntp_server(json_document[(NtpServerId)].as<std::string>());
-    data.set_timezone(static_cast<TimeZoneSupported>(json_document[(TimeZoneId)].as<uint64_t>()));
-    data.set_ntp_server_refresh_interval(json_document[(NtpServerRefreshIntervalId)].as<uint64_t>());
 
     const auto screen_brightness = json_document[ScreenBrightnessId];
     data.set_manual_screen_brightness(!screen_brightness.isNull() ? std::optional<uint8_t>(screen_brightness.as<uint8_t>()) : std::nullopt);
@@ -102,9 +96,6 @@ bool config::pre_begin()
     ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", data.get_wifi_ssid().c_str());
     ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", data.get_wifi_password().c_str());
     ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", data.get_manual_screen_brightness().value_or(0));
-    ESP_LOGI(CONFIG_TAG, "Ntp Server:%s", data.get_ntp_server().c_str());
-    ESP_LOGI(CONFIG_TAG, "Ntp Server Refresh Interval:%llu ms", data.get_ntp_server_refresh_interval());
-    ESP_LOGI(CONFIG_TAG, "Time zone:%d", static_cast<uint8_t>(data.get_timezone()));
 
     return true;
 }
@@ -133,10 +124,6 @@ void config::save_config()
     json_document[(WebPasswordId)] = data.get_web_password();
     json_document[(SsidId)] = data.get_wifi_ssid();
     json_document[(SsidPasswordId)] = data.get_wifi_password();
-
-    json_document[(NtpServerId)] = data.get_ntp_server();
-    json_document[(NtpServerRefreshIntervalId)] = data.get_ntp_server_refresh_interval();
-    json_document[(TimeZoneId)] = static_cast<uint64_t>(data.get_timezone());
 
     const auto brightness = data.get_manual_screen_brightness();
     if (brightness.has_value())

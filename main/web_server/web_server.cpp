@@ -505,30 +505,12 @@ void web_server::handle_other_settings_update(esp32::http_request *request)
     const auto arguments = request->get_form_url_encoded_arguments(
         {"hostName", "ntpServer", "ntpServerRefreshInterval", "timezone", "autoScreenBrightness", "screenBrightness"});
     auto &&host_name = arguments[0];
-    auto &&ntp_server = arguments[1];
-    auto &&ntp_server_refresh_interval = arguments[2];
-    auto &&timezone = arguments[3];
     auto &&auto_screen_brightness = arguments[4];
     auto &&screen_brightness = arguments[5];
 
     if (host_name.has_value())
     {
         config::instance.data.set_host_name(host_name.value());
-    }
-
-    if (ntp_server.has_value())
-    {
-        config::instance.data.set_ntp_server(ntp_server.value());
-    }
-
-    if (ntp_server_refresh_interval.has_value())
-    {
-        config::instance.data.set_ntp_server_refresh_interval(std::atoi(ntp_server_refresh_interval.value().c_str()));
-    }
-
-    if (timezone.has_value())
-    {
-        config::instance.data.set_timezone(static_cast<TimeZoneSupported>(std::atoi(timezone.value().c_str())));
     }
 
     if (!auto_screen_brightness.has_value())

@@ -220,4 +220,6 @@ void display::gui_task()
         vTaskDelay(pdMS_TO_TICKS(5000));
         esp_restart();
     }
+
+    vTaskDelete(NULL);
 }

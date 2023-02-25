@@ -1,17 +1,9 @@
 #include "wifi_sta.h"
 #include "logging/logging_tags.h"
 #include "util/helper.h"
-#include "operations/operations.h"
 
-#include <cstring>
 #include <esp_log.h>
 #include <mutex>
-
-
-const int CONNECTED_BIT = BIT0;
-const int DISCONNECTED_BIT = BIT1;
-const int GOTIP_BIT = BIT2;
-const int LOSTIP_BIT = BIT3;
 
 /// \brief Copies at min(SourceLen, size) bytes from source to target buffer.
 template <typename InputIt, typename SourceLen, typename T, std::size_t size>
@@ -21,12 +13,9 @@ void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[siz
     std::copy_n(source, to_copy, target);
 }
 
-wifi_sta::wifi_sta(const std::string &host_name, const std::string &ssid, const std::string &password)
-    : host_name_(host_name), ssid_(ssid), password_(password)
+wifi_sta::wifi_sta(wifi_events_notify &events_notify, const std::string &host_name, const std::string &ssid, const std::string &password)
+    : events_notify_(events_notify), host_name_(host_name), ssid_(ssid), password_(password)
 {
-    wifi_event_group_ = xEventGroupCreate();
-    configASSERT(wifi_event_group_);
-
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_wifi_event_));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_ip_event_));
 }
@@ -38,7 +27,6 @@ wifi_sta::~wifi_sta()
     esp_wifi_disconnect();
     esp_wifi_stop();
     esp_wifi_deinit();
-    vEventGroupDelete(wifi_event_group_);
 }
 
 void wifi_sta::set_host_name(const std::string &name)
@@ -93,7 +81,7 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t eve
         }
         else if (event_id == WIFI_EVENT_STA_CONNECTED)
         {
-            xEventGroupSetBits(wifi_event_group_, CONNECTED_BIT);
+            events_notify_.set_ap_connected();
         }
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
         {
@@ -104,29 +92,23 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t eve
             ip_info_.netmask = ip_info_.ip;
             ip_info_.gw = ip_info_.ip;
 
-            xEventGroupSetBits(wifi_event_group_, DISCONNECTED_BIT);
-
-            if (!operations::instance.get_reset_pending())
-            {
-                esp_wifi_stop();
-                connect();
-            }
+            events_notify_.set_ap_disconnected();
         }
     }
     else if (event_base == IP_EVENT)
     {
-        if (event_id == IP_EVENT_STA_GOT_IP || event_id == IP_EVENT_GOT_IP6 || event_id == IP_EVENT_ETH_GOT_IP)
+        if (event_id == IP_EVENT_STA_GOT_IP || event_id == IP_EVENT_ETH_GOT_IP)
         {
             ip_info_ = reinterpret_cast<ip_event_got_ip_t *>(event_data)->ip_info;
             ESP_LOGI(WIFI_TAG, "New IP Address : %d.%d.%d.%d", IP2STR(&ip_info_.ip));
-            xEventGroupSetBits(wifi_event_group_, GOTIP_BIT);
+            events_notify_.set_ip_connected();
         }
         else if (event_id == IP_EVENT_STA_LOST_IP)
         {
             ip_info_.ip.addr = 0;
             ip_info_.netmask = ip_info_.ip;
             ip_info_.gw = ip_info_.ip;
-            xEventGroupSetBits(wifi_event_group_, LOSTIP_BIT);
+            events_notify_.set_ip_lost();
         }
     }
 }
@@ -161,22 +143,6 @@ std::string wifi_sta::get_gateway()
 {
     std::array<char, 16> str_gw;
     return esp_ip4addr_ntoa(&ip_info_.gw, str_gw.data(), 16);
-}
-
-bool wifi_sta::wait_for_connect(TickType_t time)
-{
-    return xEventGroupWaitBits(wifi_event_group_, CONNECTED_BIT | GOTIP_BIT,
-                               pdTRUE, // clear before return
-                               pdTRUE, // wait for both
-                               time) == (CONNECTED_BIT | GOTIP_BIT);
-}
-
-bool wifi_sta::wait_for_disconnect(TickType_t time)
-{
-    return xEventGroupWaitBits(wifi_event_group_, DISCONNECTED_BIT | LOSTIP_BIT,
-                               pdTRUE,  // clear before return
-                               pdFALSE, // wait for any
-                               time) != (0);
 }
 
 std::string wifi_sta::get_disconnect_reason_str(uint8_t reason)

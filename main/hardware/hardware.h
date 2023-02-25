@@ -37,8 +37,7 @@ class hardware final : ui_interface
     void set_screen_brightness(uint8_t value) override;
     std::optional<sensor_value::value_type> get_sensor_value(sensor_id_index index) const override;
     sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index) override;
-    bool is_wifi_connected() override;
-    std::string get_wifi_status() override;
+    wifi_status get_wifi_status() override;
     bool clean_sps_30() override;
 
   private:

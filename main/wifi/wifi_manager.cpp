@@ -1,6 +1,7 @@
 #include "wifi_manager.h"
 #include "config/config_manager.h"
 #include "logging/logging_tags.h"
+#include "operations/operations.h"
 #include "util/helper.h"
 
 #include <esp_log.h>
@@ -11,12 +12,10 @@
 
 wifi_manager wifi_manager::instance;
 
-const int CONNECTED_BIT = BIT0;
-const int IP_BIT = BIT1;
-
 void wifi_manager::begin()
 {
     ESP_ERROR_CHECK(esp_netif_init());
+    config::instance.add_callback([this] { events_notify_.set_config_changed(); });
     wifi_task_.spawn_same("wifi task", 4096, esp32::task::default_priority);
 }
 
@@ -31,32 +30,73 @@ bool wifi_manager::connect_saved_wifi()
         ESP_LOGI(WIFI_TAG, "Hostname is %s", rfc_name.c_str());
         {
             std::lock_guard<esp32::semaphore> lock(data_mutex_);
-            wifi_instance_ = std::make_unique<wifi_sta>(rfc_name, ssid, pwd);
+            wifi_instance_ = std::make_unique<wifi_sta>(events_notify_, rfc_name, ssid, pwd);
         }
+        events_notify_.clear_connection_bits();
         wifi_instance_->connect_to_ap();
-        return wifi_instance_->wait_for_connect(pdMS_TO_TICKS(30000));
+        return events_notify_.wait_for_connect(pdMS_TO_TICKS(30000));
     }
     return false;
+}
+
+std::string wifi_manager::get_ssid()
+{
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    return (wifi_instance_) ? wifi_instance_->get_ssid() : std::string();
 }
 
 void wifi_manager::wifi_task_ftn()
 {
     ESP_LOGI(WIFI_TAG, "Started Wifi Task on Core:%d", xPortGetCoreID());
+    
     do
     {
-        connected_to_ap_ = connect_saved_wifi();
-        call_change_listeners();
-
-        if (connected_to_ap_)
+        // not connected or ssid changed
+        if (!connected_to_ap_ || (get_ssid() != config::instance.data.get_wifi_ssid()))
         {
-            wifi_instance_->wait_for_disconnect(portMAX_DELAY);
+            disconnect();
+            connected_to_ap_ = connect_saved_wifi();
+            call_change_listeners();
+        }
+
+        const auto bits_set = events_notify_.wait_for_any_event(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
+
+        if (!operations::instance.get_reset_pending())
+        {
+            // dont do anything if restarting
+            break;
+        }
+
+        if (bits_set & (wifi_events_notify::DISCONNECTED_BIT | wifi_events_notify::LOSTIP_BIT))
+        {
             connected_to_ap_ = false;
             call_change_listeners();
         }
 
-        vTaskDelay(pdMS_TO_TICKS(30000)); // 30s before retry to connect
+        if (bits_set & wifi_events_notify::CONFIG_CHANGED)
+        {
+            ESP_LOGD(WIFI_TAG, "Config Changed");
+        }
 
     } while (true);
+
+    vTaskDelete(NULL);
+}
+
+void wifi_manager::disconnect()
+{
+    connected_to_ap_ = false;
+    bool changed = false;
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        changed = wifi_instance_ != nullptr;
+        wifi_instance_.reset();
+    }
+
+    if (changed)
+    {
+        call_change_listeners();
+    }
 }
 
 std::string wifi_manager::get_rfc_952_host_name(const std::string &name)
@@ -108,29 +148,23 @@ std::string wifi_manager::get_rfc_name()
     return get_rfc_952_host_name(rfc_name);
 }
 
-bool wifi_manager::is_wifi_connected()
-{
-    return connected_to_ap_.load();
-}
-
-std::string wifi_manager::get_wifi_status()
+wifi_status wifi_manager::get_wifi_status()
 {
     std::lock_guard<esp32::semaphore> lock(data_mutex_);
-
-    if (connected_to_ap_)
+    if (connected_to_ap_ && wifi_instance_)
     {
         if ((wifi_instance_->get_local_ip() != 0))
         {
-            return esp32::string::sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
-                                          wifi_instance_->get_local_ip_address().c_str());
+            return {connected_to_ap_, esp32::string::sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
+                                                             wifi_instance_->get_local_ip_address().c_str())};
         }
         else
         {
-            return "Not connected to Wifi";
+            return {connected_to_ap_, "Not connected to Wifi"};
         }
     }
     else
     {
-        return "Not connected to Wifi";
+        return {connected_to_ap_, "Not connected to Wifi"};
     }
 }

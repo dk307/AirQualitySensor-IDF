@@ -8,15 +8,6 @@
 #include <mutex>
 #include <optional>
 
-enum class TimeZoneSupported
-{
-    USEastern = 0,
-    USCentral = 1,
-    USMountainTime = 2,
-    USArizona = 3,
-    USPacific = 4
-};
-
 struct config_data
 {
     config_data()
@@ -34,9 +25,6 @@ struct config_data
         web_password_ = defaultUserIDPassword;
         wifi_ssid_.clear();
         wifi_password_.clear();
-        ntp_server_.clear();
-        ntp_server_refresh_interval_ = 60 * 60 * 1000;
-        time_zone_ = TimeZoneSupported::USPacific;
         manual_screen_brightness_.reset();
     }
 
@@ -106,38 +94,6 @@ struct config_data
         manual_screen_brightness_ = screen_brightness;
     }
 
-    std::string get_ntp_server() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return ntp_server_;
-    }
-    void set_ntp_server(const std::string &ntp_server)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        ntp_server_ = ntp_server;
-    }
-
-    uint64_t get_ntp_server_refresh_interval() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return ntp_server_refresh_interval_;
-    }
-    void set_ntp_server_refresh_interval(uint64_t ntp_server_refresh_interval)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        ntp_server_refresh_interval_ = ntp_server_refresh_interval;
-    }
-
-    TimeZoneSupported get_timezone() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return time_zone_;
-    }
-    void set_timezone(TimeZoneSupported time_zone)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        time_zone_ = time_zone;
-    }
 
   private:
     std::string host_name_;
@@ -145,10 +101,6 @@ struct config_data
     std::string web_password_;
     std::string wifi_ssid_;
     std::string wifi_password_;
-
-    std::string ntp_server_;
-    uint64_t ntp_server_refresh_interval_;
-    TimeZoneSupported time_zone_;
 
     std::optional<uint8_t> manual_screen_brightness_;
 

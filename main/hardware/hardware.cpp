@@ -18,10 +18,6 @@
 
 hardware hardware::instance;
 
-static const char *timezone_strings[5]{
-    "USA Eastern", "USA Central", "USA Mountain time", "USA Arizona", "USA Pacific",
-};
-
 std::string hardware::get_up_time()
 {
     const auto now = esp_timer_get_time() / (1000 * 1000);
@@ -132,7 +128,7 @@ std::string get_reset_reason_string()
 
 std::string get_version()
 {
-    auto desc = esp_ota_get_app_description();
+    const auto desc = esp_app_get_description();
     return esp32::string::sprintf("%s %s %s", desc->date, desc->time, desc->version);
 }
 
@@ -208,9 +204,6 @@ ui_interface::information_table_type hardware::get_information_table(information
     case information_type::config:
         return {
             {"Hostname", config::instance.instance.data.get_host_name()},
-            {"NTP server", config::instance.instance.data.get_ntp_server()},
-            {"NTP server refresh interval", esp32::string::to_string(config::instance.instance.data.get_ntp_server_refresh_interval())},
-            {"Time zone", timezone_strings[static_cast<size_t>(config::instance.instance.data.get_timezone())]},
             {"SSID", config::instance.instance.data.get_wifi_ssid()},
             {"Web user name", config::instance.instance.data.get_web_user_name()},
             {"Screen brightness (%)",
@@ -232,12 +225,7 @@ sensor_history::sensor_history_snapshot hardware::get_sensor_detail_info(sensor_
     return (*sensors_history)[static_cast<size_t>(index)].get_snapshot(sensor_history::reads_per_minute);
 }
 
-bool hardware::is_wifi_connected()
-{
-    return wifi_manager::instance.is_wifi_connected();
-}
-
-std::string hardware::get_wifi_status()
+wifi_status hardware::get_wifi_status()
 {
     return wifi_manager::instance.get_wifi_status();
 }

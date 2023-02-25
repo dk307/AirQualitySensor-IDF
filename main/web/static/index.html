@@ -114,11 +114,6 @@
                         <div class="d-grid gap-3">
                             <div class="d-grid gap-2">
                                 <button type="button" class="btn btn-info" data-bs-toggle="modal"
-                                    data-bs-dismiss="modal" data-bs-target="#wifiSettingsModal">Wifi Settings</button>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-info" data-bs-toggle="modal"
                                     data-bs-dismiss="modal" data-bs-target="#websiteLoginModal">Website login</button>
                             </div>
 
@@ -166,43 +161,6 @@
             </div>
         </div>
         <!-- Settings Modal End-->
-
-        <!-- Wifi Settings Modal Start-->
-        <form class="needs-validation" action="/wifiupdate.handler" method="post">
-            <div class="modal fade" id="wifiSettingsModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Wifi Settings</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <div class="input-group mb-4">
-                                <label class="input-group-text" for="ssid">Wifi Network</label>
-                                <input type="text" id="ssid" name="ssid" class="form-control" required />
-                            </div>
-
-                            <div class="input-group mb-2 input-group">
-                                <label class="input-group-text" for="wifipassword">Wifi Password</label>
-                                <input type="password" id="wifipassword" name="wifipassword" class="form-control"
-                                    required />
-                                <div class="input-group-text">
-                                    <input class="form-check-input mt-0" type="checkbox" id="wifitooglepassword"
-                                        value="" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Save</button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </form>
-        <!-- Wifi Settings Modal End -->
 
         <!-- Confirm Action Modal Start-->
         <form id="confirmActionForm" method="post">
@@ -290,7 +248,7 @@
 
                         <div class="modal-body">
                             <div class="input-group mb-4">
-                                <label class="input-group-text" for="ssid">Username</label>
+                                <label class="input-group-text" for="webUserName">Username</label>
                                 <input type="text" id="webUserName" name="webUserName" class="form-control" required />
                             </div>
 
@@ -329,30 +287,6 @@
                                 <label class="input-group-text" for="hostName">Hostname</label>
                                 <input type="text" id="hostName" name="hostName" class="form-control" />
                             </div>
-
-                            <div class="input-group mb-4">
-                                <label class="input-group-text" for="ntpServer">NTP Server</label>
-                                <input type="text" id="ntpServer" name="ntpServer" class="form-control" required />
-                            </div>
-
-                            <div class="input-group mb-4">
-                                <label class="input-group-text" for="ntpServerRefreshInterval">NTP Sync Interval</label>
-                                <input type="number" id="ntpServerRefreshInterval" name="ntpServerRefreshInterval"
-                                    class="form-control" required />
-                                <label class="input-group-text" for="ntpServerRefreshInterval">seconds</label>
-                            </div>
-
-                            <div class="input-group mb-4">
-                                <label class="input-group-text" for="timezone">Timezone</label>
-                                <select class="form-select" id="timezone" name="timezone">
-                                    <option value="0">US Eastern Time</option>
-                                    <option value="1">US Central Time</option>
-                                    <option value="2">US Mountain Time</option>
-                                    <option value="3">US Arizona</option>
-                                    <option value="4">US Pacific Time</option>
-                                </select>
-                            </div>
-
 
                             <div class="mb-2 d-flex border rounded">
                                 <div class="row align-items-center">
@@ -610,16 +544,6 @@
         }
 
         $(document).ready(function () {
-            // Wifi Password toggle
-            $('#wifitooglepassword').change(function () {
-                let input = $('#wifipassword');
-                if (input.attr('type') == 'password') {
-                    input.attr('type', 'text');
-                } else {
-                    input.attr('type', 'password');
-                }
-            });
-
             // Login Password toggle
             $('#webPasswordToggle').change(function () {
                 let input = $('#webPassword');
@@ -628,21 +552,6 @@
                 } else {
                     input.attr('type', 'password');
                 }
-            });
-
-            document.getElementById('wifiSettingsModal').addEventListener('show.bs.modal', (e) => {
-                $.ajax({
-                    type: "GET",
-                    url: "/api/wifi/get",
-                    dataType: "json",
-                    success: function (data) {
-                        $('#ssid').val(data["ssid"]);
-                    },
-                    error: function () {
-                        $('#ssid').val('');
-                        console.warn('Failed to update');
-                    }
-                });
             });
 
             document.getElementById('websiteLoginModal').addEventListener('show.bs.modal', (e) => {
@@ -667,9 +576,6 @@
                     dataType: "json",
                     success: function (data) {
                         $('#hostName').val(data["hostname"]);
-                        $('#ntpServerRefreshInterval').val(data["ntpserverrefreshinterval"] / 1000);
-                        $('#ntpServer').val(data["ntpserver"]);
-                        $('#timezone').val(data["timezone"]);
 
                         var brightness = data["screenbrightness"];
                         if (brightness == null) {
@@ -778,10 +684,6 @@
             });
 
             //focus
-            $('#wifiSettingsModal').on('shown.bs.modal', function () {
-                $("#ssid").focus();
-            });
-
             $('#websiteLoginModal').on('shown.bs.modal', function () {
                 $("#webUserName").focus();
             });

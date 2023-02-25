@@ -2,19 +2,18 @@
 #pragma once
 
 #include "util/semaphore_lockable.h"
-#include <array>
-#include <atomic>
+#include "wifi/wifi_events_notify.h"
+
 #include <esp_event.h>
 #include <esp_netif.h>
 #include <esp_wifi.h>
-#include <freertos\event_groups.h>
 #include <string>
 
 /// Wifi sta class
 class wifi_sta
 {
   public:
-    wifi_sta(const std::string &host_name, const std::string &ssid, const std::string &password);
+    wifi_sta(wifi_events_notify &events_notify_, const std::string &host_name, const std::string &ssid, const std::string &password);
 
     wifi_sta(const wifi_sta &) = delete;
     wifi_sta(wifi_sta &&) = delete;
@@ -47,9 +46,6 @@ class wifi_sta
         return ssid_;
     }
 
-    bool wait_for_connect(TickType_t time);
-    bool wait_for_disconnect(TickType_t time);
-
   private:
     void connect() const;
     void close_if();
@@ -60,11 +56,10 @@ class wifi_sta
 
     static std::string get_disconnect_reason_str(uint8_t reason);
 
+    wifi_events_notify &events_notify_;
     std::string host_name_;
     const std::string ssid_;
     const std::string password_;
-
-    EventGroupHandle_t wifi_event_group_;
 
     esp_netif_t *interface_{nullptr};
 

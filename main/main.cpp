@@ -39,11 +39,6 @@ extern "C" void app_main(void)
         wifi_manager::instance.begin();
         web_server::instance.begin();
 
-        while (!wifi_manager::instance.is_wifi_connected())
-        {
-            vTaskDelay(pdMS_TO_TICKS(5000));
-        }
-
         http_init();
         httpd_handle_t http_server;
         http_start_webserver(&http_server);

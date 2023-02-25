@@ -185,7 +185,8 @@ void ui::wifi_changed()
 {
     if (!boot_screen_.is_active())
     {
-        if (ui_interface_instance_.is_wifi_connected())
+        const auto wifi_status = ui_interface_instance_.get_wifi_status();
+        if (wifi_status.connected)
         {
             ESP_LOGI(UI_TAG, "Hiding No wifi icon");
             lv_obj_add_flag(no_wifi_image_, LV_OBJ_FLAG_HIDDEN);
@@ -198,6 +199,6 @@ void ui::wifi_changed()
             lv_anim_timeline_start(no_wifi_image_animation_timeline_);
         }
 
-        show_top_level_message(ui_interface_instance_.get_wifi_status(), 5000);
+        show_top_level_message(wifi_status.status, 5000);
     }
 }

@@ -2,7 +2,9 @@
 
 #include "sensor/sensor.h"
 #include "ui_screen_with_sensor_panel.h"
+#include "util/helper.h"
 
+#include <esp_timer.h>
 
 class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 {
@@ -107,7 +109,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
     lv_obj_t *sensor_detail_screen_chart;
     lv_chart_series_t *sensor_detail_screen_chart_series;
     sensor_history::vector_history_t sensor_detail_screen_chart_series_data;
-    std::optional<time_t> sensor_detail_screen_chart_series_data_time;
+    uint64_t sensor_detail_screen_chart_series_time;
     const static uint8_t chart_total_x_ticks = 4;
 
     std::array<panel_and_label, 4> panel_and_labels;
@@ -267,35 +269,31 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
                 }
             }
         }
-        else if (dsc->part == LV_PART_TICKS && dsc->id == LV_CHART_AXIS_PRIMARY_X)
+        else if (dsc->part == LV_PART_TICKS && dsc->id == LV_CHART_AXIS_PRIMARY_X && dsc->text)
         {
-            if (sensor_detail_screen_chart_series_data_time.has_value() && sensor_detail_screen_chart_series_data.size())
+            if (sensor_detail_screen_chart_series_data.size())
             {
                 const auto data_interval_seconds = (sensor_detail_screen_chart_series_data.size() * 60);
                 const float interval = float(chart_total_x_ticks - 1 - dsc->value) / (chart_total_x_ticks - 1);
                 // ESP_LOGI("total seconds :%d,  Series length: %d,  %f", data_interval_seconds, sensor_detail_screen_chart_series_data.size(),
                 // interval);
-                const time_t tick_time = sensor_detail_screen_chart_series_data_time.value() - (data_interval_seconds * interval);
+                const auto seconds_ago =
+                    (data_interval_seconds * interval) + (esp_timer_get_time() / 1000 * 1000 - sensor_detail_screen_chart_series_time);
 
-                tm t{};
-                localtime_r(&tick_time, &t);
-                strftime(dsc->text, 32, "%I:%M%p", &t);
+                seconds_to_timestring(seconds_ago, dsc->text, dsc->text_length);
             }
             else
             {
-                strcpy(dsc->text, "-");
+                strncpy(dsc->text, "-", dsc->text_length);
             }
         }
     }
 
     void set_current_values(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
     {
-
         set_value_in_panel(panel_and_labels[label_and_unit_label_current_index], index, value);
 
-        // sensor_detail_screen_chart_series_data_time = ntp_time::instance.get_local_time();
-
-        time_t t = sensor_detail_screen_chart_series_data_time.value_or((time_t)0);
+        sensor_detail_screen_chart_series_time = esp_timer_get_time() / (1000 * 1000);
 
         auto &&sensor_info = ui_interface_instance_.get_sensor_detail_info(index);
 
@@ -328,6 +326,29 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
             sensor_detail_screen_chart_series_data.clear();
             lv_chart_set_type(sensor_detail_screen_chart, LV_CHART_TYPE_NONE);
+        }
+    }
+
+    void seconds_to_timestring(int seconds, char *buffer, uint32_t buffer_len)
+    {
+        if (seconds < 60)
+        {
+            snprintf(buffer, buffer_len, "%d sec ago", seconds);
+        }
+        else if (seconds < 60 * 60)
+        {
+            const auto minutes = static_cast<int>(seconds / 60.0);
+            snprintf(buffer, buffer_len, "%d min ago", minutes);
+        }
+        else if (seconds < 60 * 60 * 24)
+        {
+            const auto hours = static_cast<int>(seconds / (60.0 * 60.0));
+            snprintf(buffer, buffer_len, "%d hours ago", hours);
+        }
+        else
+        {
+            const auto days = static_cast<int>(seconds / (60.0 * 60.0 * 24.0));
+            snprintf(buffer, buffer_len, "%d days ago", days);
         }
     }
 };
