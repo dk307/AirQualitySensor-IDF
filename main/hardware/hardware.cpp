@@ -5,6 +5,7 @@
 #include "util/helper.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
+#include "hardware/sdcard.h"
 
 #include <esp_chip_info.h>
 #include <esp_efuse.h>
@@ -155,7 +156,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             {"Uptime", get_up_time()},
             {"Reset Reason", get_reset_reason_string()},
             {"Mac Address", get_default_mac_address()},
-            //{"SD Card Size", to_string(SD.cardSize() / (1024 * 1024), " MB")},
+            {"SD Card", sd_card::instance.get_info()},
             {"Screen Brightness", esp32::string::sprintf("%d %%", (display_instance_.get_brightness() * 100) / 256)},
             // {"SHT31 sensor status", get_sht31_status()},
             // {"SPS30 sensor status", get_sps30_error_register_status()},

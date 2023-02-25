@@ -78,7 +78,8 @@
         "complex": "cpp",
         "netfwd": "cpp",
         "locale": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "string.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

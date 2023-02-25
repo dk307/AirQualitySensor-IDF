@@ -17,8 +17,6 @@
 #include <esp_log.h>
 #include <nvs_flash.h>
 
-sd_card card;
-
 extern "C" void app_main(void)
 {
     esp_log_level_set(WEBSERVER_TAG, ESP_LOG_DEBUG);
@@ -32,7 +30,7 @@ extern "C" void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-        card.pre_begin();
+        sd_card::instance.pre_begin();
         config::instance.pre_begin();
         hardware::instance.pre_begin();
 

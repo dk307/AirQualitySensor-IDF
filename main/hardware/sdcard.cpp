@@ -1,6 +1,7 @@
 #include "sdcard.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
+#include "util/helper.h"
 
 #include <esp_log.h>
 #include <esp_vfs_fat.h>
@@ -9,6 +10,8 @@
 #define SD_MOSI GPIO_NUM_40
 #define SD_SCLK GPIO_NUM_39
 #define SD_CS GPIO_NUM_41
+
+sd_card sd_card::instance;
 
 void sd_card::pre_begin()
 {
@@ -54,5 +57,73 @@ void sd_card::pre_begin()
     }
     ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");
 
-    sdmmc_card_print_info(stdout, sd_card_);
+    ESP_LOGI(HARDWARE_TAG, "%s", get_info().c_str());
+}
+
+std::string sd_card::get_info()
+{
+    std::string info;
+    info.reserve(256);
+
+    bool print_scr = false;
+    bool print_csd = false;
+    const char *type;
+    info += "Name: " + std::string(sd_card_->cid.name) + "\n";
+    if (sd_card_->is_sdio)
+    {
+        type = "SDIO";
+        print_scr = true;
+        print_csd = true;
+    }
+    else if (sd_card_->is_mmc)
+    {
+        type = "MMC";
+        print_csd = true;
+    }
+    else
+    {
+        #define SD_OCR_SDHC_CAP                 (1<<30)
+        type = (sd_card_->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC";
+        print_csd = true;
+    }
+    info += "Type: " + std::string(type) + "\n";
+    if (sd_card_->max_freq_khz < 1000)
+    {
+        info += "Speed: " + std::to_string(sd_card_->max_freq_khz) + " kHz\n";
+    }
+    else
+    {
+        info += "Speed: " + std::to_string(sd_card_->max_freq_khz / 1000);
+        if (sd_card_->is_ddr)
+        {
+            info += ", DDR";
+        }
+        info += "\n";
+    }
+
+    info += "Size: " + std::to_string(((uint64_t)sd_card_->csd.capacity) * sd_card_->csd.sector_size / (1024 * 1024)) + "MB\n";
+
+    if (print_csd)
+    {
+        info += "CSD: ver=" + std::to_string(sd_card_->is_mmc ? sd_card_->csd.csd_ver : sd_card_->csd.csd_ver + 1) +
+                ", sector_size=" + std::to_string(sd_card_->csd.sector_size) + ", capacity=" + std::to_string(sd_card_->csd.capacity) +
+                ", read_bl_len=" + std::to_string(sd_card_->csd.read_block_len) + "\n";
+
+        if (sd_card_->is_mmc)
+        {
+            info += "EXT CSD: bus_width=" + std::to_string(1 << sd_card_->log_bus_width) + "\n";
+        }
+        else if (!sd_card_->is_sdio)
+        {
+            // make sure card is SD
+            info += "SSR: bus_width=" + std::to_string(sd_card_->ssr.cur_bus_width ? 4 : 1) + "\n";
+        }
+    }
+
+    if (print_scr)
+    {
+        info += "SCR: sd_spec=" + std::to_string(sd_card_->scr.sd_spec) + ", bus_width=" + std::to_string(sd_card_->scr.bus_width) + "\n";
+    }
+
+    return info;
 }
