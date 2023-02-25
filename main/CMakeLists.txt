@@ -1,5 +1,5 @@
 idf_component_register(SRCS "main.cpp" 
-                            "hardware/sdcard.cpp" 
+                            "hardware/sd_card.cpp" 
                             "hardware/lgfx_device.cpp" 
                             "hardware/display.cpp" 
                             "hardware/hardware.cpp" 

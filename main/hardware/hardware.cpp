@@ -5,7 +5,7 @@
 #include "util/helper.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
-#include "hardware/sdcard.h"
+#include "hardware/sd_card.h"
 
 #include <esp_chip_info.h>
 #include <esp_efuse.h>

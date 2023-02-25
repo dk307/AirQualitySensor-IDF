@@ -11,7 +11,7 @@
 
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
-#include "hardware/sdcard.h"
+#include "hardware/sd_card.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
 #include "util/async_web_server/http_request.h"

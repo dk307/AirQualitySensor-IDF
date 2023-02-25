@@ -5,7 +5,7 @@
 
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
-#include "hardware/sdcard.h"
+#include "hardware/sd_card.h"
 #include "http_ota/http.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
@@ -21,6 +21,7 @@ extern "C" void app_main(void)
 {
     esp_log_level_set(WEBSERVER_TAG, ESP_LOG_DEBUG);
     esp_log_level_set(DISPLAY_TAG, ESP_LOG_DEBUG);
+    esp_log_level_set(WIFI_TAG, ESP_LOG_DEBUG);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGD(OPERATIONS_TAG, "Starting ....");

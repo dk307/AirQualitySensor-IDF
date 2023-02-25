@@ -69,7 +69,7 @@ void ui::load_boot_screen()
     // lv_log_register_print_cb(&lv_logger);
     lv_disp_t *dispp = lv_disp_get_default();
 
-    lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_LIME), false, LV_FONT_DEFAULT);
+    lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_LIME), true, LV_FONT_DEFAULT);
 
     lv_disp_set_theme(dispp, theme);
 

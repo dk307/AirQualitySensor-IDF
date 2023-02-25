@@ -48,7 +48,7 @@ std::string wifi_manager::get_ssid()
 void wifi_manager::wifi_task_ftn()
 {
     ESP_LOGI(WIFI_TAG, "Started Wifi Task on Core:%d", xPortGetCoreID());
-    
+
     do
     {
         // not connected or ssid changed
@@ -61,14 +61,16 @@ void wifi_manager::wifi_task_ftn()
 
         const auto bits_set = events_notify_.wait_for_any_event(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
 
-        if (!operations::instance.get_reset_pending())
+        if (operations::instance.get_reset_pending())
         {
-            // dont do anything if restarting
+             // dont do anything if restarting
+            ESP_LOGI(WIFI_TAG, "Reset pending, wifi disconnect ignore");
             break;
         }
 
         if (bits_set & (wifi_events_notify::DISCONNECTED_BIT | wifi_events_notify::LOSTIP_BIT))
         {
+            ESP_LOGI(WIFI_TAG, "Wifi disconnected");
             connected_to_ap_ = false;
             call_change_listeners();
         }
