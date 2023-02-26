@@ -19,9 +19,9 @@
 
 extern "C" void app_main(void)
 {
-    esp_log_level_set(WEBSERVER_TAG, ESP_LOG_DEBUG);
-    esp_log_level_set(DISPLAY_TAG, ESP_LOG_DEBUG);
-    esp_log_level_set(WIFI_TAG, ESP_LOG_DEBUG);
+    esp_log_level_set(HARDWARE_TAG, ESP_LOG_DEBUG);
+    // esp_log_level_set(DISPLAY_TAG, ESP_LOG_DEBUG);
+    // esp_log_level_set(WIFI_TAG, ESP_LOG_DEBUG);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGD(OPERATIONS_TAG, "Starting ....");

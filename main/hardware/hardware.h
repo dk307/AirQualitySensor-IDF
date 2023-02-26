@@ -5,6 +5,8 @@
 #include "ui/ui_interface.h"
 #include "util/psram_allocator.h"
 
+#include "hardware/sps30/sps30.h"
+
 #include <bh1750.h>
 #include <i2cdev.h>
 #include <sht3x.h>
@@ -40,6 +42,9 @@ class hardware final : ui_interface
     wifi_status get_wifi_status() override;
     bool clean_sps_30() override;
 
+    esp_err_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count);
+    esp_err_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);
+
   private:
     hardware() : sensor_refresh_task(std::bind(&hardware::sensor_task_ftn, this))
     {
@@ -55,20 +60,19 @@ class hardware final : ui_interface
 
     esp32::task sensor_refresh_task;
 
-    // using light_sensor_values_t = sensor_history_t<sensor_value::value_type, 10>;
-    // light_sensor_values_t light_sensor_values;
+    using light_sensor_values_t = sensor_history_t<sensor_value::value_type, 10>;
+    light_sensor_values_t light_sensor_values;
 
     const gpio_num_t SDAWire = GPIO_NUM_11;
     const gpio_num_t SCLWire = GPIO_NUM_10;
 
     // // SHT31
-    // const int sht31_i2c_address = 0x44;
     sht3x_t sht3x_sensor{};
     uint64_t sht3x_sensor_last_read = 0;
-    // int sht31_last_error{0xFF};
 
     // // SPS 30
-    // uint32_t sps30_sensor_last_read = 0;
+    i2c_dev_t sps30_sensor{};
+    uint64_t sps30_sensor_last_read = 0;
 
     // BH1750
     i2c_dev_t bh1750_sensor{};
@@ -76,17 +80,23 @@ class hardware final : ui_interface
 
     void set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value);
 
-    static std::string get_up_time();
     void read_bh1750_sensor();
     void read_sht3x_sensor();
-    // void read_sps30_sensor();
-    // std::string get_sht31_status();
-    // std::string get_sps30_error_register_status();
-    // uint8_t lux_to_intensity(sensor_value::value_type lux);
-    // void set_auto_display_brightness();
+    esp_err_t sps30_i2c_init();
+    void read_sps30_sensor();
+    uint8_t lux_to_intensity(sensor_value::value_type lux);
+    void set_auto_display_brightness();
 
     static std::optional<sensor_value::value_type> round_value(float val, int places = 0);
-
-    void i2c_master_init();
     void sensor_task_ftn();
+
+    // info
+    static std::string get_default_mac_address();
+    static std::string get_version();
+    static std::string get_reset_reason_string();
+    static std::string get_chip_details();
+    static std::string get_heap_info_str(uint32_t caps);
+    static std::string get_up_time();
+
+    std::string get_sps30_error_register_status();
 };

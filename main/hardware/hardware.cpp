@@ -4,8 +4,8 @@
 #include "hardware/sd_card.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
-#include "util/misc.h"
 #include "util/helper.h"
+#include "util/misc.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
 
@@ -22,16 +22,6 @@
 
 hardware hardware::instance;
 
-std::string hardware::get_up_time()
-{
-    const auto now = esp_timer_get_time() / (1000 * 1000);
-    const uint8_t hour = now / 3600;
-    const uint8_t mins = (now % 3600) / 60;
-    const uint8_t sec = (now % 3600) % 60;
-
-    return esp32::string::sprintf("%02d hours %02d mins %02d secs", hour, mins, sec);
-}
-
 void hardware::set_screen_brightness(uint8_t value)
 {
     if (current_brightness_ != value)
@@ -40,182 +30,6 @@ void hardware::set_screen_brightness(uint8_t value)
         display_instance_.set_brightness(std::max<uint8_t>(30, value));
         current_brightness_ = value;
     }
-}
-
-std::string get_heap_info_str(uint32_t caps)
-{
-    multi_heap_info_t info;
-    heap_caps_get_info(&info, caps);
-    return esp32::string::sprintf("%s free out of %s", esp32::string::stringify_size(info.total_free_bytes, 1).c_str(),
-                                  esp32::string::stringify_size(info.total_allocated_bytes + info.total_free_bytes, 1).c_str());
-}
-
-std::string get_chip_details()
-{
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-
-    std::string model;
-    switch (chip_info.model)
-    {
-    case CHIP_ESP32:
-        model = "ESP32";
-        break;
-    case CHIP_ESP32S2:
-        model = "ESP32-S2";
-        break;
-    case CHIP_ESP32S3:
-        model = "ESP32-S3";
-        break;
-    case CHIP_ESP32C3:
-        model = "ESP32-C3";
-        break;
-    default:
-        model = "Unknown";
-    }
-
-    std::string flash_size_str;
-    uint32_t flash_size = 0;
-    if (esp_flash_get_size(NULL, &flash_size) != ESP_OK)
-    {
-        ESP_LOGE(OPERATIONS_TAG, "Get flash size failed");
-        flash_size_str = "Unknown";
-    }
-    else
-    {
-        flash_size_str = esp32::string::stringify_size(flash_size);
-    }
-
-    return esp32::string::sprintf("%s Rev. (%d) Cores: %d Flash size: %s", model.c_str(), chip_info.revision, static_cast<int>(chip_info.cores),
-                                  flash_size_str.c_str());
-}
-
-std::string get_reset_reason_string()
-{
-    const auto reset_reason = esp_reset_reason();
-    std::string reset_reason_string;
-    switch (reset_reason)
-    {
-    case ESP_RST_POWERON:
-        reset_reason_string = "Power-on reset";
-        break;
-    case ESP_RST_EXT:
-        reset_reason_string = "Reset caused by external pin";
-        break;
-    case ESP_RST_SW:
-        reset_reason_string = "Software reset";
-        break;
-    case ESP_RST_PANIC:
-        reset_reason_string = "Watchdog timer expired or exception occurred";
-        break;
-    case ESP_RST_INT_WDT:
-        reset_reason_string = "Internal Watchdog Timer expired";
-        break;
-    case ESP_RST_TASK_WDT:
-        reset_reason_string = "Task Watchdog Timer expired";
-        break;
-    case ESP_RST_DEEPSLEEP:
-        reset_reason_string = "Wakeup from deep sleep";
-        break;
-    case ESP_RST_BROWNOUT:
-        reset_reason_string = "Brownout reset";
-        break;
-    case ESP_RST_SDIO:
-        reset_reason_string = "Reset caused by SDIO";
-        break;
-    default:
-        reset_reason_string = "Unknown reset reason";
-        break;
-    }
-    return reset_reason_string;
-}
-
-std::string get_version()
-{
-    const auto desc = esp_app_get_description();
-    return esp32::string::sprintf("%s %s %s", desc->date, desc->time, desc->version);
-}
-
-std::string get_default_mac_address()
-{
-    uint8_t mac[6];
-    esp_efuse_mac_get_default(mac);
-    char mac_address[18];
-    sprintf(mac_address, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    return std::string(mac_address);
-}
-
-ui_interface::information_table_type hardware::get_information_table(information_type type)
-{
-    switch (type)
-    {
-    case information_type::system:
-        return {
-            {"Version", get_version()},
-            {"IDF Version", std::string(esp_get_idf_version())},
-            {"Chip", get_chip_details()},
-            {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},
-            {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
-            {"Uptime", get_up_time()},
-            {"Reset Reason", get_reset_reason_string()},
-            {"Mac Address", get_default_mac_address()},
-            {"SD Card", sd_card::instance.get_info()},
-            {"Screen Brightness", esp32::string::sprintf("%d %%", (display_instance_.get_brightness() * 100) / 256)},
-            // {"SHT31 sensor status", get_sht31_status()},
-            // {"SPS30 sensor status", get_sps30_error_register_status()},
-        };
-
-    case information_type::network: {
-        ui_interface::information_table_type table;
-
-        table.push_back({"Mode", "STA Mode"});
-
-        wifi_ap_record_t info;
-        const auto result_info = esp_wifi_sta_get_ap_info(&info);
-        if (result_info != ESP_OK)
-        {
-            table.push_back({"Error", esp32::string::sprintf("failed to get info with error:%d", result_info)});
-        }
-        else
-        {
-            // IP2STR()
-            // table.push_back({"Hostname", WiFi.getHostname()});
-            // table.push_back({"IP address(wifi)", WiFi.localIP().toString()});
-            table.push_back({"Ssid", std::string(reinterpret_cast<char *>(&info.ssid[0]))});
-            table.push_back({"RSSI", esp32::string::sprintf("%d db", info.rssi)});
-            // table.push_back({"Gateway address", WiFi.gatewayIP().toString()});
-            // table.push_back({"Subnet", WiFi.subnetMask().toString()});
-            // table.push_back({"DNS", WiFi.dnsIP().toString()});
-        }
-
-        // table.push_back({"Mac Address", wifi_sta::get_mac_address()});
-
-        // auto local_time_now = ntp_time::instance.get_local_time();
-        // if (local_time_now.has_value())
-        // {
-        //     char value[64];
-        //     tm tm;
-        //     gmtime_r(&local_time_now.value(), &tm);
-        //     table.push_back({"Local time", asctime_r(&tm, value)});
-        // }
-        // else
-        // {
-        table.push_back({"Local time", "Not Synced"});
-        // }
-
-        return table;
-    }
-    case information_type::config:
-        return {
-            {"Hostname", config::instance.instance.data.get_host_name()},
-            {"SSID", config::instance.instance.data.get_wifi_ssid()},
-            {"Web user name", config::instance.instance.data.get_web_user_name()},
-            {"Screen brightness (%)",
-             esp32::string::to_string((100 * config::instance.instance.data.get_manual_screen_brightness().value_or(0)) / 256)},
-        };
-        break;
-    }
-    return {};
 }
 
 std::optional<sensor_value::value_type> hardware::get_sensor_value(sensor_id_index index) const
@@ -236,67 +50,28 @@ wifi_status hardware::get_wifi_status()
 
 bool hardware::clean_sps_30()
 {
-    // const auto sps_error = sps30_start_manual_fan_cleaning();
-    // if (sps_error != NO_ERROR)
-    // {
-    //     ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 manual clean up failed with :%d", sps_error);
-    //     return false;
-    // }
-    // else
-    // {
-    //     ESP_LOGI(SENSOR_SPS30_TAG, "SPS30 manual cleanup started");
-    //     return true;
-    // }
+    const auto sps_error = sps30_start_manual_fan_cleaning();
+    if (sps_error != NO_ERROR)
+    {
+        ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 manual clean up failed with :%d", sps_error);
+        return false;
+    }
+    else
+    {
+        ESP_LOGI(SENSOR_SPS30_TAG, "SPS30 manual cleanup started");
+        return true;
+    }
     return true;
 }
 
 void hardware::pre_begin()
 {
-
     display_instance_.start();
 
-    i2c_master_init();
+    const auto err = i2cdev_init();
+    CHECK_THROW_INIT(err, "i2cdev_init failed");
 
     sensor_refresh_task.spawn_pinned("sensor task", 4196, esp32::task::default_priority, 1);
-
-    // scan_i2c_bus();
-
-    // if (!bh1750_sensor.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire1))
-    // {
-    //     ESP_LOGI(SENSOR_BH1750_TAG, "Failed to start BH 1750");
-    // }
-    // else
-    // {
-    //     ESP_LOGI(SENSOR_BH1750_TAG, "BH1750 Initialized");
-    // }
-
-    // if (!sht31_sensor.begin(sht31_i2c_address, &Wire1)) // Wire is already used by touch i2c
-    // {
-    //     ESP_LOGE(SENSOR_SHT31_TAG, "Failed to start SHT31");
-    // }
-    // else
-    // {
-    //     ESP_LOGI(SENSOR_SHT31_TAG, "SHT31 Initialized");
-    //     sht31_sensor.heatOff();
-    // }
-
-    // const auto sps_error = sps30_probe();
-    // if (sps_error == NO_ERROR)
-    // {
-    //     ESP_LOGI(SENSOR_SPS30_TAG, "SPS30 Found");
-
-    //     const auto sps_error1 = sps30_start_measurement();
-    //     if (sps_error1 != NO_ERROR)
-    //     {
-    //         ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 start measurement failed with :%d", sps_error1);
-    //     }
-    // }
-    // else
-    // {
-    //     ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 Probe failed with :%d", sps_error);
-    // }
-
-    // set_auto_display_brightness();
 }
 
 void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
@@ -321,8 +96,30 @@ void hardware::sensor_task_ftn()
     {
         ESP_LOGI(HARDWARE_TAG, "Sensor task started on core:%d", xPortGetCoreID());
 
+        // sps30
+        auto error = sps30_i2c_init();
+        CHECK_THROW_INIT(error, "sps30_i2c_init failed");
+
+        const auto sps_error = sps30_probe();
+        if (sps_error == NO_ERROR)
+        {
+            ESP_LOGI(SENSOR_SPS30_TAG, "SPS30 Found");
+
+            const auto sps_error1 = sps30_start_measurement();
+            if (sps_error1 != NO_ERROR)
+            {
+                ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 start measurement failed with :%d", sps_error1);
+                CHECK_THROW_INIT(ESP_FAIL, "sps30 init failed");
+            }
+        }
+        else
+        {
+            ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 Probe failed with :%d", sps_error);
+            CHECK_THROW_INIT(ESP_FAIL, "sps30 init failed");
+        }
+
         // bh1750
-        auto error = bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire);
+        error = bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire);
         CHECK_THROW_INIT(error, "bh1750_init_desc failed");
 
         error = bh1750_setup(&bh1750_sensor, BH1750_MODE_CONTINUOUS, BH1750_RES_HIGH);
@@ -337,19 +134,18 @@ void hardware::sensor_task_ftn()
         error = sht3x_init(&sht3x_sensor);
         CHECK_THROW_INIT(error, "sht3x_init failed");
 
-        const auto sht3x_eait = sht3x_get_measurement_duration(SHT3X_HIGH);
+        const auto sht3x_wait = sht3x_get_measurement_duration(SHT3X_HIGH);
 
         // Wait until all sensors are ready
-        vTaskDelay(std::max<uint64_t>(bh1750_wait, sht3x_eait));
+        vTaskDelay(std::max<uint64_t>(bh1750_wait, sht3x_wait));
 
         do
         {
             read_bh1750_sensor();
             read_sht3x_sensor();
-            //  read_sps30_sensor();
-            // set_auto_display_brightness();
+            read_sps30_sensor();
+            set_auto_display_brightness();
 
-            // wait atleast min(180ms for bh1750, )
             vTaskDelay(500);
         } while (true);
 
@@ -358,7 +154,7 @@ void hardware::sensor_task_ftn()
     catch (const std::exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
-        // Long wait is intentional to fix hardware
+        // Long wait is intentional to debug hardware iisues
         vTaskDelay(pdMS_TO_TICKS(60 * 1000));
         operations::instance.reboot();
     }
@@ -376,6 +172,7 @@ void hardware::read_bh1750_sensor()
     else
     {
         lux = level_lux;
+        light_sensor_values.add_value(level_lux);
     }
 
     const auto now = esp32::millis();
@@ -423,65 +220,65 @@ void hardware::read_sht3x_sensor()
     }
 }
 
-// void hardware::read_sps30_sensor()
-// {
-//     const auto now = millis();
-//     if (now - sps30_sensor_last_read >= sensor_history::sensor_interval)
-//     {
+void hardware::read_sps30_sensor()
+{
+    const auto now = esp32::millis();
+    if (now - sps30_sensor_last_read >= sensor_history::sensor_interval)
+    {
 
-//         bool read = false;
-//         uint16_t ready = 0;
+        bool read = false;
+        uint16_t ready = 0;
 
-//         auto error = sps30_read_data_ready(&ready);
+        auto error = sps30_read_data_ready(&ready);
 
-//         if ((error == NO_ERROR) && ready)
-//         {
-//             sps30_measurement m{};
-//             error = sps30_read_measurement(&m);
-//             if (error == NO_ERROR)
-//             {
-//                 sps30_sensor_last_read = now;
-//                 read = true;
+        if ((error == NO_ERROR) && ready)
+        {
+            sps30_measurement m{};
+            error = sps30_read_measurement(&m);
+            if (error == NO_ERROR)
+            {
+                sps30_sensor_last_read = now;
+                read = true;
 
-//                 const auto val_10 = round_value(m.mc_10p0);
-//                 const auto val_1 = round_value(m.mc_1p0);
-//                 const auto val_2_5 = round_value(m.mc_2p5);
-//                 const auto val_4 = round_value(m.mc_4p0);
-//                 const auto val_p = round_value(m.typical_particle_size);
+                const auto val_10 = round_value(m.mc_10p0);
+                const auto val_1 = round_value(m.mc_1p0);
+                const auto val_2_5 = round_value(m.mc_2p5);
+                const auto val_4 = round_value(m.mc_4p0);
+                const auto val_p = round_value(m.typical_particle_size);
 
-//                 ESP_LOGI(SENSOR_SPS30_TAG, "Setting SPS30 sensor values PM2.5:%d, PM1:%d, PM4:%d, PM10:%d, Particle Size:%d",
-//                          val_2_5.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-//                          val_1.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-//                          val_4.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-//                          val_10.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-//                          val_p.value_or(std::numeric_limits<sensor_value::value_type>::max()));
+                ESP_LOGI(SENSOR_SPS30_TAG, "Setting SPS30 sensor values PM2.5:%d, PM1:%d, PM4:%d, PM10:%d, Particle Size:%d",
+                         val_2_5.value_or(std::numeric_limits<sensor_value::value_type>::max()),
+                         val_1.value_or(std::numeric_limits<sensor_value::value_type>::max()),
+                         val_4.value_or(std::numeric_limits<sensor_value::value_type>::max()),
+                         val_10.value_or(std::numeric_limits<sensor_value::value_type>::max()),
+                         val_p.value_or(std::numeric_limits<sensor_value::value_type>::max()));
 
-//                 set_sensor_value(sensor_id_index::pm_10, val_10);
-//                 set_sensor_value(sensor_id_index::pm_1, val_1);
-//                 set_sensor_value(sensor_id_index::pm_2_5, val_2_5);
-//                 set_sensor_value(sensor_id_index::pm_4, val_4);
-//                 set_sensor_value(sensor_id_index::typical_particle_size, val_p);
-//             }
-//             else
-//             {
-//                 ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS sensor with failed to read measurement error:0x%x", error);
-//             }
-//         }
-//         else
-//         {
-//             ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS sensor with data not ready error:0x%x", error);
-//         }
+                set_sensor_value(sensor_id_index::pm_10, val_10);
+                set_sensor_value(sensor_id_index::pm_1, val_1);
+                set_sensor_value(sensor_id_index::pm_2_5, val_2_5);
+                set_sensor_value(sensor_id_index::pm_4, val_4);
+                set_sensor_value(sensor_id_index::typical_particle_size, val_p);
+            }
+            else
+            {
+                ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
+            }
+        }
+        else
+        {
+            ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with data not ready error:0x%x", error);
+        }
 
-//         if (!read)
-//         {
-//             set_sensor_value(sensor_id_index::pm_10, std::nullopt);
-//             set_sensor_value(sensor_id_index::pm_1, std::nullopt);
-//             set_sensor_value(sensor_id_index::pm_2_5, std::nullopt);
-//             set_sensor_value(sensor_id_index::pm_4, std::nullopt);
-//             set_sensor_value(sensor_id_index::typical_particle_size, std::nullopt);
-//         }
-//     }
-// }
+        if (!read)
+        {
+            set_sensor_value(sensor_id_index::pm_10, std::nullopt);
+            set_sensor_value(sensor_id_index::pm_1, std::nullopt);
+            set_sensor_value(sensor_id_index::pm_2_5, std::nullopt);
+            set_sensor_value(sensor_id_index::pm_4, std::nullopt);
+            set_sensor_value(sensor_id_index::typical_particle_size, std::nullopt);
+        }
+    }
+}
 
 std::optional<sensor_value::value_type> hardware::round_value(float val, int places)
 {
@@ -495,155 +292,59 @@ std::optional<sensor_value::value_type> hardware::round_value(float val, int pla
     return std::nullopt;
 }
 
-// void hardware::scan_i2c_bus()
-// {
-//     ESP_LOGD(HARDWARE_TAG, "Scanning...");
-
-//     auto nDevices = 0;
-//     for (auto address = 1; address < 127; address++)
-//     {
-//         // The i2c_scanner uses the return value of
-//         // the Write.endTransmisstion to see if
-//         // a device did acknowledge to the address.
-//         Wire1.beginTransmission(address);
-//         auto error = Wire1.endTransmission();
-
-//         if (error == 0)
-//         {
-//             ESP_LOGI(HARDWARE_TAG, "I2C device found at address 0x%x", address);
-//             nDevices++;
-//         }
-//     }
-//     if (nDevices == 0)
-//     {
-//         ESP_LOGI(HARDWARE_TAG, "No I2C devices found");
-//     }
-// }
-
-// std::string hardware::get_sht31_status()
-// {
-//     const auto status = sht31_sensor.readStatus();
-
-//     if (status == 0xFFFF)
-//     {
-//         return "Not found.";
-//     }
-
-//     StreamString stream;
-//     if (bitRead(status, 1))
-//     {
-//         stream.print("Checksum of last write transfer failed.");
-//     }
-
-//     if (bitRead(status, 2))
-//     {
-//         stream.print("Last command failed.");
-//     }
-
-//     // if (bitRead(status, 4))
-//     // {
-//     //     stream.print("System Reset Detected.");
-//     // }
-
-//     if (bitRead(status, 0x0d))
-//     {
-//         stream.print("Heater On.");
-//     }
-
-//     if (sht31_last_error != SHT31_OK)
-//     {
-//         stream.printf("Last Error:%x", sht31_last_error);
-//     }
-
-//     if (stream.isEmpty())
-//     {
-//         stream.print("Normal");
-//     }
-
-//     return stream;
-// }
-
-// std::string hardware::get_sps30_error_register_status()
-// {
-//     uint32_t device_status_flags{};
-//     const auto error = sps30_read_device_status_register(&device_status_flags);
-
-//     StreamString stream;
-//     if (error != NO_ERROR)
-//     {
-//         stream.printf("Failed to read status with 0x%x", error);
-//         return stream;
-//     }
-
-//     if (device_status_flags & SPS30_DEVICE_STATUS_FAN_ERROR_MASK)
-//     {
-//         stream.print("Fan Error.");
-//     }
-//     if (device_status_flags & SPS30_DEVICE_STATUS_LASER_ERROR_MASK)
-//     {
-//         stream.print("Laser Error.");
-//     }
-//     if (device_status_flags & SPS30_DEVICE_STATUS_FAN_SPEED_WARNING)
-//     {
-//         stream.print("Fan Speed Warning.");
-//     }
-
-//     if (stream.isEmpty())
-//     {
-//         stream.print("Normal");
-//     }
-//     return stream;
-// }
-
-// uint8_t hardware::lux_to_intensity(sensor_value::value_type lux)
-// {
-//     // https://learn.microsoft.com/en-us/windows/win32/sensorsapi/understanding-and-interpreting-lux-values
-//     const auto intensity = (std::log10(lux) / 5) * 255;
-//     return intensity;
-// }
-
-// void hardware::set_auto_display_brightness()
-// {
-//     const auto config_brightness = config::instance.data.get_manual_screen_brightness();
-
-//     uint8_t required_brightness;
-//     if (config_brightness.has_value())
-//     {
-//         required_brightness = config_brightness.value();
-//     }
-//     else
-//     {
-//         const auto avg_lux = light_sensor_values.get_average();
-//         ESP_LOGV(SENSOR_BH1750_TAG, "Average lux:%d", avg_lux.value_or(128));
-//         required_brightness = lux_to_intensity(avg_lux.value_or(128));
-//     }
-
-//     set_screen_brightness(required_brightness);
-// }
-
-void hardware::i2c_master_init()
+uint8_t hardware::lux_to_intensity(sensor_value::value_type lux)
 {
-    // const i2c_port_t bus_num = I2C_NUM_1;
+    // https://learn.microsoft.com/en-us/windows/win32/sensorsapi/understanding-and-interpreting-lux-values
+    const auto intensity = (std::log10(lux) / 5) * 255;
+    return intensity;
+}
 
-    // i2c_config_t conf{};
-    // conf.mode = I2C_MODE_MASTER;
-    // conf.sda_io_num = SDAWire;
-    // conf.scl_io_num = SCLWire;
-    // conf.sda_pullup_en = false;
-    // conf.scl_pullup_en = false;
-    // conf.master.clk_speed = 100000L;
+void hardware::set_auto_display_brightness()
+{
+    const auto config_brightness = config::instance.data.get_manual_screen_brightness();
 
-    // auto err = i2c_param_config(bus_num, &conf);
-    // CHECK_THROW(err, "i2c_param_config failed", esp32::init_failure_exception);
+    uint8_t required_brightness;
+    if (config_brightness.has_value())
+    {
+        required_brightness = config_brightness.value();
+    }
+    else
+    {
+        const auto avg_lux = light_sensor_values.get_average();
+        ESP_LOGV(SENSOR_BH1750_TAG, "Average lux:%d", avg_lux.value_or(128));
+        required_brightness = lux_to_intensity(avg_lux.value_or(128));
+    }
 
-    // err = i2c_driver_install(bus_num, conf.mode, 0, 0, 0);
-    // CHECK_THROW(err, "i2c_driver_install failed", esp32::init_failure_exception);
+    set_screen_brightness(required_brightness);
+}
 
-    // // err = i2c_set_timeout(bus_num, I2C_LL_MAX_TIMEOUT);
-    // // CHECK_THROW(err, "i2c_set_timeout failed", esp32::init_failure_exception);
+esp_err_t hardware::sps30_i2c_init()
+{
+    sps30_sensor.addr = SPS30_I2C_ADDRESS;
+    sps30_sensor.port = I2C_NUM_1;
+    sps30_sensor.cfg.mode = I2C_MODE_MASTER;
+    sps30_sensor.cfg.sda_io_num = SDAWire;
+    sps30_sensor.cfg.scl_io_num = SCLWire;
+    sps30_sensor.cfg.master.clk_speed = 100 * 1000; // 100 Kbits
+    ESP_ERROR_CHECK(i2c_dev_create_mutex(&sps30_sensor));
 
-    // ESP_LOGI(HARDWARE_TAG, "I2C Bus %d initialized", bus_num);
+    return ESP_OK;
+}
 
-    const auto err = i2cdev_init();
-    CHECK_THROW_INIT(err, "i2cdev_init failed");
+esp_err_t hardware::sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count)
+{
+    sps30_sensor.addr = address;
+    I2C_DEV_TAKE_MUTEX(&sps30_sensor);
+    I2C_DEV_CHECK(&sps30_sensor, i2c_dev_read(&sps30_sensor, NULL, 0, data, count));
+    I2C_DEV_GIVE_MUTEX(&sps30_sensor);
+    return ESP_OK;
+}
+
+esp_err_t hardware::sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count)
+{
+    sps30_sensor.addr = address;
+    I2C_DEV_TAKE_MUTEX(&sps30_sensor);
+    I2C_DEV_CHECK(&sps30_sensor, i2c_dev_write(&sps30_sensor, NULL, 0, data, count));
+    I2C_DEV_GIVE_MUTEX(&sps30_sensor);
+    return ESP_OK;
 }

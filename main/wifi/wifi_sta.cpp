@@ -25,6 +25,7 @@ wifi_sta::~wifi_sta()
     esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event_);
     esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event_);
     esp_wifi_disconnect();
+    close_if();
     esp_wifi_stop();
     esp_wifi_deinit();
 }
