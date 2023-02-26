@@ -3,8 +3,7 @@
 #include "sensor/sensor.h"
 #include "ui_screen_with_sensor_panel.h"
 #include "util/helper.h"
-
-#include <esp_timer.h>
+#include "util/misc.h"
 
 class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 {
@@ -278,7 +277,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
                 // ESP_LOGI("total seconds :%d,  Series length: %d,  %f", data_interval_seconds, sensor_detail_screen_chart_series_data.size(),
                 // interval);
                 const auto seconds_ago =
-                    (data_interval_seconds * interval) + (esp_timer_get_time() / 1000 * 1000 - sensor_detail_screen_chart_series_time);
+                    (data_interval_seconds * interval) + ((esp32::millis() / 1000) - sensor_detail_screen_chart_series_time);
 
                 seconds_to_timestring(seconds_ago, dsc->text, dsc->text_length);
             }
@@ -293,7 +292,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
     {
         set_value_in_panel(panel_and_labels[label_and_unit_label_current_index], index, value);
 
-        sensor_detail_screen_chart_series_time = esp_timer_get_time() / (1000 * 1000);
+        sensor_detail_screen_chart_series_time = esp32::millis() / 1000;
 
         auto &&sensor_info = ui_interface_instance_.get_sensor_detail_info(index);
 

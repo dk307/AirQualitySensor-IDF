@@ -1,13 +1,13 @@
 #pragma once
 
-// #include <SHT31.h>
-// #include <sps30.h>
-// #include <BH1750.h>
-
 #include "display.h"
 #include "sensor/sensor.h"
 #include "ui/ui_interface.h"
 #include "util/psram_allocator.h"
+
+#include <bh1750.h>
+#include <i2cdev.h>
+#include <sht3x.h>
 
 class hardware final : ui_interface
 {
@@ -41,40 +41,44 @@ class hardware final : ui_interface
     bool clean_sps_30() override;
 
   private:
-    hardware() = default;
+    hardware() : sensor_refresh_task(std::bind(&hardware::sensor_task_ftn, this))
+    {
+    }
 
     display display_instance_{*this};
     uint8_t current_brightness_{0};
 
     // // same index as sensor_id_index
     std::array<sensor_value, total_sensors> sensors;
-    std::unique_ptr<std::array<sensor_history, total_sensors>, esp32::psram::deleter> sensors_history;
+    std::unique_ptr<std::array<sensor_history, total_sensors>, esp32::psram::deleter> sensors_history =
+        esp32::psram::make_unique<std::array<sensor_history, total_sensors>>();
 
-    // std::unique_ptr<esp32::task> sensor_refresh_task;
+    esp32::task sensor_refresh_task;
 
     // using light_sensor_values_t = sensor_history_t<sensor_value::value_type, 10>;
     // light_sensor_values_t light_sensor_values;
 
-    // const int SDAWire = 11;
-    // const int SCLWire = 10;
+    const gpio_num_t SDAWire = GPIO_NUM_11;
+    const gpio_num_t SCLWire = GPIO_NUM_10;
 
     // // SHT31
     // const int sht31_i2c_address = 0x44;
-    // SHT31 sht31_sensor;
+    sht3x_t sht3x_sensor{};
+    uint64_t sht3x_sensor_last_read = 0;
     // int sht31_last_error{0xFF};
 
     // // SPS 30
     // uint32_t sps30_sensor_last_read = 0;
 
-    // // BH1750
-    // BH1750 bh1750_sensor;
-    // uint32_t bh1750_sensor_last_read = 0;
+    // BH1750
+    i2c_dev_t bh1750_sensor{};
+    uint64_t bh1750_sensor_last_read = 0;
 
     void set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value);
 
     static std::string get_up_time();
-    // void read_bh1750_sensor();
-    // void read_sht31_sensor();
+    void read_bh1750_sensor();
+    void read_sht3x_sensor();
     // void read_sps30_sensor();
     // std::string get_sht31_status();
     // std::string get_sps30_error_register_status();
@@ -82,5 +86,7 @@ class hardware final : ui_interface
     // void set_auto_display_brightness();
 
     static std::optional<sensor_value::value_type> round_value(float val, int places = 0);
-    // static void scan_i2c_bus();
+
+    void i2c_master_init();
+    void sensor_task_ftn();
 };

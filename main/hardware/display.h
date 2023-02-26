@@ -6,7 +6,6 @@
 #include "util/semaphore_lockable.h"
 #include "util/task_wrapper.h"
 
-
 #include <lvgl.h>
 class display
 {
@@ -15,8 +14,7 @@ class display
     {
     }
 
-    void pre_begin();
-    void begin();
+    void start();
 
     void set_main_screen();
     uint8_t get_brightness();
@@ -40,4 +38,5 @@ class display
     static void lv_tick_task(void *arg);
     void create_timer();
     void gui_task();
+    void set_callbacks();
 };

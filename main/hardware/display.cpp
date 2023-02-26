@@ -51,7 +51,7 @@ void display::touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     }
 }
 
-void display::pre_begin()
+void display::start()
 {
     ESP_LOGI(DISPLAY_TAG, "Setting up display");
 
@@ -126,7 +126,7 @@ void display::pre_begin()
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 }
 
-void display::begin()
+void display::set_callbacks()
 {
     for (auto i = 0; i < total_sensors; i++)
     {
@@ -179,6 +179,8 @@ void display::gui_task()
         lv_task_handler();
         ui_instance_.init();
 
+        set_callbacks();
+
         do
         {
             lv_task_handler();
@@ -216,9 +218,9 @@ void display::gui_task()
     }
     catch (const std::exception &ex)
     {
-        ESP_LOGI(OPERATIONS_TAG, "UI Init Failure:%s", ex.what());
+        ESP_LOGI(OPERATIONS_TAG, "UI Task Failure:%s", ex.what());
         vTaskDelay(pdMS_TO_TICKS(5000));
-        esp_restart();
+        operations::instance.reboot();
     }
 
     vTaskDelete(NULL);

@@ -42,7 +42,6 @@ extern "C" void app_main(void)
         httpd_handle_t http_server;
         http_start_webserver(&http_server);
 
-        hardware::instance.begin();
         hardware::instance.set_main_screen();
 
         ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
@@ -51,6 +50,6 @@ extern "C" void app_main(void)
     {
         ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
         vTaskDelay(pdMS_TO_TICKS(5000));
-        esp_restart();
+        operations::instance.reboot();
     }
 }

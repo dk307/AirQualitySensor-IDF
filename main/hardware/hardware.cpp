@@ -1,12 +1,15 @@
 #include "hardware/hardware.h"
 #include "config/config_manager.h"
 #include "hardware/display.h"
+#include "hardware/sd_card.h"
 #include "logging/logging_tags.h"
+#include "util/exceptions.h"
+#include "util/misc.h"
 #include "util/helper.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
-#include "hardware/sd_card.h"
 
+#include <driver/i2c.h>
 #include <esp_chip_info.h>
 #include <esp_efuse.h>
 #include <esp_flash.h>
@@ -249,16 +252,12 @@ bool hardware::clean_sps_30()
 
 void hardware::pre_begin()
 {
-    sensors_history = esp32::psram::make_unique<std::array<sensor_history, total_sensors>>();
 
-    display_instance_.pre_begin();
+    display_instance_.start();
 
-    // // Wire is already used by touch i2c
-    // if (!Wire1.begin(SDAWire, SCLWire))
-    // {
-    //     ESP_LOGE(HARDWARE_TAG, "Failed to begin I2C interface");
-    //     return false;
-    // }
+    i2c_master_init();
+
+    sensor_refresh_task.spawn_pinned("sensor task", 4196, esp32::task::default_priority, 1);
 
     // scan_i2c_bus();
 
@@ -300,96 +299,129 @@ void hardware::pre_begin()
     // set_auto_display_brightness();
 }
 
-// void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
-// {
-//     const auto i = static_cast<size_t>(index);
-//     if (value.has_value())
-//     {
-//         (*sensors_history)[i].add_value(value.value());
-//         sensors[i].set_value(value.value());
-//     }
-//     else
-//     {
-//         ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%s", get_sensor_name(index));
-//         (*sensors_history)[i].clear();
-//         sensors[i].set_invalid_value();
-//     }
-// }
-
-void hardware::begin()
+void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
 {
-    display_instance_.begin();
-
-    // sensor_refresh_task = std::make_unique<esp32::task>([this]
-    //                                                     {
-    //                                                         ESP_LOGI( HARDWARE_TAG, "Hardware task started on core:%d", xPortGetCoreID());
-    //                                                         do
-    //                                                         {
-    //                                                             read_bh1750_sensor();
-    //                                                             read_sht31_sensor();
-    //                                                             read_sps30_sensor();
-    //                                                             set_auto_display_brightness();
-    //                                                             vTaskDelay(500);
-    //                                                         } while(true); });
-
-    // // start on core 0
-    // sensor_refresh_task->spawn_arduino_other_core("sensor task", 4196);
+    const auto i = static_cast<size_t>(index);
+    if (value.has_value())
+    {
+        (*sensors_history)[i].add_value(value.value());
+        sensors[i].set_value(value.value());
+    }
+    else
+    {
+        ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%s", get_sensor_name(index));
+        (*sensors_history)[i].clear();
+        sensors[i].set_invalid_value();
+    }
 }
 
-// void hardware::read_bh1750_sensor()
-// {
-//     std::optional<float> lux;
-//     if (bh1750_sensor.measurementReady(true))
-//     {
-//         ESP_LOGV(SENSOR_BH1750_TAG, "Reading BH1750 sensor");
+void hardware::sensor_task_ftn()
+{
+    try
+    {
+        ESP_LOGI(HARDWARE_TAG, "Sensor task started on core:%d", xPortGetCoreID());
 
-//         lux = bh1750_sensor.readLightLevel();
-//         light_sensor_values.add_value(lux.value());
-//     }
+        // bh1750
+        auto error = bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire);
+        CHECK_THROW_INIT(error, "bh1750_init_desc failed");
 
-//     const auto now = millis();
-//     if (now - bh1750_sensor_last_read >= sensor_history::sensor_interval)
-//     {
-//         if (lux.has_value())
-//         {
-//             const auto value = round_value(lux.value());
-//             ESP_LOGI(SENSOR_BH1750_TAG, "Setting new value:%d", value.value_or(std::numeric_limits<sensor_value::value_type>::max()));
-//             set_sensor_value(sensor_id_index::light_intensity, value);
-//             bh1750_sensor_last_read = now;
-//         }
-//         else
-//         {
-//             ESP_LOGE(SENSOR_BH1750_TAG, "Failed to read from BH1750");
-//             set_sensor_value(sensor_id_index::light_intensity, std::nullopt);
-//         }
-//     }
-// }
+        error = bh1750_setup(&bh1750_sensor, BH1750_MODE_CONTINUOUS, BH1750_RES_HIGH);
+        CHECK_THROW_INIT(error, "bh1750_setup failed");
 
-// void hardware::read_sht31_sensor()
-// {
-//     const auto now = millis();
-//     if (now - sht31_sensor.lastRead() >= sensor_history::sensor_interval)
-//     {
-//         if (sht31_sensor.read(false))
-//         {
-//             const auto temp = round_value(sht31_sensor.getFahrenheit());
-//             const auto hum = round_value(sht31_sensor.getHumidity());
-//             ESP_LOGI(SENSOR_SHT31_TAG, "Setting SHT31 sensor values:%d F, %d %%",
-//                      temp.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-//                      hum.value_or(std::numeric_limits<sensor_value::value_type>::max()));
-//             set_sensor_value(sensor_id_index::temperatureF, temp);
-//             set_sensor_value(sensor_id_index::humidity, hum);
-//             sht31_last_error = SHT31_OK;
-//         }
-//         else
-//         {
-//             sht31_last_error = sht31_sensor.getError();
-//             ESP_LOGE(SENSOR_SHT31_TAG, "Failed to read from SHT31 sensor with error:%x", sht31_last_error);
-//             set_sensor_value(sensor_id_index::temperatureF, std::nullopt);
-//             set_sensor_value(sensor_id_index::humidity, std::nullopt);
-//         }
-//     }
-// }
+        const auto bh1750_wait = pdMS_TO_TICKS(180);
+
+        // sht3x
+        error = sht3x_init_desc(&sht3x_sensor, SHT3X_I2C_ADDR_GND, I2C_NUM_1, SDAWire, SCLWire);
+        CHECK_THROW_INIT(error, "sht3x_init_desc failed");
+
+        error = sht3x_init(&sht3x_sensor);
+        CHECK_THROW_INIT(error, "sht3x_init failed");
+
+        const auto sht3x_eait = sht3x_get_measurement_duration(SHT3X_HIGH);
+
+        // Wait until all sensors are ready
+        vTaskDelay(std::max<uint64_t>(bh1750_wait, sht3x_eait));
+
+        do
+        {
+            read_bh1750_sensor();
+            read_sht3x_sensor();
+            //  read_sps30_sensor();
+            // set_auto_display_brightness();
+
+            // wait atleast min(180ms for bh1750, )
+            vTaskDelay(500);
+        } while (true);
+
+        vTaskDelete(NULL);
+    }
+    catch (const std::exception &ex)
+    {
+        ESP_LOGI(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
+        // Long wait is intentional to fix hardware
+        vTaskDelay(pdMS_TO_TICKS(60 * 1000));
+        operations::instance.reboot();
+    }
+}
+
+void hardware::read_bh1750_sensor()
+{
+    std::optional<uint16_t> lux;
+    uint16_t level_lux = 0;
+    auto err = bh1750_read(&bh1750_sensor, &level_lux);
+    if (err != ESP_OK)
+    {
+        ESP_LOGW(SENSOR_BH1750_TAG, "Failed to read sensor with %s", esp_err_to_name(err));
+    }
+    else
+    {
+        lux = level_lux;
+    }
+
+    const auto now = esp32::millis();
+    if (now - bh1750_sensor_last_read >= sensor_history::sensor_interval)
+    {
+        if (lux.has_value())
+        {
+            const auto value = round_value(lux.value());
+            ESP_LOGI(SENSOR_BH1750_TAG, "Setting new value:%d", value.value_or(std::numeric_limits<sensor_value::value_type>::max()));
+            set_sensor_value(sensor_id_index::light_intensity, value);
+            bh1750_sensor_last_read = now;
+        }
+        else
+        {
+            ESP_LOGE(SENSOR_BH1750_TAG, "Failed to read from BH1750");
+            set_sensor_value(sensor_id_index::light_intensity, std::nullopt);
+        }
+    }
+}
+
+void hardware::read_sht3x_sensor()
+{
+    const auto now = esp32::millis();
+    if (now - sht3x_sensor_last_read >= sensor_history::sensor_interval)
+    {
+        float temperature = NAN;
+        float humidity = NAN;
+        auto err = sht3x_measure(&sht3x_sensor, &temperature, &humidity);
+        if (err == ESP_OK)
+        {
+            const auto temp = round_value((temperature * 1.8) + 32);
+            const auto hum = round_value(humidity);
+            ESP_LOGI(SENSOR_SHT31_TAG, "Setting SHT31 sensor values:%d F, %d %%", temp.value_or(std::numeric_limits<sensor_value::value_type>::max()),
+                     hum.value_or(std::numeric_limits<sensor_value::value_type>::max()));
+            set_sensor_value(sensor_id_index::temperatureF, temp);
+            set_sensor_value(sensor_id_index::humidity, hum);
+            sht3x_sensor_last_read = now;
+        }
+        else
+        {
+            ESP_LOGE(SENSOR_SHT31_TAG, "Failed to read from SHT3x sensor with error:%s", esp_err_to_name(err));
+            set_sensor_value(sensor_id_index::temperatureF, std::nullopt);
+            set_sensor_value(sensor_id_index::humidity, std::nullopt);
+        }
+    }
+}
 
 // void hardware::read_sps30_sensor()
 // {
@@ -588,3 +620,30 @@ std::optional<sensor_value::value_type> hardware::round_value(float val, int pla
 
 //     set_screen_brightness(required_brightness);
 // }
+
+void hardware::i2c_master_init()
+{
+    // const i2c_port_t bus_num = I2C_NUM_1;
+
+    // i2c_config_t conf{};
+    // conf.mode = I2C_MODE_MASTER;
+    // conf.sda_io_num = SDAWire;
+    // conf.scl_io_num = SCLWire;
+    // conf.sda_pullup_en = false;
+    // conf.scl_pullup_en = false;
+    // conf.master.clk_speed = 100000L;
+
+    // auto err = i2c_param_config(bus_num, &conf);
+    // CHECK_THROW(err, "i2c_param_config failed", esp32::init_failure_exception);
+
+    // err = i2c_driver_install(bus_num, conf.mode, 0, 0, 0);
+    // CHECK_THROW(err, "i2c_driver_install failed", esp32::init_failure_exception);
+
+    // // err = i2c_set_timeout(bus_num, I2C_LL_MAX_TIMEOUT);
+    // // CHECK_THROW(err, "i2c_set_timeout failed", esp32::init_failure_exception);
+
+    // ESP_LOGI(HARDWARE_TAG, "I2C Bus %d initialized", bus_num);
+
+    const auto err = i2cdev_init();
+    CHECK_THROW_INIT(err, "i2cdev_init failed");
+}

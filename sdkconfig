@@ -1603,6 +1603,13 @@ CONFIG_WPA_MBEDTLS_TLS_CLIENT=y
 # end of Supplicant
 
 #
+# I2C
+#
+CONFIG_I2CDEV_TIMEOUT=1000
+# CONFIG_I2CDEV_NOLOCK is not set
+# end of I2C
+
+#
 # LVGL configuration
 #
 # CONFIG_LV_CONF_SKIP is not set

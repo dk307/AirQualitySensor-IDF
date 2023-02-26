@@ -62,3 +62,13 @@ class http_request_exception : public esp_exception
         if (result != ESP_OK)                                                                                                                        \
             throw exception_type_(message, result);                                                                                                  \
     } while (0)
+
+#define CHECK_THROW_INIT(error_, message)                                                                                                \
+    do                                                                                                                                               \
+    {                                                                                                                                                \
+        const esp_err_t result = (error_);                                                                                                           \
+        if (result != ESP_OK)                                                                                                                        \
+            throw esp32::init_failure_exception(message, result);                                                                                                  \
+    } while (0)
+
+

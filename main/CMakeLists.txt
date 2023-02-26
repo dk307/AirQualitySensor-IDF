@@ -21,6 +21,6 @@ idf_component_register(SRCS "main.cpp"
                             "operations/operations.cpp"
 
                     INCLUDE_DIRS "."
-                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support app_update esp_http_server esp-tls)
+                    REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support app_update esp_http_server esp-tls esp_idf_lib_helpers i2cdev bh1750 sht3x)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE "-Wno-deprecated-enum-enum-conversion")
