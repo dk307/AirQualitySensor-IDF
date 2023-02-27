@@ -5,13 +5,14 @@
 #include <string>
 #include <vector>
 
-#include <esp_http_server.h>
-
 #include "util/exceptions.h"
+#include "util/noncopyable.h"
+
+#include <esp_http_server.h>
 
 namespace esp32
 {
-class http_request
+class http_request : esp32::noncopyable
 {
   public:
     http_request(httpd_req_t *req) : req_(req)

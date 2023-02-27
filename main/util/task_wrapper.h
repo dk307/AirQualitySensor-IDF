@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/noncopyable.h"
+
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -10,7 +12,7 @@
 
 namespace esp32
 {
-class task
+class task : esp32::noncopyable
 {
   public:
     constexpr static uint32_t default_priority = 0;

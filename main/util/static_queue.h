@@ -1,13 +1,16 @@
 #pragma once
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
+#include "util/noncopyable.h"
+
 #include <bits/functexcept.h>
 #include <errno.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+
 
 namespace esp32
 {
-template <class T, std::size_t TSize> class static_queue
+template <class T, std::size_t TSize> class static_queue : esp32::noncopyable
 {
   public:
     static_assert(std::is_pod<T>::value, "T must be POD");

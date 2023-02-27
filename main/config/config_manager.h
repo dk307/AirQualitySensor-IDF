@@ -2,6 +2,7 @@
 
 #include "util/change_callback.h"
 #include "util/semaphore_lockable.h"
+#include "util/noncopyable.h"
 
 #include <ArduinoJson.h>
 #include <atomic>

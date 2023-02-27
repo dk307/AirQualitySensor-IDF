@@ -1,10 +1,12 @@
 #pragma once
 
+#include "util/noncopyable.h"
+
 #include <sdmmc_cmd.h>
 
 #include <string>
 
-class sd_card
+class sd_card : esp32::noncopyable
 {
   public:
     void pre_begin();

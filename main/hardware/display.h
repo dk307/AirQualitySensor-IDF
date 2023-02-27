@@ -3,11 +3,13 @@
 #include "lgfx_device.h"
 #include "ui/ui2.h"
 #include "ui/ui_interface.h"
+#include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include "util/task_wrapper.h"
 
+
 #include <lvgl.h>
-class display
+class display : esp32::noncopyable
 {
   public:
     display(ui_interface &ui_interface_) : lvgl_task_(std::bind(&display::gui_task, this)), ui_instance_(ui_interface_)

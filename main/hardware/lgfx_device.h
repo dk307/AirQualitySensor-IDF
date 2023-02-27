@@ -1,9 +1,11 @@
 #pragma once
 
+#include "util/noncopyable.h"
+
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
 
-class LGFX : public lgfx::LGFX_Device
+class LGFX : public lgfx::LGFX_Device , esp32::noncopyable
 {
   public:
     LGFX();

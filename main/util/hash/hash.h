@@ -1,12 +1,14 @@
 #include <mbedtls/md.h>
 
+#include "util/noncopyable.h"
+
 #include <cstring>
 #include <stdexcept>
 #include <vector>
 
 namespace esp32::hash
 {
-template <mbedtls_md_type_t hashType> class hash
+template <mbedtls_md_type_t hashType> class hash : esp32::noncopyable
 {
   public:
     hash()

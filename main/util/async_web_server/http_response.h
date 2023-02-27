@@ -2,6 +2,8 @@
 
 #include <esp_http_server.h>
 
+#include "util/noncopyable.h"
+
 #include <set>
 #include <string>
 
@@ -10,7 +12,7 @@ namespace esp32
 {
 class http_request;
 
-class http_response
+class http_response : esp32::noncopyable
 {
   public:
     http_response(const http_request *req) : req_(req)

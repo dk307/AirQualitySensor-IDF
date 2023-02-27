@@ -1,17 +1,17 @@
 #pragma once
 
 #include "display.h"
+#include "hardware/sps30/sps30.h"
 #include "sensor/sensor.h"
 #include "ui/ui_interface.h"
+#include "util/noncopyable.h"
 #include "util/psram_allocator.h"
-
-#include "hardware/sps30/sps30.h"
 
 #include <bh1750.h>
 #include <i2cdev.h>
 #include <sht3x.h>
 
-class hardware final : ui_interface
+class hardware final : ui_interface, esp32::noncopyable
 {
   public:
     void pre_begin();

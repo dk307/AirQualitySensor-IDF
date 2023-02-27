@@ -6,6 +6,7 @@
 #include "logging/logging_tags.h"
 #include "ui_inter_screen_interface.h"
 #include "ui_interface.h"
+#include "util/noncopyable.h"
 
 struct ui_common_fonts
 {
@@ -18,7 +19,7 @@ struct ui_common_fonts
     lv_font_t *font_montserrat_medium_14;          // 0x20-0x7F,0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-
 };
 
-class ui_screen
+class ui_screen : esp32::noncopyable
 {
   public:
     ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface_, const ui_common_fonts *fonts_)

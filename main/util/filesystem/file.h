@@ -2,7 +2,7 @@
 
 namespace esp32::filesystem
 {
-class file
+class file : esp32::noncopyable
 {
   public:
     file(const char *filename, const char *mode)

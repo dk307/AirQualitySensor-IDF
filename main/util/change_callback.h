@@ -8,7 +8,7 @@
 
 namespace esp32
 {
-class change_callback
+class change_callback : esp32::noncopyable
 {
   public:
     void add_callback(const std::function<void()> &func) const

@@ -1,15 +1,16 @@
 #pragma once
 
+#include "util/exceptions.h"
+#include "util/noncopyable.h"
+
 #include <esp_ota_ops.h>
 #include <esp_partition.h>
 
 #include <array>
 
-#include "util/exceptions.h"
-
 namespace esp32
 {
-class ota_updator
+class ota_updator : esp32::noncopyable
 {
   public:
     ota_updator(const std::array<uint8_t, 32> &expected_sha256);

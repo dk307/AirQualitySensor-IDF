@@ -3,16 +3,15 @@
 #include <esp_http_server.h>
 #include <vector>
 
-
 #include "logging/logging_tags.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_response.h"
+#include "util/noncopyable.h"
 #include <esp_log.h>
-
 
 namespace esp32
 {
-class http_server
+class http_server : esp32::noncopyable
 {
   public:
     typedef esp_err_t (*url_handler)(httpd_req_t *r);

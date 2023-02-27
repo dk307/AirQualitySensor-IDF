@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/noncopyable.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include <bits/functexcept.h>
@@ -7,7 +9,7 @@
 
 namespace esp32
 {
-class semaphore final
+class semaphore final : esp32::noncopyable
 {
   public:
     semaphore() : handle_(xSemaphoreCreateMutexStatic(&buffer_))

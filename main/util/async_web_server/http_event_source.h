@@ -2,6 +2,7 @@
 
 #include "http_request.h"
 #include "http_response.h"
+#include "util/noncopyable.h"
 
 #include <set>
 
@@ -9,7 +10,7 @@ namespace esp32
 {
 class event_source;
 
-class event_source_connection
+class event_source_connection : esp32::noncopyable
 {
   public:
     event_source_connection(event_source *source, esp32::http_request *request);
@@ -24,7 +25,7 @@ class event_source_connection
     int fd_{};
 };
 
-class event_source
+class event_source : esp32::noncopyable
 {
   public:
     ~event_source();

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "util/noncopyable.h"
+
 #include <atomic>
 
-class operations
+class operations : esp32::noncopyable
 {
   public:
     void reboot();
@@ -17,7 +19,7 @@ class operations
     }
 
   private:
-    operations(); 
+    operations();
     [[noreturn]] void reset();
 
     static void shutdown_restarting();
