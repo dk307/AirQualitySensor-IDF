@@ -1,11 +1,9 @@
 #pragma once
 
 #include <functional>
-#include <map>
 #include <optional>
 #include <string>
 #include <vector>
-
 
 #include <esp_http_server.h>
 
@@ -43,6 +41,7 @@ class http_request
     friend class http_response;
     friend class array_response;
     friend class fs_card_file_response;
+    friend class event_source_connection;
 
     static void extract_parameters(const std::vector<char> &query_str, const std::vector<std::string> &names,
                                    std::vector<std::optional<std::string>> &result);

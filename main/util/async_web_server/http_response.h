@@ -1,7 +1,10 @@
 #pragma once
 
 #include <esp_http_server.h>
+
+#include <set>
 #include <string>
+
 
 namespace esp32
 {
@@ -63,4 +66,5 @@ class fs_card_file_response final : http_response
     const char *content_type_;
     const bool download_;
 };
+
 } // namespace esp32

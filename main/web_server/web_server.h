@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "sensor/sensor.h"
+#include "util/async_web_server/http_event_source.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_server.h"
 
@@ -42,15 +43,17 @@ class web_server : esp32::http_server
 
     // void on_event_connect(AsyncEventSourceClient *client);
     // void on_logging_connect(AsyncEventSourceClient *client);
-    // bool filter_events(esp32::http_request *request);
 
-    // // fs ajax
+    // fs ajax
     void handle_dir_list(esp32::http_request *request);
     void handle_dir_create(esp32::http_request *request);
     void handle_fs_download(esp32::http_request *request);
     void handle_fs_delete(esp32::http_request *request);
     void handle_fs_rename(esp32::http_request *request);
     void handle_file_upload(esp32::http_request *request);
+
+    // events
+    void handle_events(esp32::http_request *request);
 
     static const char *get_content_type(const std::string &extension);
 
@@ -60,14 +63,13 @@ class web_server : esp32::http_server
     static void send_empty_200(const esp32::http_request *request);
     static std::string get_file_sha256(const char *filename);
 
-    // void notify_sensor_change(sensor_id_index id);
+    void notify_sensor_change(sensor_id_index id);
 
     // void send_log_data(const std::string& c);
     // static void on_get_log_info(esp32::http_request *request);
 
-    // esp32::AsyncWebServer http_server{80};
-    // esp32::AsyncEventSource events{"/events"};
+    esp32::event_source events;
     // std::unique_ptr<std::vector<uint8_t>> restore_config_data;
 
-    // esp32::AsyncEventSource logging{"/logs"};
+    // esp32::event_source logging{"/logs"};
 };

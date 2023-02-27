@@ -22,12 +22,14 @@
 #include "util/finally.h"
 #include "util/hash/hash.h"
 #include "util/helper.h"
+#include "util/misc.h"
 #include "util/ota.h"
 #include "util/psram_allocator.h"
 #include "web/include/debug.html.gz.h"
 #include "web/include/fs.html.gz.h"
 #include "web/include/index.html.gz.h"
 #include "web/include/login.html.gz.h"
+
 
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
@@ -138,6 +140,9 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_fs_delete>("/fs/delete", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_file_upload>("/fs/upload", HTTP_POST);
 
+    // event source
+    add_handler_ftn<web_server, &web_server::handle_events>("/events", HTTP_GET);
+
     // events.onConnect(std::bind(&web_server::on_event_connec&t, this,
     // std::placeholders::_1));
     // events.setFilter(std::bind(&web_server::filter_events, this,
@@ -154,14 +159,11 @@ void web_server::begin()
     // server_routing();
     // ESP_LOGI(WEBSERVER_TAG, "WebServer Started");
 
-    // for (auto i = 0; i < total_sensors; i++)
-    // {
-    // 	const auto id = static_cast<sensor_id_index>(i);
-    // 	hardware::instance.get_sensor(id).add_callback([id, this]
-    // 												   {
-    // notify_sensor_change(id);
-    // });
-    // }
+    for (auto i = 0; i < total_sensors; i++)
+    {
+        const auto id = static_cast<sensor_id_index>(i);
+        hardware::instance.get_sensor(id).add_callback([id, this] { notify_sensor_change(id); });
+    }
 }
 
 bool web_server::check_authenticated(esp32::http_request *request)
@@ -553,19 +555,6 @@ void web_server::handle_factory_reset(esp32::http_request *request)
     operations::instance.factory_reset();
 }
 
-// void web_server::reboot_on_upload_complete(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "reboot");
-
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
-
-// 	request->send(200);
-// 	operations::instance.reboot();
-// }
-
 void web_server::redirect_to_root(esp32::http_request *request)
 {
     esp32::http_response response(request);
@@ -688,30 +677,27 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
 // 	operations::instance.abort_update();
 // }
 
-// void web_server::notify_sensor_change(sensor_id_index id)
-// {
-// 	if (events.count())
-// 	{
-// 		const auto &sensor = hardware::instance.get_sensor(id);
-// 		const auto value = sensor.get_value();
-// 		const std::string value_str = value.has_value() ?
-// std::string(value.value(), 10) : std::string("-");
+void web_server::notify_sensor_change(sensor_id_index id)
+{
+    if (events.connection_count())
+    {
+        const auto &sensor = hardware::instance.get_sensor(id);
+        const auto value = sensor.get_value();
+        const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
 
-// 		BasicJsonDocument<esp32::psram::json_allocator>
-// json_document(128);
+        BasicJsonDocument<esp32::psram::json_allocator> json_document(128);
 
-// 		auto &&definition = get_sensor_definition(id);
-// 		json_document["value"] = value_str;
-// 		json_document["unit"] = definition.get_unit();
-// 		json_document["type"] = definition.get_name();
-// 		json_document["level"] =
-// definition.calculate_level(value.value_or(0));
+        auto &&definition = get_sensor_definition(id);
+        json_document["value"] = value_str;
+        json_document["unit"] = definition.get_unit();
+        json_document["type"] = definition.get_name();
+        json_document["level"] = definition.calculate_level(value.value_or(0));
 
-// 		std::string json;
-// 		serializeJson(json_document, json);
-// 		events.send(json.c_str(), "sensor", millis());
-// 	}
-// }
+        std::string json;
+        serializeJson(json_document, json);
+        events.send(json.c_str(), "sensor", esp32::millis(), true);
+    }
+}
 
 void web_server::handle_dir_list(esp32::http_request *request)
 {
@@ -1014,6 +1000,26 @@ void web_server::handle_file_upload(esp32::http_request *request)
 
     ESP_LOGI(WEBSERVER_TAG, "File Uploaded: %s", upload_file_name.c_str());
     send_empty_200(request);
+}
+
+void web_server::handle_events(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/fs/events");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    events.add_request(request);
+
+    ESP_LOGI(WEBSERVER_TAG, "Events client first time");
+
+    // send all the events
+    for (auto i = 0; i < total_sensors; i++)
+    {
+        notify_sensor_change(static_cast<sensor_id_index>(i));
+    }
 }
 
 std::string web_server::get_file_sha256(const char *filename)
