@@ -41,9 +41,6 @@ class web_server : esp32::http_server
     bool check_authenticated(esp32::http_request *request);
     void redirect_to_root(esp32::http_request *request);
 
-    // void on_event_connect(AsyncEventSourceClient *client);
-    // void on_logging_connect(AsyncEventSourceClient *client);
-
     // fs ajax
     void handle_dir_list(esp32::http_request *request);
     void handle_dir_create(esp32::http_request *request);
@@ -69,7 +66,5 @@ class web_server : esp32::http_server
     // static void on_get_log_info(esp32::http_request *request);
 
     esp32::event_source events;
-    // std::unique_ptr<std::vector<uint8_t>> restore_config_data;
-
-    // esp32::event_source logging{"/logs"};
+    esp32::event_source logging;
 };

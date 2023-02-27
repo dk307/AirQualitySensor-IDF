@@ -53,6 +53,11 @@ void ota_updator::write(const uint8_t *data, size_t size)
     CHECK_THROW_OTA(ret, "Failed to write OTA data");
 }
 
+esp_err_t ota_updator::write2(const uint8_t *data, size_t size) noexcept
+{
+    return esp_ota_write(handle_, data, size);
+}
+
 void ota_updator::end()
 {
     if (!handle_)

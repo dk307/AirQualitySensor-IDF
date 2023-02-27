@@ -15,7 +15,6 @@ class wifi_sta : esp32::noncopyable
 {
   public:
     wifi_sta(wifi_events_notify &events_notify_, const std::string &host_name, const std::string &ssid, const std::string &password);
-
     ~wifi_sta();
 
     /// Sets the hostname

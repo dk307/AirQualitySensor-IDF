@@ -15,6 +15,7 @@ class ota_updator : esp32::noncopyable
   public:
     ota_updator(const std::array<uint8_t, 32> &expected_sha256);
     void write(const uint8_t *data, size_t size);
+    esp_err_t write2(const uint8_t *data, size_t size) noexcept;
     void end();
     void abort();
     bool is_running();

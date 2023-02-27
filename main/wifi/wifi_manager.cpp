@@ -2,19 +2,21 @@
 #include "config/config_manager.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
+#include "util/exceptions.h"
 #include "util/helper.h"
 
 #include <esp_log.h>
 #include <esp_mac.h>
 #include <esp_timer.h>
 #include <memory>
-#include <sstream>
 
 wifi_manager wifi_manager::instance;
 
 void wifi_manager::begin()
 {
-    ESP_ERROR_CHECK(esp_netif_init());
+    const auto error = esp_netif_init();
+    CHECK_THROW_INIT(error, "esp_netif_init failed");
+
     config::instance.add_callback([this] { events_notify_.set_config_changed(); });
     wifi_task_.spawn_same("wifi task", 4096, esp32::task::default_priority);
 }
@@ -63,7 +65,7 @@ void wifi_manager::wifi_task_ftn()
 
         if (operations::instance.get_reset_pending())
         {
-             // dont do anything if restarting
+            // dont do anything if restarting
             ESP_LOGI(WIFI_TAG, "Reset pending, wifi disconnect ignore");
             break;
         }
@@ -169,4 +171,10 @@ wifi_status wifi_manager::get_wifi_status()
     {
         return {connected_to_ap_, "Not connected to Wifi"};
     }
+}
+
+void wifi_manager::set_wifi_power_mode(wifi_ps_type_t mode)
+{
+    auto error = esp_wifi_set_ps(mode);
+    CHECK_THROW(error, "esp_wifi_set_ps", esp32::esp_exception);
 }

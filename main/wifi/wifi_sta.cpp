@@ -48,6 +48,7 @@ void wifi_sta::connect_to_ap()
     memset(&config, 0, sizeof(config));
     copy_min_to_buffer(ssid_.begin(), ssid_.length(), config.sta.ssid);
     copy_min_to_buffer(password_.begin(), password_.length(), config.sta.password);
+    config.sta.listen_interval = 
 
     config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
     config.sta.bssid_set = false;
@@ -86,7 +87,6 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t eve
         }
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED)
         {
-
             const auto *data = reinterpret_cast<wifi_event_sta_disconnected_t *>(event_data);
             ESP_LOGI(WIFI_EVENT_TAG, "WiFi STA disconnected with reason:%s", get_disconnect_reason_str(data->reason).c_str());
             ip_info_.ip.addr = 0;

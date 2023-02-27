@@ -18,6 +18,9 @@ class operations : esp32::noncopyable
         return reset_pending.load();
     }
 
+    static void mark_running_parition_as_valid();
+    static bool try_mark_running_parition_as_invalid();
+
   private:
     operations();
     [[noreturn]] void reset();

@@ -74,7 +74,7 @@ std::string hardware::get_chip_details()
         flash_size_str = esp32::string::stringify_size(flash_size);
     }
 
-    return esp32::string::sprintf("%s Rev. (%d) Cores: %d Flash size: %s", model.c_str(), chip_info.revision, static_cast<int>(chip_info.cores),
+    return esp32::string::sprintf("%s Rev. %d Cores: %d Flash size: %s", model.c_str(), chip_info.revision, static_cast<int>(chip_info.cores),
                                   flash_size_str.c_str());
 }
 

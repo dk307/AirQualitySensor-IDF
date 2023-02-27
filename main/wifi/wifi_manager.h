@@ -22,6 +22,8 @@ class wifi_manager : public esp32::change_callback
     wifi_status get_wifi_status();
     static wifi_manager instance;
 
+    static void set_wifi_power_mode(wifi_ps_type_t mode);
+
   private:
     wifi_manager() : wifi_task_(std::bind(&wifi_manager::wifi_task_ftn, this))
     {

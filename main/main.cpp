@@ -38,6 +38,8 @@ extern "C" void app_main(void)
         wifi_manager::instance.begin();
         web_server::instance.begin();
 
+        operations::mark_running_parition_as_valid();
+
         http_init();
         httpd_handle_t http_server;
         http_start_webserver(&http_server);
@@ -49,6 +51,7 @@ extern "C" void app_main(void)
     catch (const std::exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
+        operations::try_mark_running_parition_as_invalid();
         vTaskDelay(pdMS_TO_TICKS(5000));
         operations::instance.reboot();
     }

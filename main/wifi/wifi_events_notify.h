@@ -1,9 +1,11 @@
 
 #pragma once
 
+#include "util/noncopyable.h"
+
 #include <freertos\event_groups.h>
 
-class wifi_events_notify
+class wifi_events_notify : esp32::noncopyable
 {
   public:
     wifi_events_notify()
@@ -11,11 +13,6 @@ class wifi_events_notify
         wifi_event_group_ = xEventGroupCreate();
         configASSERT(wifi_event_group_);
     }
-
-    wifi_events_notify(const wifi_events_notify &) = delete;
-    wifi_events_notify(wifi_events_notify &&) = delete;
-    wifi_events_notify &operator=(const wifi_events_notify &) = delete;
-    wifi_events_notify &operator=(wifi_events_notify &&) = delete;
 
     ~wifi_events_notify()
     {
@@ -76,6 +73,4 @@ class wifi_events_notify
 
   private:
     EventGroupHandle_t wifi_event_group_;
-}
-
-;
+};
