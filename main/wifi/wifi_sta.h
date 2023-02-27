@@ -29,10 +29,6 @@ class wifi_sta
     /// Initiates the connection to the AP.
     void connect_to_ap();
 
-    /// Returns a value indicating of currently connected to the access point.
-    /// \return
-    [[nodiscard]] bool is_connected_to_ap() const;
-
     [[nodiscard]] uint32_t get_local_ip();
 
     [[nodiscard]] std::string get_local_ip_address();

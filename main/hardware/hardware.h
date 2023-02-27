@@ -97,6 +97,7 @@ class hardware final : ui_interface
     static std::string get_chip_details();
     static std::string get_heap_info_str(uint32_t caps);
     static std::string get_up_time();
+    static void get_nw_info(ui_interface::information_table_type &table);
 
     std::string get_sps30_error_register_status();
 };

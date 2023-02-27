@@ -166,6 +166,36 @@ std::string hardware::get_sps30_error_register_status()
     return status;
 }
 
+void hardware::get_nw_info(ui_interface::information_table_type &table)
+{
+    esp_netif_ip_info_t ip_info{};
+
+    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+
+    if (netif != NULL)
+    {
+        // Copy the netif IP info into our variable.
+        if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK)
+        {
+            table.push_back({"IP Address", esp32::string::sprintf(IPSTR, IP2STR(&ip_info.ip))});
+            table.push_back({"Gateway", esp32::string::sprintf(IPSTR, IP2STR(&ip_info.gw))});
+            table.push_back({"Netmask", esp32::string::sprintf(IPSTR, IP2STR(&ip_info.netmask))});
+        }
+
+        const char *hostname{nullptr};
+        if ((esp_netif_get_hostname(netif, &hostname) == ESP_OK) && hostname)
+        {
+            table.push_back({"Hostname", hostname});
+        }
+
+        esp_netif_dns_info_t dns{};
+        if (esp_netif_get_dns_info(netif, ESP_NETIF_DNS_MAIN, &dns) == ESP_OK)
+        {
+            table.push_back({"DNS", esp32::string::sprintf(IPSTR, IP2STR(&dns.ip.u_addr.ip4))});
+        }
+    }
+}
+
 ui_interface::information_table_type hardware::get_information_table(information_type type)
 {
     switch (type)
@@ -173,7 +203,7 @@ ui_interface::information_table_type hardware::get_information_table(information
     case information_type::system:
         return {
             {"Version", get_version()},
-            {"IDF Version", std::string(esp_get_idf_version())},
+            // {"IDF Version", std::string(esp_get_idf_version())},
             {"Chip", get_chip_details()},
             {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},
             {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
@@ -188,9 +218,7 @@ ui_interface::information_table_type hardware::get_information_table(information
     case information_type::network: {
         ui_interface::information_table_type table;
 
-        table.push_back({"Mode", "STA Mode"});
-
-        wifi_ap_record_t info;
+        wifi_ap_record_t info{};
         const auto result_info = esp_wifi_sta_get_ap_info(&info);
         if (result_info != ESP_OK)
         {
@@ -206,6 +234,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             // table.push_back({"Gateway address", WiFi.gatewayIP().toString()});
             // table.push_back({"Subnet", WiFi.subnetMask().toString()});
             // table.push_back({"DNS", WiFi.dnsIP().toString()});
+            get_nw_info(table);
         }
 
         table.push_back({"Mac Address", get_default_mac_address()});
