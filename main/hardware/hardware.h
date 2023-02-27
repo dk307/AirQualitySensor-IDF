@@ -14,7 +14,6 @@
 class hardware final : ui_interface, esp32::noncopyable
 {
   public:
-    void pre_begin();
     void begin();
 
     static hardware instance;

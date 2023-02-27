@@ -9,7 +9,7 @@
 class sd_card : esp32::noncopyable
 {
   public:
-    void pre_begin();
+    void begin();
 
     constexpr static char mount_point[] = "/sd";
 

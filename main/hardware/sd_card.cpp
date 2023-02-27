@@ -13,7 +13,7 @@
 
 sd_card sd_card::instance;
 
-void sd_card::pre_begin()
+void sd_card::begin()
 {
     sdspi_device_config_t device_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     device_config.host_id = SPI3_HOST;

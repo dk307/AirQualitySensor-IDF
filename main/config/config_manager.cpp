@@ -39,7 +39,7 @@ void config::erase()
     esp32::filesystem::remove(ConfigFilePath);
 }
 
-bool config::pre_begin()
+bool config::begin()
 {
     ESP_LOGD(CONFIG_TAG, "Loading Configuration");
     const auto config_data = read_file(ConfigFilePath);

@@ -64,7 +64,7 @@ bool hardware::clean_sps_30()
     return true;
 }
 
-void hardware::pre_begin()
+void hardware::begin()
 {
     display_instance_.start();
 

@@ -31,10 +31,10 @@ extern "C" void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
         ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-        sd_card::instance.pre_begin();
-        config::instance.pre_begin();
-        hardware::instance.pre_begin();
-
+        // order is important
+        sd_card::instance.begin();
+        config::instance.begin();
+        hardware::instance.begin();
         wifi_manager::instance.begin();
         web_server::instance.begin();
 
@@ -44,7 +44,7 @@ extern "C" void app_main(void)
 
         hardware::instance.set_main_screen();
 
-        ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes\n", esp_get_free_heap_size());
+        ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes", esp_get_free_heap_size());
     }
     catch (const std::exception &ex)
     {

@@ -111,7 +111,7 @@ struct config_data
 class config : public esp32::change_callback
 {
   public:
-    bool pre_begin();
+    bool begin();
     void save();
     void reset();
 
