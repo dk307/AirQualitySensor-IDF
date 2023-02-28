@@ -12,6 +12,7 @@
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
+#include "logging/logging.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
 #include "util/async_web_server/http_request.h"
@@ -29,7 +30,6 @@
 #include "web/include/fs.html.gz.h"
 #include "web/include/index.html.gz.h"
 #include "web/include/login.html.gz.h"
-
 
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
@@ -142,22 +142,13 @@ void web_server::begin()
 
     // event source
     add_handler_ftn<web_server, &web_server::handle_events>("/events", HTTP_GET);
+    add_handler_ftn<web_server, &web_server::handle_logging>("/logs", HTTP_GET);
 
-    // events.onConnect(std::bind(&web_server::on_event_connec&t, this,
-    // std::placeholders::_1));
-    // events.setFilter(std::bind(&web_server::filter_events, this,
-    // std::placeholders::_1));
-
-    // logging.onConnect(std::bind(&web_server::on_logging_connect, this,
-    // std::placeholders::_1));
-    // logging.setFilter(std::bind(&web_server::filter_events, this,
-    // std::placeholders::_1));
-
-    // http_server.addHandler(&events);
-    // http_server.addHandler(&logging);
-    // http_server.begin();
-    // server_routing();
-    // ESP_LOGI(WEBSERVER_TAG, "WebServer Started");
+    // log
+    add_handler_ftn<web_server, &web_server::handle_web_logging_start>("/api/log/webstart", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::handle_web_logging_stop>("/api/log/webstop", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::handle_sd_card_logging_start>("/api/log/sdstart", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::handle_sd_card_logging_stop>("/api/log/sdstop", HTTP_POST);
 
     for (auto i = 0; i < total_sensors; i++)
     {
@@ -189,46 +180,46 @@ bool web_server::check_authenticated(esp32::http_request *request)
 // void web_server::server_routing()
 // {
 // 	// form calls
-// 	http_server.on(("/login.handler"), HTTP_POST, handle_login);
-// 	http_server.on(("/logout.handler"), HTTP_POST, handle_logout);
-// 	http_server.on(("/wifiupdate.handler"), HTTP_POST, wifi_update);
+// 	add_handler_ftn(("/login.handler"), HTTP_POST, handle_login);
+// 	add_handler_ftn(("/logout.handler"), HTTP_POST, handle_logout);
+// 	add_handler_ftn(("/wifiupdate.handler"), HTTP_POST, wifi_update);
 
-// http_server.on(("/othersettings.update.handler"), HTTP_POST,
-// other_settings_update); 	http_server.on(("/weblogin.update.handler"),
+// add_handler_ftn(("/othersettings.update.handler"), HTTP_POST,
+// other_settings_update); 	add_handler_ftn(("/weblogin.update.handler"),
 // HTTP_POST, web_login_update);
 
 // 	// ajax form call
-// 	http_server.on(("/factory.reset.handler"), HTTP_POST, factory_reset);
-// 	http_server.on(("/firmware.update.handler"), HTTP_POST,
+// 	add_handler_ftn(("/factory.reset.handler"), HTTP_POST, factory_reset);
+// 	add_handler_ftn(("/firmware.update.handler"), HTTP_POST,
 // reboot_on_upload_complete, firmware_update_upload);
-// 	http_server.on(("/setting.restore.handler"), HTTP_POST,
+// 	add_handler_ftn(("/setting.restore.handler"), HTTP_POST,
 // reboot_on_upload_complete,
 // 				   std::bind(&web_server::restore_configuration_upload,
 // this, 							 std::placeholders::_1, std::placeholders::_2,
 // std::placeholders::_3, 							 std::placeholders::_4, std::placeholders::_5,
 // std::placeholders::_6));
 
-// 	http_server.on(("/restart.handler"), HTTP_POST, restart_device);
+// 	add_handler_ftn(("/restart.handler"), HTTP_POST, restart_device);
 
 // 	// json ajax calls
-// 	http_server.on(("/api/sensor/get"), HTTP_GET, sensor_get);
-// 	http_server.on(("/api/wifi/get"), HTTP_GET, wifi_get);
-// 	http_server.on(("/api/information/get"), HTTP_GET, information_get);
-// 	http_server.on(("/api/config/get"), HTTP_GET, config_get);
+// 	add_handler_ftn(("/api/sensor/get"), HTTP_GET, sensor_get);
+// 	add_handler_ftn(("/api/wifi/get"), HTTP_GET, wifi_get);
+// 	add_handler_ftn(("/api/information/get"), HTTP_GET, information_get);
+// 	add_handler_ftn(("/api/config/get"), HTTP_GET, config_get);
 
 // 	// fs ajax
-// 	http_server.on("/fs/list", HTTP_GET, handle_dir_list);
-// 	http_server.on("/fs/mkdir", HTTP_POST, handle_dir_create);
-// 	http_server.on("/fs/download", HTTP_GET, handle_fs_download);
-// 	http_server.on("/fs/upload", HTTP_POST, handle_file_upload_complete,
+// 	add_handler_ftn("/fs/list", HTTP_GET, handle_dir_list);
+// 	add_handler_ftn("/fs/mkdir", HTTP_POST, handle_dir_create);
+// 	add_handler_ftn("/fs/download", HTTP_GET, handle_fs_download);
+// 	add_handler_ftn("/fs/upload", HTTP_POST, handle_file_upload_complete,
 // 				   std::bind(&web_server::handle_file_upload,
 // this, 							 std::placeholders::_1, std::placeholders::_2,
 // std::placeholders::_3, 							 std::placeholders::_4, std::placeholders::_5,
-// std::placeholders::_6)); http_server.on("/fs/delete", HTTP_POST, handle_fs_delete); 	http_server.on("/fs/rename", HTTP_POST, handle_fs_rename);
-// http_server.onNotFound(handle_file_read);
+// std::placeholders::_6)); add_handler_ftn("/fs/delete", HTTP_POST, handle_fs_delete); 	add_handler_ftn("/fs/rename", HTTP_POST,
+// handle_fs_rename); http_server.onNotFound(handle_file_read);
 
 // 	// log
-// 	http_server.on("/api/log/webstart", HTTP_POST,
+// 	add_handler_ftn("/api/log/webstart", HTTP_POST,
 // [this](esp32::http_request *request)
 // 				   {
 // 			if
@@ -237,13 +228,13 @@ bool web_server::check_authenticated(esp32::http_request *request)
 // 					request->send(500);
 // 			} });
 
-// 	http_server.on("/api/log/webstop", HTTP_POST, [this](esp32::http_request
+// 	add_handler_ftn("/api/log/webstop", HTTP_POST, [this](esp32::http_request
 // *request)
 // 				   {
 // 			logger::instance.disable_web_logging();
 // 					request->send(200); });
 
-// 	http_server.on("/api/log/sdstart", HTTP_POST, [this](esp32::http_request
+// 	add_handler_ftn("/api/log/sdstart", HTTP_POST, [this](esp32::http_request
 // *request)
 // 				   {
 // 			if (logger::instance.enable_sd_logging()) {
@@ -252,13 +243,13 @@ bool web_server::check_authenticated(esp32::http_request *request)
 // 					request->send(500);
 // 			} });
 
-// 	http_server.on("/api/log/sdstop", HTTP_POST, [this](esp32::http_request
+// 	add_handler_ftn("/api/log/sdstop", HTTP_POST, [this](esp32::http_request
 // *request)
 // 				   {
 // 			logger::instance.disable_sd_logging();
 // 					request->send(200); });
 
-// 	http_server.on("/api/log/info", HTTP_GET, on_get_log_info);
+// 	add_handler_ftn("/api/log/info", HTTP_GET, on_get_log_info);
 // }
 
 // void web_server::on_event_connect(AsyncEventSourceClient *client)
@@ -563,7 +554,7 @@ void web_server::redirect_to_root(esp32::http_request *request)
 
 void web_server::handle_firmware_upload(esp32::http_request *request)
 {
-    ESP_LOGD(WEBSERVER_TAG, "firmwareUpdateUpload");
+    ESP_LOGI(WEBSERVER_TAG, "firmwareUpdateUpload");
 
     if (!check_authenticated(request))
     {
@@ -592,9 +583,7 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
 
     esp32::ota_updator ota(hash_binary);
 
-    const auto result = request->read_body([&ota](const std::vector<uint8_t> &data) {
-        return ota.write2(data.data(), data.size());
-    });
+    const auto result = request->read_body([&ota](const std::vector<uint8_t> &data) { return ota.write2(data.data(), data.size()); });
 
     if (result != ESP_OK)
     {
@@ -1024,6 +1013,84 @@ void web_server::handle_events(esp32::http_request *request)
     }
 }
 
+void web_server::handle_logging(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/logging");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    logging.add_request(request);
+
+    ESP_LOGI(WEBSERVER_TAG, "Logging first time");
+}
+
+void web_server::handle_web_logging_start(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/log/webstart");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    if (logger::instance.enable_web_logging(std::bind(&web_server::send_log_data, this, std::placeholders::_1)))
+    {
+        send_empty_200(request);
+    }
+    else
+    {
+        log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to enable web logging");
+    }
+}
+
+void web_server::handle_web_logging_stop(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/log/webstop");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    logger::instance.disable_web_logging();
+    send_empty_200(request);
+}
+
+void web_server::handle_sd_card_logging_start(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/log/sdstart");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    if (logger::instance.enable_sd_logging())
+    {
+        send_empty_200(request);
+    }
+    else
+    {
+        log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to enable sd card logging");
+    }
+}
+
+void web_server::handle_sd_card_logging_stop(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/log/sdstop");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    logger::instance.disable_sd_logging();
+    send_empty_200(request);
+}
+
 std::string web_server::get_file_sha256(const char *filename)
 {
     esp32::hash::hash<MBEDTLS_MD_SHA256> hasher;
@@ -1090,13 +1157,13 @@ void web_server::send_empty_200(const esp32::http_request *request)
     response.send_empty_200();
 }
 
-// void web_server::send_log_data(const std::string &c)
-// {
-// 	if (logging.count())
-// 	{
-// 		logging.send(c.c_str(), "logs", millis());
-// 	}
-// }
+void web_server::send_log_data(const std::string &c)
+{
+    if (logging.connection_count())
+    {
+        logging.send(c.c_str(), "logs", esp32::millis(), true);
+    }
+}
 
 // void web_server::on_get_log_info(esp32::http_request *request)
 // {

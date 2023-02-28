@@ -24,6 +24,7 @@ idf_component_register(SRCS "main.cpp"
                             "http_ota/http.c"
                             "web_server/web_server.cpp"
                             "operations/operations.cpp"
+                            "logging/logging.cpp"
 
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi esp_hw_support app_update esp_http_server esp-tls esp_idf_lib_helpers i2cdev bh1750 sht3x)

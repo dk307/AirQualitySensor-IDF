@@ -51,6 +51,7 @@ class web_server : esp32::http_server
 
     // events
     void handle_events(esp32::http_request *request);
+    void handle_logging(esp32::http_request *request);
 
     static const char *get_content_type(const std::string &extension);
 
@@ -62,8 +63,12 @@ class web_server : esp32::http_server
 
     void notify_sensor_change(sensor_id_index id);
 
-    // void send_log_data(const std::string& c);
-    // static void on_get_log_info(esp32::http_request *request);
+    void send_log_data(const std::string& c);
+    void handle_web_logging_start(esp32::http_request *request);
+    void handle_web_logging_stop(esp32::http_request *request);
+    void handle_sd_card_logging_start(esp32::http_request *request);
+    void handle_sd_card_logging_stop(esp32::http_request *request);
+    // void on_get_log_info(esp32::http_request *request);
 
     esp32::event_source events;
     esp32::event_source logging;

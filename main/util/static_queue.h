@@ -13,7 +13,7 @@ namespace esp32
 template <class T, std::size_t TSize> class static_queue : esp32::noncopyable
 {
   public:
-    static_assert(std::is_pod<T>::value, "T must be POD");
+    static_assert(std::is_trivial<T>::value, "T must be POD");
     constexpr static size_t item_size = sizeof(T);
     constexpr static size_t queue_size = TSize;
 

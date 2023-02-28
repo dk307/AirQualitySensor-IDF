@@ -1,4 +1,7 @@
+#pragma once
+
 #include <cstdio>
+#include <stdexcept>
 
 namespace esp32::filesystem
 {

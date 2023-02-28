@@ -17,11 +17,11 @@ class Esp32Hook
     Esp32Hook()
     {
         _esp32Hook = this;
-        // _prevLogger = esp_log_set_vprintf(esp32hook);
+        _prevLogger = esp_log_set_vprintf(esp32hook);
     }
     ~Esp32Hook()
     {
-        // esp_log_set_vprintf(_prevLogger);
+        esp_log_set_vprintf(_prevLogger);
         _esp32Hook = nullptr;
     }
 

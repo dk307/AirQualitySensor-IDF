@@ -17,10 +17,7 @@ class http_server : esp32::noncopyable
     typedef esp_err_t (*url_handler)(httpd_req_t *r);
 
     http_server(uint16_t port) : port_(port){};
-    ~http_server()
-    {
-        end();
-    }
+    ~http_server();
 
     virtual void begin();
     virtual void end();

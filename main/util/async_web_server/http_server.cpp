@@ -6,6 +6,12 @@
 
 namespace esp32
 {
+
+http_server::~http_server()
+{
+    end();
+}
+
 void http_server::begin()
 {
     if (server_)
@@ -17,11 +23,13 @@ void http_server::begin()
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = port_;
-    config.max_uri_handlers = 30;
+    config.max_uri_handlers = 40;
     config.ctrl_port = 32760;
 
     ESP_ERROR_CHECK(httpd_start(&server_, &config));
     ESP_LOGI(WEBSERVER_TAG, "Started web server on port:%d", port_);
+
+    handlers_.reserve(config.max_uri_handlers);
 }
 
 void http_server::end()

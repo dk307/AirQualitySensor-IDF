@@ -1,7 +1,10 @@
 #include "http_event_source.h"
 
+#include "logging/logging_tags.h"
 #include "util/helper.h"
 
+
+#include <esp_log.h>
 #include <string>
 
 namespace esp32
@@ -28,6 +31,7 @@ event_source_connection::event_source_connection(event_source *source, http_requ
 
 void event_source_connection::destroy(void *ptr)
 {
+    ESP_LOGI(WEBSERVER_TAG, "events disconnect");
     auto *connection = static_cast<event_source_connection *>(ptr);
     connection->source_->connections_.erase(connection);
     delete connection;
@@ -91,7 +95,7 @@ void event_source_connection::send(const char *message, const char *event, uint3
 
 event_source::~event_source()
 {
-    for (auto && ses : connections_)
+    for (auto &&ses : connections_)
     {
         delete ses;
     }
