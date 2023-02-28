@@ -1,6 +1,6 @@
 #pragma once
 
-#include "serial_hook_sink.h"
+#include "logger_hook_sink.h"
 
 #include "hardware/sd_card.h"
 #include "util/filesystem/file.h"
@@ -17,32 +17,32 @@
 #include <esp_log.h>
 
 
-class sd_card_sink final : public serial_hook_sink
+class sd_card_sink final : public logger_hook_sink
 {
   public:
-    sd_card_sink() : background_log_task(std::bind(&sd_card_sink::flush_to_disk_task, this))
+    sd_card_sink() : background_log_task_(std::bind(&sd_card_sink::flush_to_disk_task, this))
     {
-        background_log_task.spawn_same("sd_card_sink", 4096, tskIDLE_PRIORITY);
+        background_log_task_.spawn_same("sd_card_sink", 4096, tskIDLE_PRIORITY);
     }
 
     ~sd_card_sink()
     {
-        background_log_task.kill();
+        background_log_task_.kill();
         flush_to_disk();
-        sd_card_file.reset();
+        sd_card_file_.reset();
     }
 
     void log(const std::string &log) override
     {
-        std::lock_guard<esp32::semaphore> lock(fs_buffer_mutex);
-        fs_buffer.insert(fs_buffer.end(), log.begin(), log.end());
+        std::lock_guard<esp32::semaphore> lock(fs_buffer_mutex_);
+        fs_buffer_.insert(fs_buffer_.end(), log.begin(), log.end());
     }
 
     void flush_to_disk_task()
     {
         try
         {
-            esp32::filesystem::create_directory(sd_card_path.parent_path());
+            esp32::filesystem::create_directory(sd_card_path_.parent_path());
             do
             {
                 vTaskDelay(pdMS_TO_TICKS(15 * 1000));
@@ -60,58 +60,58 @@ class sd_card_sink final : public serial_hook_sink
     void flush_to_disk()
     {
         {
-            std::lock_guard<esp32::semaphore> lock(fs_buffer_mutex);
-            if (fs_buffer.empty())
+            std::lock_guard<esp32::semaphore> lock(fs_buffer_mutex_);
+            if (fs_buffer_.empty())
             {
                 return;
             }
         }
 
-        if (sd_card_max_files > 1 && should_rotate())
+        if (sd_card_max_files_ > 1 && should_rotate())
         {
-            for (auto i = sd_card_max_files - 2; i >= 0; i--)
+            for (auto i = sd_card_max_files_ - 2; i >= 0; i--)
             {
-                auto a = sd_card_path;
+                auto a = sd_card_path_;
                 if (i)
                 {
-                    a.replace_filename(sd_card_path.filename().native() + esp32::string::to_string(i));
+                    a.replace_filename(sd_card_path_.filename().native() + esp32::string::to_string(i));
                 }
 
                 if (esp32::filesystem::exists(a))
                 {
-                    auto b = sd_card_path;
-                    b.replace_filename(sd_card_path.filename().native() + esp32::string::to_string(i));
+                    auto b = sd_card_path_;
+                    b.replace_filename(sd_card_path_.filename().native() + esp32::string::to_string(i));
                     esp32::filesystem::remove(b);
                     esp32::filesystem::rename(a, b);
                 }
             }
-            sd_card_file.reset();
+            sd_card_file_.reset();
         }
 
-        if (!sd_card_file)
+        if (!sd_card_file_)
         {
-            sd_card_file = std::make_unique<esp32::filesystem::file>(sd_card_path.c_str(), "a");
+            sd_card_file_ = std::make_unique<esp32::filesystem::file>(sd_card_path_.c_str(), "a");
         }
 
         {
-            std::lock_guard<esp32::semaphore> lock(fs_buffer_mutex);
-            sd_card_file->write(reinterpret_cast<uint8_t *>(fs_buffer.data()), 1, fs_buffer.size()); // ignore error
-            fs_buffer.clear();
+            std::lock_guard<esp32::semaphore> lock(fs_buffer_mutex_);
+            sd_card_file_->write(reinterpret_cast<uint8_t *>(fs_buffer_.data()), 1, fs_buffer_.size()); // ignore error
+            fs_buffer_.clear();
         }
-        sd_card_file->flush();
+        sd_card_file_->flush();
     }
 
     bool should_rotate()
     {
-        esp32::filesystem::file_info file_info{sd_card_path};
+        esp32::filesystem::file_info file_info{sd_card_path_};
         return (file_info.exists() && (file_info.size() > (8 * 1024)));
     }
 
   private:
-    std::unique_ptr<esp32::filesystem::file> sd_card_file;
-    const std::filesystem::path sd_card_path{std::filesystem::path(sd_card::mount_point) / "logs/log.txt"};
-    const uint8_t sd_card_max_files = 5;
-    esp32::semaphore fs_buffer_mutex;
-    std::vector<char> fs_buffer;
-    esp32::task background_log_task;
+    std::unique_ptr<esp32::filesystem::file> sd_card_file_;
+    const std::filesystem::path sd_card_path_{std::filesystem::path(sd_card::mount_point) / "logs/log.txt"};
+    const uint8_t sd_card_max_files_ = 5;
+    esp32::semaphore fs_buffer_mutex_;
+    std::vector<char> fs_buffer_;
+    esp32::task background_log_task_;
 };

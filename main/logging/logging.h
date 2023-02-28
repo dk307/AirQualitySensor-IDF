@@ -33,13 +33,13 @@ class logger : esp32::noncopyable
     static logger instance;
 
   private:
-    esp32::semaphore serial_hook_mutex;
-    std::unique_ptr<sd_card_sink> sd_card_sink_instance;
-    std::unique_ptr<web_callback_sink> web_callback_sink_instance;
+    esp32::semaphore hook_mutex_;
+    std::unique_ptr<sd_card_sink> sd_card_sink_instance_;
+    std::unique_ptr<web_callback_sink> web_callback_sink_instance_;
 
-    Esp32Hook *serial_hook_instance{nullptr};
+    Esp32Hook *hook_instance_{nullptr};
 
-    void hook_uart_logger();
+    void hook_logger();
 
     template <class T> void remove_sink(std::unique_ptr<T> &p);
     friend class Esp32Hook;

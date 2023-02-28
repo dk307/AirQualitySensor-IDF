@@ -54,7 +54,7 @@ void operations::mark_running_parition_as_valid()
     {
         ESP_LOGI(OPERATIONS_TAG, "Marking running partition as valid");
         error = esp_ota_mark_app_valid_cancel_rollback();
-        CHECK_THROW_INIT(error, "failed to mark running parition as VALID");
+        CHECK_THROW_INIT(error, "Failed to mark running parition as VALID");
     }
     else
     {
