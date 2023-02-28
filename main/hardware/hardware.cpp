@@ -8,6 +8,7 @@
 #include "util/misc.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
+#include "util/cores.h"
 
 #include <driver/i2c.h>
 #include <esp_chip_info.h>
@@ -71,7 +72,7 @@ void hardware::begin()
     const auto err = i2cdev_init();
     CHECK_THROW_INIT(err, "i2cdev_init failed");
 
-    sensor_refresh_task.spawn_pinned("sensor task", 4196, esp32::task::default_priority, 1);
+    sensor_refresh_task.spawn_pinned("sensor task", 4196, esp32::task::default_priority, esp32::hardware_core);
 }
 
 void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)

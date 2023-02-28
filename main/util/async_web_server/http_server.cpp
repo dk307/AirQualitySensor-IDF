@@ -1,7 +1,8 @@
 #include "http_server.h"
 #include "http_request.h"
-
 #include "logging/logging_tags.h"
+#include "util/cores.h"
+
 #include <esp_log.h>
 
 namespace esp32
@@ -25,6 +26,7 @@ void http_server::begin()
     config.server_port = port_;
     config.max_uri_handlers = 40;
     config.ctrl_port = 32760;
+    config.core_id = esp32::wifi_core;
 
     ESP_ERROR_CHECK(httpd_start(&server_, &config));
     ESP_LOGI(WEBSERVER_TAG, "Started web server on port:%d", port_);

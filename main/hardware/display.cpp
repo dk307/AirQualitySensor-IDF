@@ -1,16 +1,15 @@
 #include "display.h"
-
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
+#include "logging/logging_tags.h"
 #include "lvgl_fs/lvgl_fs_sd_card.h"
 #include "ui/ui2.h"
+#include "util/cores.h"
 #include "util/exceptions.h"
 #include "wifi/wifi_manager.h"
-#include <lvgl.h>
-
-#include "logging/logging_tags.h"
 
 #include <esp_log.h>
+#include <lvgl.h>
 
 const int LV_TICK_PERIOD_MS = 1;
 
@@ -111,7 +110,7 @@ void display::start()
 
     create_timer();
 
-    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 8, 1, 1);
+    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 8, 1, esp32::display_core);
 
     if (err != ESP_OK)
     {

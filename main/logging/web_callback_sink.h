@@ -46,7 +46,7 @@ class web_callback_sink final : public logger_hook_sink
     }
 
   private:
-    esp32::static_queue<std::string *, 128> queue_;
+    esp32::static_queue<std::string *, 1024> queue_;
     esp32::task background_log_task_;
     const std::function<void(const std::string &)> callback_;
 };

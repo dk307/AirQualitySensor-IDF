@@ -11,6 +11,7 @@
 #include "util/static_queue.h"
 #include "util/task_wrapper.h"
 #include "logging/logging_tags.h"
+#include "util/cores.h"
 
 #include <filesystem>
 #include <mutex>
@@ -22,7 +23,7 @@ class sd_card_sink final : public logger_hook_sink
   public:
     sd_card_sink() : background_log_task_(std::bind(&sd_card_sink::flush_to_disk_task, this))
     {
-        background_log_task_.spawn_same("sd_card_sink", 4096, tskIDLE_PRIORITY);
+        background_log_task_.spawn_pinned("sd_card_sink", 4096, tskIDLE_PRIORITY, esp32::main_task_core);
     }
 
     ~sd_card_sink()

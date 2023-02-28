@@ -2,8 +2,10 @@
 #include "config/config_manager.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
+#include "util/cores.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
+
 
 #include <esp_log.h>
 #include <esp_mac.h>
@@ -18,7 +20,7 @@ void wifi_manager::begin()
     CHECK_THROW_INIT(error, "esp_netif_init failed");
 
     config::instance.add_callback([this] { events_notify_.set_config_changed(); });
-    wifi_task_.spawn_same("wifi task", 4096, esp32::task::default_priority);
+    wifi_task_.spawn_pinned("wifi task", 4096, esp32::task::default_priority, esp32::wifi_core);
 }
 
 bool wifi_manager::connect_saved_wifi()
