@@ -26,7 +26,7 @@ class http_server : esp32::noncopyable
     void add_handler(const char *url, httpd_method_t method, url_handler request_handler, const void *user_ctx);
 
     // general url handler
-    template <class T, void (T::*ftn)(esp32::http_request *)> static esp_err_t server_url_ftn(httpd_req_t *request_p)
+    template <class T, void (T::*ftn)(esp32::http_request *)> static esp_err_t __attribute__((noinline)) server_url_ftn(httpd_req_t *request_p)
     {
         try
         {
@@ -53,7 +53,7 @@ class http_server : esp32::noncopyable
     }
 
     // fs handler
-    template <const auto file_pathT, const auto content_typeT> static esp_err_t serve_fs_file(httpd_req_t *request_p)
+    template <const auto file_pathT, const auto content_typeT> static esp_err_t __attribute__((noinline)) serve_fs_file(httpd_req_t *request_p)
     {
         try
         {
@@ -80,7 +80,8 @@ class http_server : esp32::noncopyable
     }
 
     // array handler
-    template <const uint8_t buf[], const auto len, bool is_gz, const auto content_type> static esp_err_t serve_array(httpd_req_t *request_p)
+    template <const uint8_t buf[], const auto len, bool is_gz, const auto content_type>
+    static esp_err_t __attribute__((noinline)) serve_array(httpd_req_t *request_p)
     {
         try
         {

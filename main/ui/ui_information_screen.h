@@ -100,7 +100,7 @@ class ui_information_screen : public ui_screen
         }
     }
 
-    static void update_table(lv_obj_t *table, const ui_interface::information_table_type &data)
+    static void __attribute__((noinline)) update_table(lv_obj_t *table, const ui_interface::information_table_type &data)
     {
         lv_table_set_col_cnt(table, 2);
         lv_table_set_row_cnt(table, data.size());

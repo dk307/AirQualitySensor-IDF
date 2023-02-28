@@ -87,7 +87,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         return static_cast<sensor_id_index>(reinterpret_cast<uint64_t>(lv_obj_get_user_data(screen_)));
     }
 
-    void show_screen(sensor_id_index index)
+    void __attribute__((noinline)) show_screen(sensor_id_index index)
     {
         ESP_LOGI(UI_TAG, "Panel pressed for sensor index:%s", get_sensor_name(index));
         lv_obj_set_user_data(screen_, reinterpret_cast<void *>(index));
@@ -140,7 +140,8 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         }
     }
 
-    panel_and_label create_panel(const char *label_text, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
+    panel_and_label __attribute__((noinline))
+    create_panel(const char *label_text, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
     {
         auto panel = lv_obj_create(screen_);
         lv_obj_set_size(panel, w, h);
@@ -276,8 +277,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
                 const float interval = float(chart_total_x_ticks - 1 - dsc->value) / (chart_total_x_ticks - 1);
                 // ESP_LOGI("total seconds :%d,  Series length: %d,  %f", data_interval_seconds, sensor_detail_screen_chart_series_data.size(),
                 // interval);
-                const auto seconds_ago =
-                    (data_interval_seconds * interval) + ((esp32::millis() / 1000) - sensor_detail_screen_chart_series_time);
+                const auto seconds_ago = (data_interval_seconds * interval) + ((esp32::millis() / 1000) - sensor_detail_screen_chart_series_time);
 
                 seconds_to_timestring(seconds_ago, dsc->text, dsc->text_length);
             }
@@ -337,17 +337,17 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         else if (seconds < 60 * 60)
         {
             const auto minutes = static_cast<int>(seconds / 60.0);
-            snprintf(buffer, buffer_len, "%d min ago", minutes);
+            snprintf(buffer, buffer_len, "%d min%s ago", minutes, minutes ? "s" : "");
         }
         else if (seconds < 60 * 60 * 24)
         {
             const auto hours = static_cast<int>(seconds / (60.0 * 60.0));
-            snprintf(buffer, buffer_len, "%d hours ago", hours);
+            snprintf(buffer, buffer_len, "%d hour%s ago", hours, hours ? "s" : "");
         }
         else
         {
             const auto days = static_cast<int>(seconds / (60.0 * 60.0 * 24.0));
-            snprintf(buffer, buffer_len, "%d days ago", days);
+            snprintf(buffer, buffer_len, "%d day%s ago", days, days ? "s" : "");
         }
     }
 };

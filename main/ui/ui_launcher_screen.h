@@ -1,7 +1,8 @@
 #pragma once
 
-#include "ui_screen.h"
 #include "operations/operations.h"
+#include "ui_screen.h"
+
 
 class ui_launcher_screen : public ui_screen
 {
@@ -61,7 +62,8 @@ class ui_launcher_screen : public ui_screen
         }
     }
 
-    lv_obj_t *create_button(lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, const char *src, const char *label_str, lv_event_cb_t event_cb)
+    lv_obj_t *__attribute__((noinline))
+    create_button(lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, const char *src, const char *label_str, lv_event_cb_t event_cb)
     {
         auto btn = lv_imgbtn_create(screen_);
         lv_obj_set_size(btn, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -86,7 +88,7 @@ class ui_launcher_screen : public ui_screen
         return btn;
     }
 
-    void init_confirm_win()
+    void __attribute__((noinline)) init_confirm_win()
     {
         win_confirm_ = lv_win_create(screen_, 35);
         lv_win_add_title(win_confirm_, "Confirm");
@@ -172,7 +174,7 @@ class ui_launcher_screen : public ui_screen
         factory_reset
     };
 
-    void show_confirm(confirm_type type)
+    void __attribute__((noinline)) show_confirm(confirm_type type)
     {
         lv_obj_set_user_data(win_confirm_, (void *)type);
         switch (type)

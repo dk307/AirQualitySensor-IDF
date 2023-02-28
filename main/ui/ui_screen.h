@@ -48,7 +48,7 @@ class ui_screen : esp32::noncopyable
     const ui_common_fonts *fonts_;
     lv_obj_t *screen_{nullptr};
 
-    static void set_padding_zero(lv_obj_t *obj)
+    static void __attribute__((noinline)) set_padding_zero(lv_obj_t *obj)
     {
         lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -68,7 +68,7 @@ class ui_screen : esp32::noncopyable
         (p_this->*ftn)(e);
     }
 
-    void create_close_button_to_main_screen(lv_obj_t *parent, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs)
+    void __attribute__((noinline)) create_close_button_to_main_screen(lv_obj_t *parent, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs)
     {
         lv_obj_t *close_button = lv_btn_create(parent);
         lv_obj_add_flag(close_button, LV_OBJ_FLAG_FLOATING | LV_OBJ_FLAG_CLICKABLE);
@@ -85,7 +85,7 @@ class ui_screen : esp32::noncopyable
         lv_obj_add_event_cb(close_button, event_callback<ui_screen, &ui_screen::close_button_callback>, LV_EVENT_SHORT_CLICKED, this);
     }
 
-    void set_default_screen_color()
+    void __attribute__((noinline)) set_default_screen_color()
     {
         lv_obj_set_style_bg_grad_dir(screen_, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(screen_, lv_color_hex(0x0C0D0C), LV_PART_MAIN | LV_STATE_DEFAULT);

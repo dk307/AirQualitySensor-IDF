@@ -18,9 +18,7 @@ class http_response : esp32::noncopyable
     http_response(const http_request *req) : req_(req)
     {
     }
-    virtual ~http_response()
-    {
-    }
+    virtual ~http_response() = default; 
 
     void add_common_headers();
 

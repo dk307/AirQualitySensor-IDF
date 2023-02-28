@@ -28,7 +28,7 @@ class ui_screen_with_sensor_panel : public ui_screen
   protected:
     const static uint8_t no_value_label_ = std::numeric_limits<uint8_t>::max();
 
-    static void set_default_value_in_panel(const panel_and_label &pair)
+    static void __attribute__((noinline)) set_default_value_in_panel(const panel_and_label &pair)
     {
         if (pair.panel)
         {
@@ -41,7 +41,7 @@ class ui_screen_with_sensor_panel : public ui_screen
         }
     }
 
-    static void set_label_panel_color(lv_obj_t *panel, uint8_t level)
+    static void __attribute__((noinline)) set_label_panel_color(lv_obj_t *panel, uint8_t level)
     {
         uint32_t color;
         uint32_t color_grad;
@@ -84,7 +84,7 @@ class ui_screen_with_sensor_panel : public ui_screen
         lv_obj_set_style_shadow_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-    static void set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+    static void __attribute__((noinline)) set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<sensor_value::value_type> &value)
     {
         if (value.has_value())
         {
