@@ -7,7 +7,7 @@
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_server.h"
 
-class web_server : esp32::http_server
+class web_server final : esp32::http_server
 {
   public:
     void begin() override;

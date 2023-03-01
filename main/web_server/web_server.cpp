@@ -1,14 +1,5 @@
 #include "web_server.h"
 
-#include <ArduinoJson.h>
-#include <dirent.h>
-#include <esp_log.h>
-#include <mbedtls/md.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include <filesystem>
-
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
@@ -31,18 +22,20 @@
 #include "web/include/index.html.gz.h"
 #include "web/include/login.html.gz.h"
 
+#include <ArduinoJson.h>
+#include <dirent.h>
+#include <esp_log.h>
+#include <filesystem>
+#include <mbedtls/md.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
 static const char html_media_type[] = "text/html";
 static const char css_media_type[] = "text/css";
 static const char png_media_type[] = "image/png";
-static const char TextPlainMediaType[] = "text/plain";
 
-static const char SettingsUrl[] = "/media/settings.png";
-static constexpr char LogoutUrl[] = "/media/logout.png";
-
-static const char MD5Header[] = "md5";
-static const char CacheControlHeader[] = "Cache-Control";
 static const char CookieHeader[] = "Cookie";
 static const char AuthCookieName[] = "ESPSESSIONID=";
 
@@ -167,164 +160,6 @@ bool web_server::check_authenticated(esp32::http_request *request)
     return true;
 }
 
-// bool web_server::filter_events(esp32::http_request *request)
-// {
-// 	if (!is_authenticated(request))
-// 	{
-// 		ESP_LOGW(WEBSERVER_TAG, "Dropping events request");
-// 		return false;
-// 	}
-// 	return true;
-// }
-
-// void web_server::server_routing()
-// {
-// 	// form calls
-// 	add_handler_ftn(("/login.handler"), HTTP_POST, handle_login);
-// 	add_handler_ftn(("/logout.handler"), HTTP_POST, handle_logout);
-// 	add_handler_ftn(("/wifiupdate.handler"), HTTP_POST, wifi_update);
-
-// add_handler_ftn(("/othersettings.update.handler"), HTTP_POST,
-// other_settings_update); 	add_handler_ftn(("/weblogin.update.handler"),
-// HTTP_POST, web_login_update);
-
-// 	// ajax form call
-// 	add_handler_ftn(("/factory.reset.handler"), HTTP_POST, factory_reset);
-// 	add_handler_ftn(("/firmware.update.handler"), HTTP_POST,
-// reboot_on_upload_complete, firmware_update_upload);
-// 	add_handler_ftn(("/setting.restore.handler"), HTTP_POST,
-// reboot_on_upload_complete,
-// 				   std::bind(&web_server::restore_configuration_upload,
-// this, 							 std::placeholders::_1, std::placeholders::_2,
-// std::placeholders::_3, 							 std::placeholders::_4, std::placeholders::_5,
-// std::placeholders::_6));
-
-// 	add_handler_ftn(("/restart.handler"), HTTP_POST, restart_device);
-
-// 	// json ajax calls
-// 	add_handler_ftn(("/api/sensor/get"), HTTP_GET, sensor_get);
-// 	add_handler_ftn(("/api/wifi/get"), HTTP_GET, wifi_get);
-// 	add_handler_ftn(("/api/information/get"), HTTP_GET, information_get);
-// 	add_handler_ftn(("/api/config/get"), HTTP_GET, config_get);
-
-// 	// fs ajax
-// 	add_handler_ftn("/fs/list", HTTP_GET, handle_dir_list);
-// 	add_handler_ftn("/fs/mkdir", HTTP_POST, handle_dir_create);
-// 	add_handler_ftn("/fs/download", HTTP_GET, handle_fs_download);
-// 	add_handler_ftn("/fs/upload", HTTP_POST, handle_file_upload_complete,
-// 				   std::bind(&web_server::handle_file_upload,
-// this, 							 std::placeholders::_1, std::placeholders::_2,
-// std::placeholders::_3, 							 std::placeholders::_4, std::placeholders::_5,
-// std::placeholders::_6)); add_handler_ftn("/fs/delete", HTTP_POST, handle_fs_delete); 	add_handler_ftn("/fs/rename", HTTP_POST,
-// handle_fs_rename); http_server.onNotFound(handle_file_read);
-
-// 	// log
-// 	add_handler_ftn("/api/log/webstart", HTTP_POST,
-// [this](esp32::http_request *request)
-// 				   {
-// 			if
-// (logger::instance.enable_web_logging(std::bind(&web_server::send_log_data,
-// this, std::placeholders::_1))) { 					request->send(200); 			} else {
-// 					request->send(500);
-// 			} });
-
-// 	add_handler_ftn("/api/log/webstop", HTTP_POST, [this](esp32::http_request
-// *request)
-// 				   {
-// 			logger::instance.disable_web_logging();
-// 					request->send(200); });
-
-// 	add_handler_ftn("/api/log/sdstart", HTTP_POST, [this](esp32::http_request
-// *request)
-// 				   {
-// 			if (logger::instance.enable_sd_logging()) {
-// 					request->send(200);
-// 			} else {
-// 					request->send(500);
-// 			} });
-
-// 	add_handler_ftn("/api/log/sdstop", HTTP_POST, [this](esp32::http_request
-// *request)
-// 				   {
-// 			logger::instance.disable_sd_logging();
-// 					request->send(200); });
-
-// 	add_handler_ftn("/api/log/info", HTTP_GET, on_get_log_info);
-// }
-
-// void web_server::on_event_connect(AsyncEventSourceClient *client)
-// {
-// 	if (client->lastId())
-// 	{
-// 		ESP_LOGI(WEBSERVER_TAG, "Events client reconnect");
-// 	}
-// 	else
-// 	{
-// 		ESP_LOGI(WEBSERVER_TAG, "Events client first time");
-
-// 		// send all the events
-// 		for (auto i = 0; i < total_sensors; i++)
-// 		{
-// 			notify_sensor_change(static_cast<sensor_id_index>(i));
-// 		}
-// 	}
-// }
-
-// void web_server::on_logging_connect(AsyncEventSourceClient *client)
-// {
-// 	if (client->lastId())
-// 	{
-// 		ESP_LOGI(WEBSERVER_TAG, "Logging client reconnect");
-// 	}
-// 	else
-// 	{
-// 		ESP_LOGI(WEBSERVER_TAG, "Logging client first time");
-// 	}
-// 	send_log_data("Start");
-// }
-
-// void web_server::wifi_get(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "/api/wifi/get");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
-
-// 	auto response = new AsyncJsonResponse(false, 256);
-// 	auto jsonBuffer = response->getRoot();
-
-// 	jsonBuffer[("captivePortal")] =
-// wifi_manager::instance.is_captive_portal(); 	jsonBuffer[("ssid")] =
-// config::instance.data.get_wifi_ssid(); 	response->setLength();
-// 	request->send(response);
-// }
-
-// void web_server::wifi_update(esp32::http_request *request)
-// {
-// 	const auto SsidParameter = ("ssid");
-// 	const auto PasswordParameter = ("wifipassword");
-
-// 	ESP_LOGI(WEBSERVER_TAG, "Wifi Update");
-
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
-
-// 	if (request->hasArg(SsidParameter) &&
-// request->hasArg(PasswordParameter))
-// 	{
-// 		wifi_manager::instance.set_new_wifi(request->arg(SsidParameter),
-// request->arg(PasswordParameter)); 		redirect_to_root(request); 		return;
-// 	}
-// 	else
-// 	{
-// 		handle_error(request, ("Required parameters not provided"),
-// 400);
-// 	}
-// }
-
 template <class Array, class K, class T> void web_server::add_key_value_object(Array &array, const K &key, const T &value)
 {
     auto j1 = array.createNestedObject();
@@ -367,28 +202,6 @@ void web_server::handle_config_get(esp32::http_request *request)
     const auto json = config::instance.get_all_config_as_json();
     esp32::array_response::send_response(request, json, js_media_type);
 }
-
-// template <class V, class T>
-// void web_server::add_to_json_doc(V &doc, T id, float value)
-// {
-// 	if (!isnan(value))
-// 	{
-// 		doc[id] = serialized(std::string(value, 2));
-// 	}
-// }
-
-// void web_server::sensor_get(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "/api/sensor/get");
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
-// 	auto response = new AsyncJsonResponse(false, 256);
-// 	auto doc = response->getRoot();
-// 	response->setLength();
-// 	request->send(response);
-// }
 
 // Check if header is present and correct
 bool web_server::is_authenticated(esp32::http_request *request)
@@ -598,75 +411,6 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
     send_empty_200(request);
     operations::instance.reboot();
 }
-
-// void web_server::restore_configuration_upload(esp32::http_request *request,
-// 											  const std::string
-// &filename, 											  size_t index,
-// uint8_t *data, 											  size_t len,
-// bool final)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "restoreConfigurationUpload");
-
-// 	if (!check_authenticated(request))
-// 	{
-// 		return;
-// 	}
-
-// 	std::string error;
-// 	if (!index)
-// 	{
-// 		restore_config_data = std::make_unique<std::vector<uint8_t>>();
-// 	}
-
-// 	for (size_t i = 0; i < len; i++)
-// 	{
-// 		restore_config_data->push_back(data[i]);
-// 	}
-
-// 	if (final)
-// 	{
-// 		std::string md5;
-// 		if (request->hasHeader((MD5Header)))
-// 		{
-// 			md5 = request->getHeader((MD5Header))->value();
-// 		}
-
-// 		ESP_LOGD(WEBSERVER_TAG, "Expected MD5:%s", md5.c_str());
-
-// 		if (md5.length() != 32)
-// 		{
-// 			handle_error(request, ("MD5 parameter invalid. Check file
-// exists."), 500); 			return;
-// 		}
-
-// 		if
-// (!config::instance.restore_all_config_as_json(*web_server::instance.restore_config_data,
-// md5))
-// 		{
-// 			handle_error(request, ("Restore Failed"), 500);
-// 			return;
-// 		}
-// 	}
-// }
-
-// void web_server::handle_error(esp32::http_request *request, const std::string
-// &message, int code)
-// {
-// 	if (!message.isEmpty())
-// 	{
-// 		ESP_LOGE(WEBSERVER_TAG, "%s", message.c_str());
-// 	}
-// 	AsyncWebServerResponse *response = request->beginResponse(code,
-// TextPlainMediaType, message); 	response->addHeader((CacheControlHeader),
-// ("no-cache, no-store, must-revalidate")); 	response->addHeader(("Pragma"),
-// ("no-cache")); 	response->addHeader(("Expires"), ("-1"));
-// 	request->send(response);
-// }
-
-// void web_server::handle_early_update_disconnect()
-// {
-// 	operations::instance.abort_update();
-// }
 
 void web_server::notify_sensor_change(sensor_id_index id)
 {

@@ -6,7 +6,6 @@
 #include "util/exceptions.h"
 #include "util/helper.h"
 
-
 #include <esp_log.h>
 #include <esp_mac.h>
 #include <esp_timer.h>
@@ -16,8 +15,7 @@ wifi_manager wifi_manager::instance;
 
 void wifi_manager::begin()
 {
-    const auto error = esp_netif_init();
-    CHECK_THROW_INIT(error, "esp_netif_init failed");
+    CHECK_THROW_INIT(esp_netif_init());
 
     config::instance.add_callback([this] { events_notify_.set_config_changed(); });
     wifi_task_.spawn_pinned("wifi task", 4096, esp32::task::default_priority, esp32::wifi_core);
@@ -52,39 +50,48 @@ std::string wifi_manager::get_ssid()
 void wifi_manager::wifi_task_ftn()
 {
     ESP_LOGI(WIFI_TAG, "Started Wifi Task on Core:%d", xPortGetCoreID());
-
-    do
+    try
     {
-        // not connected or ssid changed
-        if (!connected_to_ap_ || (get_ssid() != config::instance.data.get_wifi_ssid()))
+        do
         {
-            disconnect();
-            connected_to_ap_ = connect_saved_wifi();
-            call_change_listeners();
-        }
+            // not connected or ssid changed
+            if (!connected_to_ap_ || (get_ssid() != config::instance.data.get_wifi_ssid()))
+            {
+                disconnect();
+                connected_to_ap_ = connect_saved_wifi();
+                call_change_listeners();
+            }
 
-        const auto bits_set = events_notify_.wait_for_any_event(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
+            const auto bits_set = events_notify_.wait_for_any_event(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
 
-        if (operations::instance.get_reset_pending())
-        {
-            // dont do anything if restarting
-            ESP_LOGI(WIFI_TAG, "Reset pending, wifi disconnect ignore");
-            break;
-        }
+            if (operations::instance.get_reset_pending())
+            {
+                // dont do anything if restarting
+                ESP_LOGI(WIFI_TAG, "Reset pending, wifi disconnect ignore");
+                break;
+            }
 
-        if (bits_set & (wifi_events_notify::DISCONNECTED_BIT | wifi_events_notify::LOSTIP_BIT))
-        {
-            ESP_LOGI(WIFI_TAG, "Wifi disconnected");
-            connected_to_ap_ = false;
-            call_change_listeners();
-        }
+            if (bits_set & (wifi_events_notify::DISCONNECTED_BIT | wifi_events_notify::LOSTIP_BIT))
+            {
+                ESP_LOGI(WIFI_TAG, "Wifi disconnected");
+                connected_to_ap_ = false;
+                call_change_listeners();
+            }
 
-        if (bits_set & wifi_events_notify::CONFIG_CHANGED)
-        {
-            ESP_LOGD(WIFI_TAG, "Config Changed");
-        }
+            if (bits_set & wifi_events_notify::CONFIG_CHANGED)
+            {
+                ESP_LOGD(WIFI_TAG, "Config Changed");
+            }
 
-    } while (true);
+        } while (true);
+    }
+    catch (const std::exception &ex)
+    {
+        ESP_LOGI(OPERATIONS_TAG, "Wifi Task Failure:%s", ex.what());
+        // Long wait is intentional to debug wifi issues
+        vTaskDelay(pdMS_TO_TICKS(60 * 1000));
+        operations::instance.reboot();
+    }
 
     vTaskDelete(NULL);
 }
@@ -177,6 +184,5 @@ wifi_status wifi_manager::get_wifi_status()
 
 void wifi_manager::set_wifi_power_mode(wifi_ps_type_t mode)
 {
-    auto error = esp_wifi_set_ps(mode);
-    CHECK_THROW(error, "esp_wifi_set_ps", esp32::esp_exception);
+    CHECK_THROW_WIFI(esp_wifi_set_ps(mode));
 }

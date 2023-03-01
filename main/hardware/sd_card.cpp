@@ -39,22 +39,10 @@ void sd_card::begin()
     bus_cfg.quadhd_io_num = -1;
     bus_cfg.max_transfer_sz = 4092;
 
-    esp_err_t ret = spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA);
-    CHECK_THROW(ret, "Failed to initialize SPI bus", esp32::init_failure_exception);
+    CHECK_THROW_INIT(spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA));
 
     ESP_LOGI(HARDWARE_TAG, "Mounting filesystem");
-    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_);
-    if (ret != ESP_OK)
-    {
-        if (ret == ESP_FAIL)
-        {
-            CHECK_THROW(ret, "Failed to mount filesystem. Likely not formated", esp32::init_failure_exception);
-        }
-        else
-        {
-            CHECK_THROW(ret, "Failed to initialize the card", esp32::init_failure_exception);
-        }
-    }
+    CHECK_THROW_INIT(esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_));
     ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");
 
     ESP_LOGI(HARDWARE_TAG, "%s", get_info().c_str());

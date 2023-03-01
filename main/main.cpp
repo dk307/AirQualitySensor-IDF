@@ -7,6 +7,7 @@
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
 #include "http_ota/http.h"
+#include "logging/logging.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 #include "web_server/web_server.h"
@@ -32,6 +33,9 @@ extern "C" void app_main(void)
 
         // order is important
         sd_card::instance.begin();
+
+        logger::instance.enable_sd_logging();
+
         config::instance.begin();
         hardware::instance.begin();
         wifi_manager::instance.begin();

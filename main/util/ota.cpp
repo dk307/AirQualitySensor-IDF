@@ -1,29 +1,18 @@
 #include "util/ota.h"
 
+#include "logging/logging_tags.h"
+
+#include <cstring>
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_ota_ops.h>
 #include <esp_partition.h>
-
-#include <cstring>
 #include <stdexcept>
-
-#include "logging/logging_tags.h"
 
 namespace esp32
 {
 
-#define CHECK_THROW_OTA(error_, message)                                                                                                             \
-    do                                                                                                                                               \
-    {                                                                                                                                                \
-        const esp_err_t result = (error_);                                                                                                           \
-        if (result != ESP_OK)                                                                                                                        \
-        {                                                                                                                                            \
-            ota_exception ex(message, result);                                                                                                       \
-            ESP_LOGE(OPERATIONS_TAG, "%s", ex.what());                                                                                               \
-            throw ex;                                                                                                                                \
-        }                                                                                                                                            \
-    } while (0)
+#define CHECK_THROW_OTA(error_, message) CHECK_THROW(error_, ota_exception)
 
 ota_updator::ota_updator(const std::array<uint8_t, 32> &expected_sha256) : expected_sha256_(expected_sha256)
 {

@@ -1,6 +1,8 @@
 #include "wifi_sta.h"
 #include "logging/logging_tags.h"
+#include "util/exceptions.h"
 #include "util/helper.h"
+
 
 #include <esp_log.h>
 #include <mutex>
@@ -16,8 +18,8 @@ void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[siz
 wifi_sta::wifi_sta(wifi_events_notify &events_notify, const std::string &host_name, const std::string &ssid, const std::string &password)
     : events_notify_(events_notify), host_name_(host_name), ssid_(ssid), password_(password)
 {
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_wifi_event_));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_ip_event_));
+    CHECK_THROW_WIFI(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_wifi_event_));
+    CHECK_THROW_WIFI(esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_ip_event_));
 }
 
 wifi_sta::~wifi_sta()
@@ -41,20 +43,20 @@ void wifi_sta::connect_to_ap()
 
     // Prepare to connect to the provided SSID and password
     wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&init));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    CHECK_THROW_WIFI(esp_wifi_init(&init));
+    CHECK_THROW_WIFI(esp_wifi_set_mode(WIFI_MODE_STA));
 
     wifi_config_t config{};
     memset(&config, 0, sizeof(config));
     copy_min_to_buffer(ssid_.begin(), ssid_.length(), config.sta.ssid);
     copy_min_to_buffer(password_.begin(), password_.length(), config.sta.password);
-    config.sta.listen_interval = 
+    config.sta.listen_interval =
 
-    config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
+        config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
     config.sta.bssid_set = false;
 
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &config));
+    CHECK_THROW_WIFI(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    CHECK_THROW_WIFI(esp_wifi_set_config(WIFI_IF_STA, &config));
 
     close_if();
     interface_ = esp_netif_create_default_wifi_sta();
@@ -63,8 +65,8 @@ void wifi_sta::connect_to_ap()
 
 void wifi_sta::connect() const
 {
-    ESP_ERROR_CHECK(esp_wifi_start());
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    CHECK_THROW_WIFI(esp_wifi_start());
+    CHECK_THROW_WIFI(esp_wifi_connect());
 }
 
 void wifi_sta::wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)

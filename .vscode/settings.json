@@ -81,7 +81,8 @@
         "charconv": "cpp",
         "string.h": "c",
         "sps30.h": "c",
-        "hardware.h": "c"
+        "hardware.h": "c",
+        "source_location": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

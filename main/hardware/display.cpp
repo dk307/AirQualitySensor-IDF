@@ -59,7 +59,7 @@ void display::start()
 
     if (!display_device_.init())
     {
-        CHECK_THROW(ESP_FAIL, "Failed to init display", esp32::init_failure_exception);
+        CHECK_THROW_INIT2(ESP_FAIL, "Failed to init display");
     }
 
     display_device_.setRotation(1);
@@ -81,7 +81,7 @@ void display::start()
 
     if (!disp_draw_buf_ || !disp_draw_buf2_)
     {
-        CHECK_THROW(ESP_ERR_NO_MEM, "Failed to allocate lvgl display buffer", esp32::init_failure_exception);
+        CHECK_THROW_INIT2(ESP_ERR_NO_MEM, "Failed to allocate lvgl display buffer");
     }
 
     lv_disp_draw_buf_init(&draw_buf_, disp_draw_buf_, disp_draw_buf2_, screenWidth * buffer_size);
@@ -110,7 +110,7 @@ void display::start()
 
     create_timer();
 
-    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 8, 1, esp32::display_core);
+    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 4, 1, esp32::display_core);
 
     if (err != ESP_OK)
     {
@@ -118,7 +118,7 @@ void display::start()
         {
             esp_timer_delete(lv_periodic_timer_);
         }
-        CHECK_THROW(err, "Create task for LVGL failed", esp32::init_failure_exception);
+        CHECK_THROW_INIT2(err, "Create task for LVGL failed");
     }
 
     display_device_.setBrightness(128);

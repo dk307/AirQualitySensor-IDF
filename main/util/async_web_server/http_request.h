@@ -50,6 +50,5 @@ class http_request : esp32::noncopyable
     static bool url_decode_in_place(std::string &url, std::string::iterator begin, std::string::iterator end);
 };
 
-#define __STR(x) #x
-#define CHECK_HTTP_REQUEST(error_) CHECK_THROW(error_, __STR(__LINE__), esp32::http_request_exception)
+#define CHECK_HTTP_REQUEST(error_) CHECK_THROW(error_, esp32::http_request_exception)
 } // namespace esp32

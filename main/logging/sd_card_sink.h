@@ -1,8 +1,9 @@
 #pragma once
 
-#include "logger_hook_sink.h"
-
 #include "hardware/sd_card.h"
+#include "logger_hook_sink.h"
+#include "logging/logging_tags.h"
+#include "util/cores.h"
 #include "util/filesystem/file.h"
 #include "util/filesystem/file_info.h"
 #include "util/filesystem/filesystem.h"
@@ -10,13 +11,10 @@
 #include "util/semaphore_lockable.h"
 #include "util/static_queue.h"
 #include "util/task_wrapper.h"
-#include "logging/logging_tags.h"
-#include "util/cores.h"
 
+#include <esp_log.h>
 #include <filesystem>
 #include <mutex>
-#include <esp_log.h>
-
 
 class sd_card_sink final : public logger_hook_sink
 {

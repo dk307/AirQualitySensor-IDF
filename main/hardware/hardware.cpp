@@ -3,12 +3,13 @@
 #include "hardware/display.h"
 #include "hardware/sd_card.h"
 #include "logging/logging_tags.h"
+#include "util/cores.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
 #include "util/misc.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
-#include "util/cores.h"
+
 
 #include <driver/i2c.h>
 #include <esp_chip_info.h>
@@ -68,11 +69,8 @@ bool hardware::clean_sps_30()
 void hardware::begin()
 {
     display_instance_.start();
-
-    const auto err = i2cdev_init();
-    CHECK_THROW_INIT(err, "i2cdev_init failed");
-
-    sensor_refresh_task.spawn_pinned("sensor task", 4196, esp32::task::default_priority, esp32::hardware_core);
+    CHECK_THROW_INIT(i2cdev_init());
+    sensor_refresh_task.spawn_pinned("sensor task", 4 * 1024, esp32::task::default_priority, esp32::hardware_core);
 }
 
 void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
@@ -98,8 +96,7 @@ void hardware::sensor_task_ftn()
         ESP_LOGI(HARDWARE_TAG, "Sensor task started on core:%d", xPortGetCoreID());
 
         // sps30
-        auto error = sps30_i2c_init();
-        CHECK_THROW_INIT(error, "sps30_i2c_init failed");
+        CHECK_THROW_INIT(sps30_i2c_init());
 
         const auto sps_error = sps30_probe();
         if (sps_error == NO_ERROR)
@@ -110,30 +107,24 @@ void hardware::sensor_task_ftn()
             if (sps_error1 != NO_ERROR)
             {
                 ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 start measurement failed with :%d", sps_error1);
-                CHECK_THROW_INIT(ESP_FAIL, "sps30 init failed");
+                CHECK_THROW_INIT2(ESP_FAIL, "sps30 init failed");
             }
         }
         else
         {
             ESP_LOGE(SENSOR_SPS30_TAG, "SPS30 Probe failed with :%d", sps_error);
-            CHECK_THROW_INIT(ESP_FAIL, "sps30 init failed");
+            CHECK_THROW_INIT2(ESP_FAIL, "sps30 init failed");
         }
 
         // bh1750
-        error = bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire);
-        CHECK_THROW_INIT(error, "bh1750_init_desc failed");
-
-        error = bh1750_setup(&bh1750_sensor, BH1750_MODE_CONTINUOUS, BH1750_RES_HIGH);
-        CHECK_THROW_INIT(error, "bh1750_setup failed");
+        CHECK_THROW_INIT(bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire));
+        CHECK_THROW_INIT(bh1750_setup(&bh1750_sensor, BH1750_MODE_CONTINUOUS, BH1750_RES_HIGH));
 
         const auto bh1750_wait = pdMS_TO_TICKS(180);
 
         // sht3x
-        error = sht3x_init_desc(&sht3x_sensor, SHT3X_I2C_ADDR_GND, I2C_NUM_1, SDAWire, SCLWire);
-        CHECK_THROW_INIT(error, "sht3x_init_desc failed");
-
-        error = sht3x_init(&sht3x_sensor);
-        CHECK_THROW_INIT(error, "sht3x_init failed");
+        CHECK_THROW_INIT(sht3x_init_desc(&sht3x_sensor, SHT3X_I2C_ADDR_GND, I2C_NUM_1, SDAWire, SCLWire));
+        CHECK_THROW_INIT(sht3x_init(&sht3x_sensor));
 
         const auto sht3x_wait = sht3x_get_measurement_duration(SHT3X_HIGH);
 
