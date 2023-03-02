@@ -49,7 +49,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
             sensor_detail_screen_chart = lv_chart_create(screen_);
             lv_obj_set_style_bg_opa(sensor_detail_screen_chart, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_size(sensor_detail_screen_chart, screen_width - panel_w - x_pad * 3 - extra_chart_x - 10,
-                            screen_height - top_y_margin - 3 * y_pad - 20);
+                            screen_height - top_y_margin - 3 * y_pad - 20 - 5); // -5 for y for readablity
             lv_obj_align(sensor_detail_screen_chart, LV_ALIGN_TOP_LEFT, x_pad + extra_chart_x, y_pad + top_y_margin);
             lv_obj_set_style_size(sensor_detail_screen_chart, 0, LV_PART_INDICATOR);
             sensor_detail_screen_chart_series =
@@ -290,7 +290,6 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
     void set_current_values(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
     {
-        set_value_in_panel(panel_and_labels[label_and_unit_label_current_index], index, value);
 
         sensor_detail_screen_chart_series_time = esp32::millis() / 1000;
 
@@ -308,6 +307,9 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
             set_value_in_panel(panel_and_labels[label_and_unit_label_max_index], index, stats.max);
 
             auto &&values = sensor_info.history;
+
+            set_value_in_panel(panel_and_labels[label_and_unit_label_current_index], index, values[values.size() - 1]);
+
             lv_chart_set_point_count(sensor_detail_screen_chart, values.size());
             const auto range = std::max<sensor_value::value_type>((stats.max - stats.min) * 0.1, 2);
             lv_chart_set_range(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_Y, stats.min - range / 2, stats.max + range / 2);
@@ -330,7 +332,11 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
     void seconds_to_timestring(int seconds, char *buffer, uint32_t buffer_len)
     {
-        if (seconds < 60)
+        if (seconds <= 1)
+        {
+            strncpy(buffer, "now", buffer_len);
+        }
+        else if (seconds < 60)
         {
             snprintf(buffer, buffer_len, "%d sec ago", seconds);
         }

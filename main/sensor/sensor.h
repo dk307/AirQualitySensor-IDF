@@ -10,7 +10,7 @@
 #include <math.h>
 #include <mutex>
 #include <optional>
-#include <optional>
+
 
 class sensor_definition_display
 {
@@ -163,7 +163,7 @@ template <class T, uint16_t countT> class sensor_history_t
                 stats_value.max = std::max(value, stats_value.max);
                 stats_value.min = std::min(value, stats_value.min);
 
-                if ((i % group_by_count) == 0)
+                if (((i + 1) % group_by_count) == 0)
                 {
                     return_values.push_back(group_sum / group_by_count);
                     group_sum = 0;

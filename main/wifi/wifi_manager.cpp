@@ -18,7 +18,7 @@ void wifi_manager::begin()
     CHECK_THROW_INIT(esp_netif_init());
 
     config::instance.add_callback([this] { events_notify_.set_config_changed(); });
-    wifi_task_.spawn_pinned("wifi task", 4096, esp32::task::default_priority, esp32::wifi_core);
+    wifi_task_.spawn_pinned("wifi task", 8 * 1024, esp32::task::default_priority, esp32::wifi_core);
 }
 
 bool wifi_manager::connect_saved_wifi()

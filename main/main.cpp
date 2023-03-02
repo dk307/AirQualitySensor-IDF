@@ -18,6 +18,8 @@
 #include <esp_log.h>
 #include <nvs_flash.h>
 
+// #define MIN_FOR_UPLOAD
+
 extern "C" void app_main(void)
 {
     esp_log_level_set(WIFI_TAG, ESP_LOG_DEBUG);
@@ -34,22 +36,28 @@ extern "C" void app_main(void)
         // order is important
         sd_card::instance.begin();
 
-        logger::instance.enable_sd_logging();
-
         config::instance.begin();
+#ifndef MIN_FOR_UPLOAD
         hardware::instance.begin();
+#endif
         wifi_manager::instance.begin();
-        web_server::instance.begin();
 
+#ifndef MIN_FOR_UPLOAD
+        web_server::instance.begin();
+#endif
         operations::mark_running_parition_as_valid();
 
+#ifdef MIN_FOR_UPLOAD
         http_init();
         httpd_handle_t http_server;
         http_start_webserver(&http_server);
+#endif
 
+#ifndef MIN_FOR_UPLOAD
         hardware::instance.set_main_screen();
+#endif
 
-        ESP_LOGI(OPERATIONS_TAG, "Minimum free heap size: %ld bytes", esp_get_free_heap_size());
+        ESP_LOGI(OPERATIONS_TAG, "Main task is done!");
     }
     catch (const std::exception &ex)
     {

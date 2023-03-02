@@ -70,7 +70,7 @@ void hardware::begin()
 {
     display_instance_.start();
     CHECK_THROW_INIT(i2cdev_init());
-    sensor_refresh_task.spawn_pinned("sensor task", 4 * 1024, esp32::task::default_priority, esp32::hardware_core);
+    sensor_refresh_task.spawn_pinned("sensor task", 8 * 1024, esp32::task::default_priority, esp32::hardware_core);
 }
 
 void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
