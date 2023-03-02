@@ -338,22 +338,22 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         }
         else if (seconds < 60)
         {
-            snprintf(buffer, buffer_len, "%d sec ago", seconds);
+            snprintf(buffer, buffer_len, "%d sec%s ago", seconds, seconds > 1 ? "s" : "");
         }
         else if (seconds < 60 * 60)
         {
             const auto minutes = static_cast<int>(seconds / 60.0);
-            snprintf(buffer, buffer_len, "%d min%s ago", minutes, minutes ? "s" : "");
+            snprintf(buffer, buffer_len, "%d min%s ago", minutes, minutes > 1 ? "s" : "");
         }
         else if (seconds < 60 * 60 * 24)
         {
             const auto hours = static_cast<int>(seconds / (60.0 * 60.0));
-            snprintf(buffer, buffer_len, "%d hour%s ago", hours, hours ? "s" : "");
+            snprintf(buffer, buffer_len, "%d hour%s ago", hours, hours > 1 ? "s" : "");
         }
         else
         {
             const auto days = static_cast<int>(seconds / (60.0 * 60.0 * 24.0));
-            snprintf(buffer, buffer_len, "%d day%s ago", days, days ? "s" : "");
+            snprintf(buffer, buffer_len, "%d day%s ago", days, days > 1 ? "s" : "");
         }
     }
 };
