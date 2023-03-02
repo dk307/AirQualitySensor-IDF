@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <atomic>
 
 struct wifi_status
 {
@@ -14,7 +15,7 @@ struct wifi_status
     std::string status;
 };
 
-class wifi_manager : public esp32::change_callback
+class wifi_manager final : public esp32::change_callback
 {
   public:
     void begin();
@@ -29,11 +30,10 @@ class wifi_manager : public esp32::change_callback
     {
     }
     wifi_events_notify events_notify_;
-    mutable esp32::semaphore data_mutex_;
     std::unique_ptr<wifi_sta> wifi_instance_;
     esp32::task wifi_task_;
 
-    bool connected_to_ap_{false};
+    std::atomic_bool connected_to_ap_{false};
 
     bool connect_saved_wifi();
     void wifi_task_ftn();

@@ -97,6 +97,22 @@ class Esp32Hook
     std::vector<logger_hook_sink *> sinks_;
 };
 
+logger::logger()
+{
+    esp_register_shutdown_handler(logging_shutdown_handler);
+}
+
+void logger::logging_shutdown_handler()
+{
+    std::lock_guard<esp32::semaphore> lock(logger::instance.hook_mutex_);
+    ESP_LOGI(LOGGING_TAG, "Flushing custom loggers");
+
+    if (logger::instance.sd_card_sink_instance_)
+    {
+        logger::instance.sd_card_sink_instance_->flush();
+    }
+}
+
 bool logger::enable_sd_logging()
 {
     std::lock_guard<esp32::semaphore> lock(hook_mutex_);

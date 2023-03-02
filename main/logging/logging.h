@@ -33,6 +33,10 @@ class logger : esp32::noncopyable
     static logger instance;
 
   private:
+    logger();
+
+    static void logging_shutdown_handler();
+
     esp32::semaphore hook_mutex_;
     std::unique_ptr<sd_card_sink> sd_card_sink_instance_;
     std::unique_ptr<web_callback_sink> web_callback_sink_instance_;

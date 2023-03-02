@@ -4,7 +4,7 @@
 
 #include <atomic>
 
-class operations : esp32::noncopyable
+class operations final : esp32::noncopyable
 {
   public:
     void reboot();
@@ -25,6 +25,6 @@ class operations : esp32::noncopyable
     operations();
     [[noreturn]] void reset();
 
-    static void shutdown_restarting();
+    static void operations_shutdown_handler();
     std::atomic_bool reset_pending{false};
 };

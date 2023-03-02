@@ -3,7 +3,6 @@
 #include "util/exceptions.h"
 #include "util/helper.h"
 
-
 #include <esp_log.h>
 #include <mutex>
 
@@ -47,13 +46,10 @@ void wifi_sta::connect_to_ap()
     CHECK_THROW_WIFI(esp_wifi_set_mode(WIFI_MODE_STA));
 
     wifi_config_t config{};
-    memset(&config, 0, sizeof(config));
     copy_min_to_buffer(ssid_.begin(), ssid_.length(), config.sta.ssid);
     copy_min_to_buffer(password_.begin(), password_.length(), config.sta.password);
-    config.sta.listen_interval =
-
-        config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA_WPA2_PSK;
-    config.sta.bssid_set = false;
+    config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
+    config.sta.pmf_cfg.capable = true;
 
     CHECK_THROW_WIFI(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     CHECK_THROW_WIFI(esp_wifi_set_config(WIFI_IF_STA, &config));

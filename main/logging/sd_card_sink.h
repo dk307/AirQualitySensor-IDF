@@ -37,6 +37,12 @@ class sd_card_sink final : public logger_hook_sink
         fs_buffer_.insert(fs_buffer_.end(), log.begin(), log.end());
     }
 
+    void flush()
+    {
+        flush_to_disk();
+    }
+
+  private:
     void flush_to_disk_task()
     {
         try
@@ -44,7 +50,7 @@ class sd_card_sink final : public logger_hook_sink
             esp32::filesystem::create_directory(sd_card_path_.parent_path());
             do
             {
-                vTaskDelay(pdMS_TO_TICKS(15 * 1000));
+                vTaskDelay(pdMS_TO_TICKS(60 * 1000));
                 flush_to_disk();
             } while (true);
         }
@@ -66,6 +72,7 @@ class sd_card_sink final : public logger_hook_sink
             }
         }
 
+        std::lock_guard<esp32::semaphore> lock(flush_to_disk_mutex_);
         if (sd_card_max_files_ > 1 && should_rotate())
         {
             for (auto i = sd_card_max_files_ - 2; i >= 0; i--)
@@ -110,6 +117,7 @@ class sd_card_sink final : public logger_hook_sink
     std::unique_ptr<esp32::filesystem::file> sd_card_file_;
     const std::filesystem::path sd_card_path_{std::filesystem::path(sd_card::mount_point) / "logs/log.txt"};
     const uint8_t sd_card_max_files_ = 5;
+    esp32::semaphore flush_to_disk_mutex_;
     esp32::semaphore fs_buffer_mutex_;
     std::vector<char> fs_buffer_;
     esp32::task background_log_task_;

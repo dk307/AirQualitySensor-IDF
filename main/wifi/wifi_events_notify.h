@@ -5,12 +5,12 @@
 
 #include <freertos\event_groups.h>
 
-class wifi_events_notify : esp32::noncopyable
+class wifi_events_notify final : esp32::noncopyable
 {
   public:
     wifi_events_notify()
     {
-        wifi_event_group_ = xEventGroupCreate();
+        wifi_event_group_ = xEventGroupCreateStatic(&event_group_buffer_);
         configASSERT(wifi_event_group_);
     }
 
@@ -51,10 +51,33 @@ class wifi_events_notify : esp32::noncopyable
 
     bool wait_for_connect(TickType_t time)
     {
-        return xEventGroupWaitBits(wifi_event_group_, CONNECTED_BIT | GOTIP_BIT,
-                                   pdTRUE, // clear before return
-                                   pdTRUE, // wait for both
-                                   time) == (CONNECTED_BIT | GOTIP_BIT);
+        const TickType_t final_time = xTaskGetTickCount() + time;
+        const auto connected_bits = CONNECTED_BIT | GOTIP_BIT;
+        const auto disconnected_bits = DISCONNECTED_BIT | LOSTIP_BIT;
+
+        EventBits_t set_bits = 0;
+        int64_t wait = time;
+        do
+        {
+            set_bits |= xEventGroupWaitBits(wifi_event_group_, CONNECTED_BIT | DISCONNECTED_BIT | GOTIP_BIT | LOSTIP_BIT,
+                                            pdTRUE,  // clear before return
+                                            pdFALSE, // wait for any
+                                            wait);
+
+            if (set_bits & disconnected_bits) // any bit is set
+            {
+                xEventGroupSetBits(wifi_event_group_, set_bits & disconnected_bits);
+                return false;
+            }
+
+            if ((set_bits & connected_bits) == connected_bits)
+            {
+                return true;
+            }
+            wait = final_time - xTaskGetTickCount();
+        } while (wait);
+
+        return false;
     }
 
     EventBits_t wait_for_any_event(TickType_t time)
@@ -73,4 +96,5 @@ class wifi_events_notify : esp32::noncopyable
 
   private:
     EventGroupHandle_t wifi_event_group_;
+    StaticEventGroup_t  event_group_buffer_;;
 };

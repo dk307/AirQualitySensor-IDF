@@ -28,28 +28,33 @@ bool wifi_manager::connect_saved_wifi()
 
     if (!ssid.empty())
     {
+        ESP_LOGD(WIFI_TAG, "Connecting to saved Wifi connection:%s", ssid.c_str());
         const auto rfc_name = get_rfc_name();
         ESP_LOGI(WIFI_TAG, "Hostname is %s", rfc_name.c_str());
-        {
-            std::lock_guard<esp32::semaphore> lock(data_mutex_);
-            wifi_instance_ = std::make_unique<wifi_sta>(events_notify_, rfc_name, ssid, pwd);
-        }
+
+        wifi_instance_ = std::make_unique<wifi_sta>(events_notify_, rfc_name, ssid, pwd);
         events_notify_.clear_connection_bits();
+        
+        ESP_LOGD(WIFI_TAG, "Waiting for Wifi connection");
         wifi_instance_->connect_to_ap();
         return events_notify_.wait_for_connect(pdMS_TO_TICKS(30000));
     }
-    return false;
+    else
+    {
+        ESP_LOGW(WIFI_TAG, "No wifi connection configured");
+        return false;
+    }
 }
 
 std::string wifi_manager::get_ssid()
 {
-    std::lock_guard<esp32::semaphore> lock(data_mutex_);
     return (wifi_instance_) ? wifi_instance_->get_ssid() : std::string();
 }
 
 void wifi_manager::wifi_task_ftn()
 {
     ESP_LOGI(WIFI_TAG, "Started Wifi Task on Core:%d", xPortGetCoreID());
+    connected_to_ap_ = false;
     try
     {
         do
@@ -59,6 +64,14 @@ void wifi_manager::wifi_task_ftn()
             {
                 disconnect();
                 connected_to_ap_ = connect_saved_wifi();
+                if (connected_to_ap_)
+                {
+                    ESP_LOGI(WIFI_TAG, "Connected to Wifi");
+                }
+                else
+                {
+                    ESP_LOGW(WIFI_TAG, "Failed to connect to Wifi");
+                }
                 call_change_listeners();
             }
 
@@ -80,14 +93,14 @@ void wifi_manager::wifi_task_ftn()
 
             if (bits_set & wifi_events_notify::CONFIG_CHANGED)
             {
-                ESP_LOGD(WIFI_TAG, "Config Changed");
+                ESP_LOGI(WIFI_TAG, "Config Changed");
             }
 
         } while (true);
     }
     catch (const std::exception &ex)
     {
-        ESP_LOGI(OPERATIONS_TAG, "Wifi Task Failure:%s", ex.what());
+        ESP_LOGE(WIFI_TAG, "Wifi Task Failure:%s", ex.what());
         // Long wait is intentional to debug wifi issues
         vTaskDelay(pdMS_TO_TICKS(60 * 1000));
         operations::instance.reboot();
@@ -99,12 +112,8 @@ void wifi_manager::wifi_task_ftn()
 void wifi_manager::disconnect()
 {
     connected_to_ap_ = false;
-    bool changed = false;
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        changed = wifi_instance_ != nullptr;
-        wifi_instance_.reset();
-    }
+    const auto changed = wifi_instance_ != nullptr;
+    wifi_instance_.reset();
 
     if (changed)
     {
@@ -163,23 +172,23 @@ std::string wifi_manager::get_rfc_name()
 
 wifi_status wifi_manager::get_wifi_status()
 {
-    std::lock_guard<esp32::semaphore> lock(data_mutex_);
-    if (connected_to_ap_ && wifi_instance_)
+    if (connected_to_ap_)
     {
-        if ((wifi_instance_->get_local_ip() != 0))
+        esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+
+        if (netif != NULL)
         {
-            return {connected_to_ap_, esp32::string::sprintf("Connected to %s with IP %s", wifi_instance_->get_ssid().c_str(),
-                                                             wifi_instance_->get_local_ip_address().c_str())};
-        }
-        else
-        {
-            return {connected_to_ap_, "Not connected to Wifi"};
+            esp_netif_ip_info_t ip_info{};
+            if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK)
+            {
+                if (ip_info.ip.addr != 0)
+                {
+                    return {true, esp32::string::sprintf("Connected to %s", wifi_instance_->get_ssid().c_str())};
+                }
+            }
         }
     }
-    else
-    {
-        return {connected_to_ap_, "Not connected to Wifi"};
-    }
+    return {false, "Not connected to Wifi"};
 }
 
 void wifi_manager::set_wifi_power_mode(wifi_ps_type_t mode)

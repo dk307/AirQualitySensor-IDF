@@ -6,7 +6,7 @@
 
 #include <string>
 
-class sd_card : esp32::noncopyable
+class sd_card final : esp32::noncopyable
 {
   public:
     void begin();

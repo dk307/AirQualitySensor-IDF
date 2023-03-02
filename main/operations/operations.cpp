@@ -12,10 +12,10 @@ operations operations::instance;
 
 operations::operations()
 {
-    esp_register_shutdown_handler(shutdown_restarting);
+    esp_register_shutdown_handler(operations_shutdown_handler);
 }
 
-void operations::shutdown_restarting()
+void operations::operations_shutdown_handler()
 {
     operations::instance.reset_pending.store(true);
 }
