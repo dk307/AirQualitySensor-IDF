@@ -88,11 +88,11 @@ class wifi_events_notify final : esp32::noncopyable
                                    time);
     }
 
-    const static auto CONNECTED_BIT = BIT0;
-    const static auto DISCONNECTED_BIT = BIT1;
-    const static auto GOTIP_BIT = BIT2;
-    const static auto LOSTIP_BIT = BIT3;
-    const static auto CONFIG_CHANGED = BIT4;
+    constexpr static auto CONNECTED_BIT = BIT0;
+    constexpr static auto DISCONNECTED_BIT = BIT1;
+    constexpr static auto GOTIP_BIT = BIT2;
+    constexpr static auto LOSTIP_BIT = BIT3;
+    constexpr static auto CONFIG_CHANGED = BIT4;
 
   private:
     EventGroupHandle_t wifi_event_group_;

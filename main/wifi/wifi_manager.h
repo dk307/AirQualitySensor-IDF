@@ -39,7 +39,7 @@ class wifi_manager final : public esp32::change_callback
     void wifi_task_ftn();
     void disconnect();
 
-    std::string get_ssid();
+    std::string_view get_ssid();
 
     static std::string get_rfc_name();
     static std::string get_rfc_952_host_name(const std::string &name);

@@ -11,7 +11,6 @@
 #include <mutex>
 #include <optional>
 
-
 class sensor_definition_display
 {
   public:

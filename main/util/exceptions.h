@@ -39,7 +39,7 @@ class esp_exception : public std::exception
     }
 
     virtual ~esp_exception() = default;
-    
+
     const char *what() const _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW override
     {
         return message_.empty() ? esp_err_to_name(error_) : message_.c_str();
@@ -79,7 +79,7 @@ class wifi_op_exception : public esp_exception
     do                                                                                                                                               \
     {                                                                                                                                                \
         const esp_err_t result = (error_);                                                                                                           \
-        if (result != ESP_OK)                                                                                                                        \
+        if (result != ESP_OK) [[unlikely]]                                                                                                           \
             throw exception_type_(std::source_location::current(), result);                                                                          \
     } while (0)
 
@@ -87,11 +87,9 @@ class wifi_op_exception : public esp_exception
     do                                                                                                                                               \
     {                                                                                                                                                \
         const esp_err_t result = (error_);                                                                                                           \
-        if (result != ESP_OK)                                                                                                                        \
+        if (result != ESP_OK) [[unlikely]]                                                                                                           \
             throw exception_type_(std::source_location::current(), message, result);                                                                 \
     } while (0)
-
-
 
 #define CHECK_THROW_INIT(error_) CHECK_THROW(error_, esp32::init_failure_exception);
 #define CHECK_THROW_INIT2(error_, message_) CHECK_THROW2(error_, message_, esp32::init_failure_exception);

@@ -68,7 +68,7 @@ class ui_information_screen : public ui_screen
 
     lv_timer_t *refresh_timer_;
 
-    const static int tab_width = 64;
+    constexpr static int tab_width = 64;
 
     void screen_callback(lv_event_t *e)
     {

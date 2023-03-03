@@ -121,29 +121,6 @@ void wifi_sta::close_if()
     }
 }
 
-uint32_t wifi_sta::get_local_ip()
-{
-    return ip_info_.ip.addr;
-}
-
-std::string wifi_sta::get_local_ip_address()
-{
-    std::array<char, 16> str_ip;
-    return esp_ip4addr_ntoa(&ip_info_.ip, str_ip.data(), 16);
-}
-
-std::string wifi_sta::get_netmask()
-{
-    std::array<char, 16> str_mask;
-    return esp_ip4addr_ntoa(&ip_info_.netmask, str_mask.data(), 16);
-}
-
-std::string wifi_sta::get_gateway()
-{
-    std::array<char, 16> str_gw;
-    return esp_ip4addr_ntoa(&ip_info_.gw, str_gw.data(), 16);
-}
-
 std::string wifi_sta::get_disconnect_reason_str(uint8_t reason)
 {
     switch (reason)

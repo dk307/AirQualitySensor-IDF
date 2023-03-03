@@ -58,14 +58,17 @@
   </div>
 
   <script src="/js/s.js"></script>
+  <script src="/js/extra/ansi_up.js"></script>
 
   <script>
     var logsSource;
+    var ansi_up = new AnsiUp;
 
     function appendLogs(e) {
       var data = e.data;
       if (data != null) {
         var logsBlock = $('#logsBlock');
+        data =  ansi_up.ansi_to_html(data);
         logsBlock.html(logsBlock.html() + data + "\r\n");
       }
     }

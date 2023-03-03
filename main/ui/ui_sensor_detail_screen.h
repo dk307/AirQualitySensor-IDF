@@ -109,7 +109,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
     lv_chart_series_t *sensor_detail_screen_chart_series;
     sensor_history::vector_history_t sensor_detail_screen_chart_series_data;
     uint64_t sensor_detail_screen_chart_series_time;
-    const static uint8_t chart_total_x_ticks = 4;
+    constexpr static uint8_t chart_total_x_ticks = 4;
 
     std::array<panel_and_label, 4> panel_and_labels;
     const size_t label_and_unit_label_current_index = 0;

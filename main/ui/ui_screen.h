@@ -38,8 +38,8 @@ class ui_screen : esp32::noncopyable
     }
 
   protected:
-    const static int screen_width = 480;
-    const static int screen_height = 320;
+    constexpr static int screen_width = 480;
+    constexpr static int screen_height = 320;
     const lv_color_t off_black_color = lv_color_hex(0x1E1E1E);
     const lv_color_t text_color = lv_color_hex(0xFFFAFA);
 

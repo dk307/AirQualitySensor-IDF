@@ -24,14 +24,6 @@ class wifi_sta final : esp32::noncopyable
     /// Initiates the connection to the AP.
     void connect_to_ap();
 
-    [[nodiscard]] uint32_t get_local_ip();
-
-    [[nodiscard]] std::string get_local_ip_address();
-
-    [[nodiscard]] std::string get_netmask();
-
-    [[nodiscard]] std::string get_gateway();
-
     const std::string &get_ssid() const
     {
         return ssid_;

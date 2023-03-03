@@ -45,6 +45,7 @@ static constexpr char favicon_url[] = "/media/favicon.png";
 static constexpr char all_js_url[] = "/js/s.js";
 static constexpr char datatables_js_url[] = "/js/extra/datatables.min.js";
 static constexpr char moment_js_url[] = "/js/extra/moment.min.js";
+static constexpr char ansi_up_js_url[] = "/js/extra/ansi_up.js";
 static constexpr char bootstrap_css_url[] = "/css/bootstrap.min.css";
 static constexpr char datatable_css_url[] = "/css/datatables.min.css";
 static constexpr char root_url[] = "/";
@@ -58,6 +59,7 @@ static constexpr char logo_file_path[] = "/sd/web/logo.png";
 static constexpr char all_js_file_path[] = "/sd/web/s.js";
 static constexpr char datatable_js_file_path[] = "/sd/web/extra/datatables.min.js";
 static constexpr char moment_js_file_path[] = "/sd/web/extra/moment.min.js";
+static constexpr char ansi_up_js_file_path[] = "/sd/web/extra/ansi_up.js";
 static constexpr char bootstrap_css_file_path[] = "/sd/web/bootstrap.min.css";
 static constexpr char datatables_css_file_path[] = "/sd/web/datatables.min.css";
 
@@ -97,6 +99,7 @@ void web_server::begin()
     add_fs_file_handler<all_js_file_path, js_media_type>(all_js_url);
     add_fs_file_handler<datatable_js_file_path, js_media_type>(datatables_js_url);
     add_fs_file_handler<moment_js_file_path, js_media_type>(moment_js_url);
+    add_fs_file_handler<ansi_up_js_file_path, js_media_type>(ansi_up_js_url);
 
     add_fs_file_handler<bootstrap_css_file_path, css_media_type>(bootstrap_css_url);
     add_fs_file_handler<datatables_css_file_path, css_media_type>(datatable_css_url);

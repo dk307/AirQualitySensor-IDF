@@ -9,7 +9,7 @@ class noncopyable
     ~noncopyable() = default; 
 
   private: 
-    noncopyable(const noncopyable &) = delete;
+    explicit noncopyable(const noncopyable &) = delete;
     const noncopyable &operator=(const noncopyable &) = delete;
 };
 } // namespace esp32

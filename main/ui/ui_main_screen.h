@@ -15,9 +15,9 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
         lv_obj_clear_flag(screen_, LV_OBJ_FLAG_SCROLLABLE);
 
-        const int y_pad = 8;
-        const int big_panel_w = (screen_width * 3) / 4;
-        const int big_panel_h = ((screen_height * 2) / 3) - 15;
+        constexpr int y_pad = 8;
+        constexpr int big_panel_w = (screen_width * 3) / 4;
+        constexpr int big_panel_h = ((screen_height * 2) / 3) - 15;
 
         panel_and_labels_[static_cast<size_t>(sensor_id_index::pm_2_5)] =
             create_big_panel((screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h);

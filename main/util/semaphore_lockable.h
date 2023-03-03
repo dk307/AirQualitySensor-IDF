@@ -21,9 +21,7 @@ class semaphore final : esp32::noncopyable
         vSemaphoreDelete(handle_);
     }
 
-    explicit semaphore(const semaphore &) = delete;
     explicit semaphore(const semaphore &&) = delete;
-    semaphore &operator=(const semaphore &) = delete;
 
     void lock()
     {

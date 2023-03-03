@@ -46,9 +46,9 @@ bool wifi_manager::connect_saved_wifi()
     }
 }
 
-std::string wifi_manager::get_ssid()
+std::string_view wifi_manager::get_ssid()
 {
-    return (wifi_instance_) ? wifi_instance_->get_ssid() : std::string();
+    return (wifi_instance_) ? wifi_instance_->get_ssid() : std::string_view();
 }
 
 void wifi_manager::wifi_task_ftn()
