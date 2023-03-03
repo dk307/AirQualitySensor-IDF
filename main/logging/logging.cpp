@@ -50,7 +50,7 @@ class Esp32Hook
   private:
     static int esp32hook(const char *str, va_list arg)
     {
-        auto h = logger::instance.hook_instance_;
+        auto&& h = logger::instance.hook_instance_;
         if (h)
         {
             auto return_value = h->call_sinks(str, arg);
@@ -155,7 +155,6 @@ bool logger::enable_web_logging(const std::function<void(const std::string &)> &
 template <class T> void logger::remove_sink(std::unique_ptr<T> &p)
 {
     std::lock_guard<esp32::semaphore> lock(hook_mutex_);
-
     if (p)
     {
         hook_instance_->remove_sink(p.get());
@@ -164,10 +163,9 @@ template <class T> void logger::remove_sink(std::unique_ptr<T> &p)
 
     if (hook_instance_)
     {
-        if (!hook_instance_->sink_size())
+        if (hook_instance_->sink_size() == 0)
         {
-            delete hook_instance_;
-            p.reset();
+            hook_instance_.reset();
         }
     }
 }
@@ -188,7 +186,7 @@ void logger::hook_logger()
 {
     if (!hook_instance_)
     {
-        hook_instance_ = new Esp32Hook();
+        hook_instance_ = std::make_unique<Esp32Hook>();
     }
 }
 

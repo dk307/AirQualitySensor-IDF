@@ -142,6 +142,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_web_logging_stop>("/api/log/webstop", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_start>("/api/log/sdstart", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_stop>("/api/log/sdstop", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::on_set_logging_level>("/api/log/loglevel", HTTP_POST);
 
     for (auto i = 0; i < total_sensors; i++)
     {
@@ -909,15 +910,33 @@ void web_server::send_log_data(const std::string &c)
     }
 }
 
-// void web_server::on_get_log_info(esp32::http_request *request)
-// {
-// 	ESP_LOGI(WEBSERVER_TAG, "/api/log/info");
+void web_server::on_set_logging_level(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/log/loglevel");
 
-// 	BasicJsonDocument<esp32::psram::json_allocator> json_document(128);
-// 	json_document["logLevel"] =
-// logger::instance.get_general_logging_level();
+    if (!check_authenticated(request))
+    {
+        return;
+    }
 
-// 	std::string json;
-// 	serializeJson(json_document, json);
-// 	request->send(200, JsonMediaType, json);
-// }
+    const auto arguments = request->get_form_url_encoded_arguments({"tag", "level"});
+    auto &&tag_arg = arguments[0];
+    auto &&level_arg = arguments[1];
+
+    if (!tag_arg || !level_arg)
+    {
+        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Parameters not supplied for log level set");
+        return;
+    }
+
+    const auto log_level = esp32::parse_number<uint8_t>(level_arg.value());
+
+    if (!log_level.has_value() || (log_level.value() > ESP_LOG_VERBOSE) || (log_level.value() < ESP_LOG_NONE))
+    {
+        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Log level not valid");
+        return;
+    }
+
+    logger::instance.set_logging_level(tag_arg.value().c_str(), static_cast<esp_log_level_t>(log_level.value()));
+    send_empty_200(request);
+}

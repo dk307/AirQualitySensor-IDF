@@ -9,7 +9,6 @@
   <title>Debug</title>
 
   <link rel="stylesheet" href="/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="/css/datatables.min.css" />
 
   <style>
     .logs {
@@ -21,13 +20,35 @@
 </head>
 
 <body>
-  <nav class="navbar navbar bg-light">
-    <form class="container-fluid justify-content-start">
-      <button class="btn btn-primary me-3" type="button" id="startWebLoggingId">Start Web logging</button>
-      <button class="btn btn-primary me-3" type="button" id="stopWebLoggingId">Stop Web logging</button>
-      <button class="btn btn-primary me-3" type="button" id="startSDLoggingId">Start SD Card logging</button>
-      <button class="btn btn-primary me-3" type="button" id="stopSDLoggingId">Stop SD Card logging</button>
-    </form>
+  <nav class="navbar navbar bg-light fixed-top">
+    <div class="container">
+      <div class="row justify-content-start">
+        <div class="col">
+          <div class="btn-group mx-3">
+            <button type="button" class="btn btn-outline-primary" id="startWebLoggingId">Start Web logging</button>
+            <button type="button" class="btn btn-outline-primary" id="stopWebLoggingId">Stop Web logging</button>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="btn-group mx-3">
+            <button type="button" class="btn btn-outline-primary" id="startSDLoggingId">Start SD Card logging</button>
+            <button type="button" class="btn btn-outline-primary" id="stopSDLoggingId">Stop SD Card logging</button>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="input-group">
+            <span class="input-group-text">Tag</span>
+            <input type="text" class="form-control" placeholder="Tag to change logging level" id="loggingTag">
+            <button class="btn btn-outline-secondary" type="button" id="debugTag">Debug</button>
+            <button class="btn btn-outline-secondary" type="button" id="infoTag">Info</button>
+            <button class="btn btn-outline-secondary" type="button" id="warnTag">Warn</button>
+            <button class="btn btn-outline-secondary" type="button" id="errorTag">Error</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </nav>
 
   <div class="modal-body">
@@ -55,10 +76,11 @@
       logsSource.addEventListener("logs", appendLogs);
     });
 
-    function ajaxPost(url, text) {
+    function ajaxPost(url, data, text) {
       $.ajax({
         type: "POST",
         url: url,
+        data: data,
         success: function (data) {
           alert(text + " success");
         },
@@ -68,21 +90,49 @@
       });
     }
 
+    function setTagLoggingLevel(level) {
+      var tag = $("#loggingTag").val();
+
+      if (tag === "") {
+        alert("No logging tag specified");
+      }
+
+      var data = { 'tag': tag, 'level': level };
+      ajaxPost("/api/log/loglevel", $.param(data), "Logging level change");
+    }
+
     document.getElementById('startWebLoggingId').addEventListener('click', function () {
-      ajaxPost("/api/log/webstart", "Web Logging enable");
+      ajaxPost("/api/log/webstart", "", "Web Logging enable");
     });
 
     document.getElementById('stopWebLoggingId').addEventListener('click', function () {
-      ajaxPost("/api/log/webstop", "Web Logging disable");
+      ajaxPost("/api/log/webstop", "", "Web Logging disable");
     });
 
     document.getElementById('startSDLoggingId').addEventListener('click', function () {
-      ajaxPost("/api/log/sdstart", "SD Card Logging enable");
+      ajaxPost("/api/log/sdstart", "", "SD Card Logging enable");
     });
 
     document.getElementById('stopSDLoggingId').addEventListener('click', function () {
-      ajaxPost("/api/log/sdstop", "SD Card Logging disable");
+      ajaxPost("/api/log/sdstop", "", "SD Card Logging disable");
     });
+
+    document.getElementById('debugTag').addEventListener('click', function () {
+      setTagLoggingLevel(4);
+    });
+
+    document.getElementById('infoTag').addEventListener('click', function () {
+      setTagLoggingLevel(3);
+    });
+
+    document.getElementById('warnTag').addEventListener('click', function () {
+      setTagLoggingLevel(2);
+    });
+
+    document.getElementById('errorTag').addEventListener('click', function () {
+      setTagLoggingLevel(1);
+    });
+
   </script>
 
 </body>

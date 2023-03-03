@@ -68,7 +68,7 @@ class web_server final : esp32::http_server
     void handle_web_logging_stop(esp32::http_request *request);
     void handle_sd_card_logging_start(esp32::http_request *request);
     void handle_sd_card_logging_stop(esp32::http_request *request);
-    // void on_get_log_info(esp32::http_request *request);
+    void on_set_logging_level(esp32::http_request *request);
 
     esp32::event_source events;
     esp32::event_source logging;

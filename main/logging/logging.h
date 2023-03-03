@@ -40,7 +40,7 @@ class logger : esp32::noncopyable
     esp32::semaphore hook_mutex_;
     std::unique_ptr<sd_card_sink> sd_card_sink_instance_;
     std::unique_ptr<web_callback_sink> web_callback_sink_instance_;
-    Esp32Hook *hook_instance_{nullptr};
+    std::unique_ptr<Esp32Hook>hook_instance_{nullptr};
 
     void hook_logger();
 
