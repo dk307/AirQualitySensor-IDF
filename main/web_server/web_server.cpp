@@ -84,7 +84,7 @@ template <const uint8_t data[], const auto len, const char *sha256> void web_ser
         return;
     }
 
-    esp32::array_response response(request, data, len, sha256, true, html_media_type);
+    esp32::array_response response(request, {data, len}, sha256, true, html_media_type);
     response.send_response();
 }
 
@@ -109,8 +109,10 @@ void web_server::begin()
 
     // static pages from flash with auth
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len, index_html_gz_sha256>>(root_url, HTTP_GET);
-    add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len, index_html_gz_sha256>>(index_url, HTTP_GET);
-    add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<debug_html_gz, debug_html_gz_len, debug_html_gz_sha256>>(debug_url, HTTP_GET);
+    add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len, index_html_gz_sha256>>(index_url,
+                                                                                                                                  HTTP_GET);
+    add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<debug_html_gz, debug_html_gz_len, debug_html_gz_sha256>>(debug_url,
+                                                                                                                                  HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<fs_html_gz, fs_html_gz_len, fs_html_gz_sha256>>(fs_url, HTTP_GET);
 
     // not static pages

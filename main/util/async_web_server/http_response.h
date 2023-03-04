@@ -1,11 +1,11 @@
 #pragma once
 
-#include <esp_http_server.h>
-
 #include "util/noncopyable.h"
 
+#include <esp_http_server.h>
 #include <set>
-#include <string>
+#include <span>
+#include <string_view>
 
 namespace esp32
 {
@@ -34,20 +34,19 @@ class http_response : esp32::noncopyable
 class array_response final : http_response
 {
   public:
-    array_response(const http_request *req, const uint8_t *buf, ssize_t buf_len, const char *sha256, bool is_gz, const char *content_type)
-        : http_response(req), buf_(buf), buf_len_(buf_len), sha256_(sha256), content_type_(content_type), is_gz_(is_gz)
+    array_response(const http_request *req, const std::span<const uint8_t> &buf, const char *sha256, bool is_gz, const std::string_view &content_type)
+        : http_response(req), buf_(buf), sha256_(sha256), content_type_(content_type), is_gz_(is_gz)
     {
     }
 
     void send_response();
 
-    static void send_response(esp32::http_request *request, const std::string &data, const char *content_type);
+    static void send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view& content_type);
 
   private:
-    const uint8_t *buf_;
-    const ssize_t buf_len_;
+    const std::span<const uint8_t> buf_;
     const char *sha256_;
-    const char *content_type_;
+    const std::string_view content_type_;
     const bool is_gz_;
 };
 

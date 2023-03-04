@@ -50,7 +50,7 @@ void array_response::send_response()
     add_common_headers();
 
     // content type
-    CHECK_HTTP_REQUEST(httpd_resp_set_type(req_->req_, content_type_));
+    CHECK_HTTP_REQUEST(httpd_resp_set_type(req_->req_, content_type_.data()));
     if (is_gz_)
     {
         CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
@@ -73,12 +73,12 @@ void array_response::send_response()
     {
         CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "ETag", sha256_));
     }
-    CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_), buf_len_));
+    CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_.data()), buf_.size()));
 }
 
-void array_response::send_response(esp32::http_request *request, const std::string &data_str, const char *content_type)
+void array_response::send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view &content_type)
 {
-    esp32::array_response response(request, reinterpret_cast<const uint8_t *>(data_str.c_str()), data_str.size(), nullptr, false, content_type);
+    esp32::array_response response(request, {reinterpret_cast<const uint8_t *>(data_str.data()), data_str.size()}, nullptr, false, content_type);
     response.send_response();
 }
 
