@@ -1,10 +1,11 @@
 #include "sps30.h"
-#include <esp_task.h>
-#include <i2cdev.h>
-#include <esp_log.h>
 
 #include "hardware/hardware.h"
 #include "logging/logging_tags.h"
+
+#include <esp_log.h>
+#include <esp_task.h>
+#include <i2cdev.h>
 
 extern "C" int8_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count)
 {
