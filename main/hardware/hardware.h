@@ -62,8 +62,8 @@ class hardware final : ui_interface, esp32::noncopyable
     using light_sensor_values_t = sensor_history_t<sensor_value::value_type, 10>;
     light_sensor_values_t light_sensor_values;
 
-    const gpio_num_t SDAWire = GPIO_NUM_11;
-    const gpio_num_t SCLWire = GPIO_NUM_10;
+    constexpr static gpio_num_t SDAWire = GPIO_NUM_11;
+    constexpr static gpio_num_t SCLWire = GPIO_NUM_10;
 
     // // SHT31
     sht3x_t sht3x_sensor{};

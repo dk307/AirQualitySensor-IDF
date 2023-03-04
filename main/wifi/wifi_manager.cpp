@@ -123,7 +123,7 @@ void wifi_manager::disconnect()
 
 std::string wifi_manager::get_rfc_952_host_name(const std::string &name)
 {
-    const int max_length = 24;
+    constexpr int max_length = 24;
     std::string rfc_952_hostname;
     rfc_952_hostname.reserve(max_length);
 
