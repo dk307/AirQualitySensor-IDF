@@ -34,7 +34,8 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         const auto &pair = panel_and_labels_.at(static_cast<size_t>(index));
         if (pair.is_valid())
         {
-            ESP_LOGI(UI_TAG, "Updating sensor %s to %d in main screen", get_sensor_name(index), value.value_or(-1));
+            ESP_LOGI(UI_TAG, "Updating sensor %.*s to %d in main screen", get_sensor_name(index).size(), get_sensor_name(index).data(),
+                     value.value_or(-1));
             set_value_in_panel(pair, index, value);
         }
     }
@@ -56,7 +57,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         auto label = lv_label_create(panel);
         lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
 
-        lv_label_set_text_static(label, get_sensor_name(index));
+        lv_label_set_text_static(label, get_sensor_name(index).data());
         lv_obj_set_style_text_color(label, off_black_color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_opa(label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(label, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -126,7 +127,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(value_label, fonts_->font_temp_hum, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_label_set_text_fmt(value_label, "- %s", get_sensor_unit(index));
+        lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 
         lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<index>>, LV_EVENT_SHORT_CLICKED, this);
         return {nullptr, value_label};
@@ -157,7 +158,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(value_label, fonts_->font_temp_hum, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_label_set_text_fmt(value_label, "- %s", get_sensor_unit(index));
+        lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 
         lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<index>>, LV_EVENT_SHORT_CLICKED, this);
         return {nullptr, value_label};

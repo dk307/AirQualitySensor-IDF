@@ -45,7 +45,8 @@ class sensor_definition_display
 class sensor_definition
 {
   public:
-    sensor_definition(const char *name, const char *unit, const sensor_definition_display *display_definitions, size_t display_definitions_count)
+    sensor_definition(const std::string_view &name, const std::string_view &unit, const sensor_definition_display *display_definitions,
+                      size_t display_definitions_count)
         : name_(name), unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count)
     {
     }
@@ -62,18 +63,18 @@ class sensor_definition
         return display_definitions_[0].get_level();
     }
 
-    const char *get_unit() const
+    const std::string_view &get_unit() const
     {
         return unit_;
     }
-    const char *get_name() const
+    const std::string_view &get_name() const
     {
         return name_;
     }
 
   private:
-    const char *name_;
-    const char *unit_;
+    const std::string_view name_;
+    const std::string_view unit_;
     const sensor_definition_display *display_definitions_;
     const uint8_t display_definitions_count_;
 };
@@ -220,5 +221,5 @@ class sensor_history_minute_t : public sensor_history_t<T, reads_per_minuteT * m
 using sensor_history = sensor_history_minute_t<sensor_value::value_type, 12, 240>;
 
 const sensor_definition &get_sensor_definition(sensor_id_index id);
-const char *get_sensor_name(sensor_id_index id);
-const char *get_sensor_unit(sensor_id_index id);
+const std::string_view &get_sensor_name(sensor_id_index id);
+const std::string_view &get_sensor_unit(sensor_id_index id);

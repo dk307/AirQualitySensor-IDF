@@ -76,7 +76,8 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         {
             if (get_sensor_id_index() == index)
             {
-                ESP_LOGI(UI_TAG, "Updating sensor %s to %d in details screen", get_sensor_name(index), value.value_or(-1));
+                ESP_LOGI(UI_TAG, "Updating sensor %.*s to %d in details screen", get_sensor_name(index).size(), get_sensor_name(index).data(),
+                         value.value_or(-1));
                 set_current_values(index, value);
             }
         }
@@ -89,12 +90,12 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
     void __attribute__((noinline)) show_screen(sensor_id_index index)
     {
-        ESP_LOGI(UI_TAG, "Panel pressed for sensor index:%s", get_sensor_name(index));
+        ESP_LOGI(UI_TAG, "Panel pressed for sensor index:%.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
         lv_obj_set_user_data(screen_, reinterpret_cast<void *>(index));
 
         const auto sensor_definition = get_sensor_definition(index);
-        lv_label_set_text(sensor_detail_screen_top_label, sensor_definition.get_name());
-        lv_label_set_text_static(sensor_detail_screen_top_label_units, sensor_definition.get_unit());
+        lv_label_set_text_static(sensor_detail_screen_top_label, sensor_definition.get_name().data());
+        lv_label_set_text_static(sensor_detail_screen_top_label_units, sensor_definition.get_unit().data());
 
         const auto value = ui_interface_instance_.get_sensor_value(index);
         set_current_values(index, value);
@@ -297,7 +298,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
         if (sensor_info.stat.has_value())
         {
-            ESP_LOGD(UI_TAG, "Found stats for %s", get_sensor_name(index));
+            ESP_LOGD(UI_TAG, "Found stats for %.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
             auto &&stats = sensor_info.stat.value();
 
             lv_chart_set_type(sensor_detail_screen_chart, LV_CHART_TYPE_LINE);
@@ -320,7 +321,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         }
         else
         {
-            ESP_LOGD(UI_TAG, "No stats for %s", get_sensor_name(index));
+            ESP_LOGD(UI_TAG, "No stats for %.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
             set_default_value_in_panel(panel_and_labels[label_and_unit_label_average_index]);
             set_default_value_in_panel(panel_and_labels[label_and_unit_label_min_index]);
             set_default_value_in_panel(panel_and_labels[label_and_unit_label_max_index]);

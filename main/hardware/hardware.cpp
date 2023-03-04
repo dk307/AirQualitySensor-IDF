@@ -83,7 +83,7 @@ void hardware::set_sensor_value(sensor_id_index index, const std::optional<senso
     }
     else
     {
-        ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%s", get_sensor_name(index));
+        ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%.*s", get_sensor_name(index).size(),get_sensor_name(index).data());
         (*sensors_history)[i].clear();
         sensors[i].set_invalid_value();
     }

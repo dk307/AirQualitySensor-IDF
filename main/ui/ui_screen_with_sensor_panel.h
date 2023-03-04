@@ -100,7 +100,7 @@ class ui_screen_with_sensor_panel : public ui_screen
             {
                 if (!pair.panel)
                 {
-                    lv_label_set_text_fmt(pair.label, "%d%s", final_value, sensor_definition.get_unit());
+                    lv_label_set_text_fmt(pair.label, "%d%.*s", final_value, sensor_definition.get_unit().size(), sensor_definition.get_unit().data());
                 }
                 else
                 {
