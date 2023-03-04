@@ -7,7 +7,6 @@
 #include <set>
 #include <string>
 
-
 namespace esp32
 {
 class http_request;
@@ -18,7 +17,7 @@ class http_response : esp32::noncopyable
     http_response(const http_request *req) : req_(req)
     {
     }
-    virtual ~http_response() = default; 
+    virtual ~http_response() = default;
 
     void add_common_headers();
 
@@ -35,8 +34,8 @@ class http_response : esp32::noncopyable
 class array_response final : http_response
 {
   public:
-    array_response(const http_request *req, const uint8_t *buf, ssize_t buf_len, bool is_gz, const char *content_type)
-        : http_response(req), buf_(buf), buf_len_(buf_len), content_type_(content_type), is_gz_(is_gz)
+    array_response(const http_request *req, const uint8_t *buf, ssize_t buf_len, const char *sha256, bool is_gz, const char *content_type)
+        : http_response(req), buf_(buf), buf_len_(buf_len), sha256_(sha256), content_type_(content_type), is_gz_(is_gz)
     {
     }
 
@@ -47,6 +46,7 @@ class array_response final : http_response
   private:
     const uint8_t *buf_;
     const ssize_t buf_len_;
+    const char *sha256_;
     const char *content_type_;
     const bool is_gz_;
 };

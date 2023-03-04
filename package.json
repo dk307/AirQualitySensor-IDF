@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "gulp-html-minifier": "^0.1.8",
-    "gulp-html-minifier-terser": "^7.1.0"
+    "gulp-html-minifier-terser": "^7.1.0",
+    "sha.js": "^2.4.11"
   }
 }

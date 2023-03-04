@@ -13,6 +13,7 @@ var reload = browserSync.reload;
 var stripcomments = require('gulp-strip-comments');
 var htmlminify = require('gulp-html-minifier-terser');
 var minify = require('gulp-minify');
+var shajs = require("sha.js");
 
 var log = require('fancy-log');
 
@@ -28,9 +29,13 @@ var toHeader = function (name, debug) {
         var filename = parts[parts.length - 1];
         var safename = name || filename.split('.').join('_');
 
+        var sha = shajs('sha256').update(source.contents).digest('hex');
+        // console.info(sha);
+
         // Generate output
         var output = '';
         output += '#define ' + safename + '_len ' + source.contents.length + '\n';
+        output += 'const char ' + safename + '_sha256[] = "' + sha + '";\n';
         output += 'const uint8_t ' + safename + '[] = {';
         for (var i = 0; i < source.contents.length; i++) {
             if (i > 0) { output += ','; }

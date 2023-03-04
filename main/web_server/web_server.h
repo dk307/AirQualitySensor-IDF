@@ -18,7 +18,7 @@ class web_server final : esp32::http_server
     {
     }
 
-    template <const uint8_t data[], const auto len> void handle_array_page_with_auth(esp32::http_request *request);
+    template <const uint8_t data[], const auto len, const char * sha256> void handle_array_page_with_auth(esp32::http_request *request);
 
     // handlers
     void handle_login(esp32::http_request *request);

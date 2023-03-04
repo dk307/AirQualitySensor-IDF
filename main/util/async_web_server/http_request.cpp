@@ -14,7 +14,7 @@ bool http_request::has_header(const char *header)
     return httpd_req_get_hdr_value_len(req_, header) != 0;
 }
 
-std::optional<std::string> http_request::get_header(const char *header)
+std::optional<std::string> http_request::get_header(const char *header) const
 {
     const size_t buf_len = httpd_req_get_hdr_value_len(req_, header);
     if (buf_len == 0)

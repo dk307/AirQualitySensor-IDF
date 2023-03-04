@@ -20,7 +20,7 @@ class http_request : esp32::noncopyable
     }
 
     bool has_header(const char *header);
-    std::optional<std::string> get_header(const char *header);
+    std::optional<std::string> get_header(const char *header) const;
     std::vector<std::optional<std::string>> get_url_arguments(const std::vector<std::string> &names);
     std::vector<std::optional<std::string>> get_form_url_encoded_arguments(const std::vector<std::string> &names);
 

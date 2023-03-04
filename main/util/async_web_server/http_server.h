@@ -80,13 +80,13 @@ class http_server : esp32::noncopyable
     }
 
     // array handler
-    template <const uint8_t buf[], const auto len, bool is_gz, const auto content_type>
+    template <const uint8_t buf[], const auto len, const auto sha_256, bool is_gz, const auto content_type>
     static esp_err_t __attribute__((noinline)) serve_array(httpd_req_t *request_p)
     {
         try
         {
             esp32::http_request request(request_p);
-            esp32::array_response response(&request, reinterpret_cast<const uint8_t *>(buf), len, is_gz, content_type);
+            esp32::array_response response(&request, reinterpret_cast<const uint8_t *>(buf), len, sha_256, is_gz, content_type);
             response.send_response();
             return ESP_OK;
         }
@@ -102,10 +102,10 @@ class http_server : esp32::noncopyable
         }
     }
 
-    template <const uint8_t buf[], const auto len, bool is_gz, const auto content_type>
+    template <const uint8_t buf[], const auto len, const auto sha_256, bool is_gz, const auto content_type>
     inline void add_array_handler(const char *url, httpd_method_t method = HTTP_GET)
     {
-        add_handler(url, method, serve_array<buf, len, is_gz, content_type>, nullptr);
+        add_handler(url, method, serve_array<buf, len, sha_256, is_gz, content_type>, nullptr);
     }
 
   private:
