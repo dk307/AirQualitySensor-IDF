@@ -56,10 +56,10 @@ void array_response::send_response()
         CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
     }
 
-    if (sha256_)
+    if (sha256_.has_value())
     {
         const auto match_sha256 = req_->get_header("If-None-Match");
-        if (match_sha256.has_value() && (match_sha256.value() == sha256_))
+        if (match_sha256.has_value() && (match_sha256.value() == sha256_.value()))
         {
             CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, "304 Not Modified"));
             CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, "", 0));
@@ -69,16 +69,16 @@ void array_response::send_response()
 
     CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, HTTPD_200));
     CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Connection", "keep-alive"));
-    if (sha256_)
+    if (sha256_.has_value())
     {
-        CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "ETag", sha256_));
+        CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "ETag", sha256_.value().data()));
     }
     CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_.data()), buf_.size()));
 }
 
 void array_response::send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view &content_type)
 {
-    esp32::array_response response(request, {reinterpret_cast<const uint8_t *>(data_str.data()), data_str.size()}, nullptr, false, content_type);
+    esp32::array_response response(request, {reinterpret_cast<const uint8_t *>(data_str.data()), data_str.size()}, std::nullopt, false, content_type);
     response.send_response();
 }
 

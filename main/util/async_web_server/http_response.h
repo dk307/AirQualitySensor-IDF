@@ -6,6 +6,7 @@
 #include <set>
 #include <span>
 #include <string_view>
+#include <optional>
 
 namespace esp32
 {
@@ -34,18 +35,19 @@ class http_response : esp32::noncopyable
 class array_response final : http_response
 {
   public:
-    array_response(const http_request *req, const std::span<const uint8_t> &buf, const char *sha256, bool is_gz, const std::string_view &content_type)
+    array_response(const http_request *req, const std::span<const uint8_t> &buf, const std::optional<std::string_view> &sha256, bool is_gz,
+                   const std::string_view &content_type)
         : http_response(req), buf_(buf), sha256_(sha256), content_type_(content_type), is_gz_(is_gz)
     {
     }
 
     void send_response();
 
-    static void send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view& content_type);
+    static void send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view &content_type);
 
   private:
     const std::span<const uint8_t> buf_;
-    const char *sha256_;
+    const std::optional<std::string_view> sha256_;
     const std::string_view content_type_;
     const bool is_gz_;
 };
