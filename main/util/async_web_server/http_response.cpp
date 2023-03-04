@@ -5,6 +5,7 @@
 #include "util/exceptions.h"
 #include "util/filesystem/file_info.h"
 #include "util/filesystem/filesystem.h"
+#include "util/finally.h"
 #include "util/helper.h"
 
 #include "logging/logging_tags.h"
@@ -117,6 +118,18 @@ void fs_card_file_response::send_response()
         return;
     }
 
+    const auto etag = esp32::string::sprintf("%lld-%u", file_info.last_modified(), file_info.size());
+
+    const auto existing_etag = req_->get_header("If-None-Match");
+    if (existing_etag.has_value() && (existing_etag.value() == etag))
+    {
+        CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, "304 Not Modified"));
+        CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, "", 0));
+        return;
+    }
+
+    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "ETag", etag.c_str()));
+
     // Content dispostion
     const auto filename = path.filename();
     const auto content_disposition_header = download_ ? esp32::string::sprintf("attachment; filename=\"%s\"", filename.c_str())
@@ -139,6 +152,8 @@ void fs_card_file_response::send_response()
         httpd_resp_send_err(req_->req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read existing file");
         return;
     }
+
+    auto auto_close_file = esp32::finally([&file_handle] { fclose(file_handle); });
 
     /* Retrieve the pointer to scratch buffer for temporary storage */
     size_t chuck_size = 8192;
@@ -169,8 +184,6 @@ void fs_card_file_response::send_response()
             }
         }
     } while (chuck_size != 0);
-
-    fclose(file_handle);
 
     /* Close file after sending complete */
     ESP_LOGD(WEBSERVER_TAG, "File sending complete for %s", path.c_str());
