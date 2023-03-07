@@ -9,8 +9,6 @@
 #include "util/misc.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
-
-
 #include <driver/i2c.h>
 #include <esp_chip_info.h>
 #include <esp_efuse.h>
@@ -66,6 +64,16 @@ bool hardware::clean_sps_30()
     return true;
 }
 
+void hardware::start_wifi_enrollment()
+{
+    wifi_manager::instance.start_wifi_enrollment();
+}
+
+void hardware::stop_wifi_enrollment()
+{
+    wifi_manager::instance.stop_wifi_enrollment();
+}
+
 void hardware::begin()
 {
     display_instance_.start();
@@ -83,7 +91,7 @@ void hardware::set_sensor_value(sensor_id_index index, const std::optional<senso
     }
     else
     {
-        ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%.*s", get_sensor_name(index).size(),get_sensor_name(index).data());
+        ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
         (*sensors_history)[i].clear();
         sensors[i].set_invalid_value();
     }

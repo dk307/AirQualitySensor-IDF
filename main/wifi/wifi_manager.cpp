@@ -5,7 +5,6 @@
 #include "util/cores.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
-
 #include <esp_log.h>
 #include <esp_mac.h>
 #include <esp_timer.h>
@@ -17,24 +16,28 @@ void wifi_manager::begin()
 {
     CHECK_THROW_INIT(esp_netif_init());
 
+    wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
+    CHECK_THROW_WIFI(esp_wifi_init(&init));
+
+    esp_netif_create_default_wifi_sta();
+
     config::instance.add_callback([this] { events_notify_.set_config_changed(); });
     wifi_task_.spawn_pinned("wifi task", 8 * 1024, esp32::task::default_priority, esp32::wifi_core);
 }
 
 bool wifi_manager::connect_saved_wifi()
 {
-    const auto ssid = config::instance.data.get_wifi_ssid();
-    const auto pwd = config::instance.data.get_wifi_password();
+    const auto wifi_credentials = config::instance.data.get_wifi_credentials();
 
-    if (!ssid.empty())
+    if (!wifi_credentials.empty())
     {
-        ESP_LOGD(WIFI_TAG, "Connecting to saved Wifi connection:%s", ssid.c_str());
+        ESP_LOGD(WIFI_TAG, "Connecting to saved Wifi connection:%s", wifi_credentials.get_user_name().c_str());
         const auto rfc_name = get_rfc_name();
         ESP_LOGI(WIFI_TAG, "Hostname is %s", rfc_name.c_str());
 
-        wifi_instance_ = std::make_unique<wifi_sta>(events_notify_, rfc_name, ssid, pwd);
+        wifi_instance_ = std::make_unique<wifi_sta>(events_notify_, rfc_name, wifi_credentials);
         events_notify_.clear_connection_bits();
-        
+
         ESP_LOGD(WIFI_TAG, "Waiting for Wifi connection");
         wifi_instance_->connect_to_ap();
         return events_notify_.wait_for_connect(pdMS_TO_TICKS(30000));
@@ -46,9 +49,21 @@ bool wifi_manager::connect_saved_wifi()
     }
 }
 
+void wifi_manager::start_wifi_enrollment()
+{
+    ESP_LOGI(WIFI_TAG, "Signalled starting DPE enrollement");
+    events_notify_.set_start_wifi_enrollement();
+}
+
+void wifi_manager::stop_wifi_enrollment()
+{
+    ESP_LOGI(WIFI_TAG, "Signalled cancel DPE enrollement");
+    events_notify_.set_wifi_enrollement_cencelled();
+}
+
 std::string_view wifi_manager::get_ssid()
 {
-    return (wifi_instance_) ? wifi_instance_->get_ssid() : std::string_view();
+    return (wifi_instance_) ? wifi_instance_->get_credentials().get_user_name() : std::string_view();
 }
 
 void wifi_manager::wifi_task_ftn()
@@ -60,7 +75,7 @@ void wifi_manager::wifi_task_ftn()
         do
         {
             // not connected or ssid changed
-            if (!connected_to_ap_ || (get_ssid() != config::instance.data.get_wifi_ssid()))
+            if (!connected_to_ap_ || (get_ssid() != config::instance.data.get_wifi_credentials().get_user_name()))
             {
                 disconnect();
                 connected_to_ap_ = connect_saved_wifi();
@@ -75,13 +90,48 @@ void wifi_manager::wifi_task_ftn()
                 call_change_listeners();
             }
 
-            const auto bits_set = events_notify_.wait_for_any_event(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
+            const auto bits_set = events_notify_.wait_for_events(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
 
             if (operations::instance.get_reset_pending())
             {
                 // dont do anything if restarting
-                ESP_LOGI(WIFI_TAG, "Reset pending, wifi disconnect ignore");
+                ESP_LOGI(WIFI_TAG, "Reset pending, wifi disconnect is ignored");
                 break;
+            }
+
+            if (bits_set & wifi_events_notify::WIFI_ENROLL_START)
+            {
+                ESP_LOGI(WIFI_TAG, "Wifi Enrollment start");
+                disconnect();
+
+                events_notify_.clear_enrollment_bits();
+
+                auto wifi_enroll_instance = std::make_unique<smart_config_enroll>(events_notify_);
+                wifi_enroll_instance->start();
+                const auto bits = events_notify_.wait_for_enrollement_complete(portMAX_DELAY);
+
+                events_notify_.clear_enrollment_bits();
+
+                if (bits & wifi_events_notify::WIFI_ENROLL_CANCEL)
+                {
+                    ESP_LOGI(WIFI_TAG, "Wifi enrollment was cancelled");
+                }
+                else
+                {
+                    ESP_LOGI(WIFI_TAG, "Wifi enrollment done");
+
+                    auto ssid = wifi_enroll_instance->get_ssid();
+                    if (!ssid.empty())
+                    {
+                        ESP_LOGI(WIFI_TAG, "Updating wifi ssid/password");
+                        config::instance.data.set_wifi_credentials(credentials(ssid, wifi_enroll_instance->get_password()));
+                        config::instance.save();
+                    }
+                    else
+                    {
+                        ESP_LOGW(WIFI_TAG, "Empty ssid after enrollement");
+                    }
+                }
             }
 
             if (bits_set & (wifi_events_notify::DISCONNECTED_BIT | wifi_events_notify::LOSTIP_BIT))
@@ -183,7 +233,8 @@ wifi_status wifi_manager::get_wifi_status()
             {
                 if (ip_info.ip.addr != 0)
                 {
-                    return {true, esp32::string::sprintf("Connected to %s", wifi_instance_->get_ssid().c_str())};
+                    auto ssid = get_ssid();
+                    return {true, esp32::string::sprintf("Connected to %.*s", ssid.size(), ssid.data())};
                 }
             }
         }

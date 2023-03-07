@@ -3,7 +3,8 @@
 
 #include "util/noncopyable.h"
 
-#include <freertos\event_groups.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 
 class wifi_events_notify final : esp32::noncopyable
 {
@@ -22,6 +23,11 @@ class wifi_events_notify final : esp32::noncopyable
     void clear_connection_bits()
     {
         xEventGroupClearBits(wifi_event_group_, CONNECTED_BIT | GOTIP_BIT | DISCONNECTED_BIT | LOSTIP_BIT);
+    }
+
+    void clear_enrollment_bits()
+    {
+        xEventGroupClearBits(wifi_event_group_, WIFI_ENROLL_START | WIFI_ENROLL_DONE | WIFI_ENROLL_CANCEL);
     }
 
     void set_ap_connected()
@@ -49,17 +55,32 @@ class wifi_events_notify final : esp32::noncopyable
         xEventGroupSetBits(wifi_event_group_, LOSTIP_BIT);
     }
 
+    void set_start_wifi_enrollement()
+    {
+        xEventGroupSetBits(wifi_event_group_, WIFI_ENROLL_START);
+    }
+
+    void set_wifi_enrollement_finished()
+    {
+        xEventGroupSetBits(wifi_event_group_, WIFI_ENROLL_DONE);
+    }
+
+    void set_wifi_enrollement_cencelled()
+    {
+        xEventGroupSetBits(wifi_event_group_, WIFI_ENROLL_CANCEL);
+    }
+
     bool wait_for_connect(TickType_t time)
     {
         const TickType_t final_time = xTaskGetTickCount() + time;
-        const auto connected_bits = CONNECTED_BIT | GOTIP_BIT;
-        const auto disconnected_bits = DISCONNECTED_BIT | LOSTIP_BIT;
+        constexpr auto connected_bits = CONNECTED_BIT | GOTIP_BIT;
+        constexpr auto disconnected_bits = DISCONNECTED_BIT | LOSTIP_BIT | WIFI_ENROLL_START;
 
         EventBits_t set_bits = 0;
         int64_t wait = time;
         do
         {
-            set_bits |= xEventGroupWaitBits(wifi_event_group_, CONNECTED_BIT | DISCONNECTED_BIT | GOTIP_BIT | LOSTIP_BIT,
+            set_bits |= xEventGroupWaitBits(wifi_event_group_, connected_bits | disconnected_bits,
                                             pdTRUE,  // clear before return
                                             pdFALSE, // wait for any
                                             wait);
@@ -80,9 +101,17 @@ class wifi_events_notify final : esp32::noncopyable
         return false;
     }
 
-    EventBits_t wait_for_any_event(TickType_t time)
+    EventBits_t wait_for_events(TickType_t time)
     {
-        return xEventGroupWaitBits(wifi_event_group_, CONNECTED_BIT | DISCONNECTED_BIT | GOTIP_BIT | LOSTIP_BIT | CONFIG_CHANGED,
+        return xEventGroupWaitBits(wifi_event_group_, DISCONNECTED_BIT | LOSTIP_BIT | CONFIG_CHANGED | WIFI_ENROLL_START,
+                                   pdTRUE,  // clear before return
+                                   pdFALSE, // wait for any
+                                   time);
+    }
+
+    EventBits_t wait_for_enrollement_complete(TickType_t time)
+    {
+        return xEventGroupWaitBits(wifi_event_group_, WIFI_ENROLL_DONE | WIFI_ENROLL_CANCEL,
                                    pdTRUE,  // clear before return
                                    pdFALSE, // wait for any
                                    time);
@@ -93,8 +122,11 @@ class wifi_events_notify final : esp32::noncopyable
     constexpr static auto GOTIP_BIT = BIT2;
     constexpr static auto LOSTIP_BIT = BIT3;
     constexpr static auto CONFIG_CHANGED = BIT4;
+    constexpr static auto WIFI_ENROLL_START = BIT5;
+    constexpr static auto WIFI_ENROLL_DONE = BIT6;
+    constexpr static auto WIFI_ENROLL_CANCEL = BIT7;
 
   private:
     EventGroupHandle_t wifi_event_group_;
-    StaticEventGroup_t  event_group_buffer_;;
+    StaticEventGroup_t event_group_buffer_;
 };

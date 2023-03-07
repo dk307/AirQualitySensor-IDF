@@ -2,7 +2,6 @@
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
-
 #include <esp_log.h>
 #include <esp_vfs_fat.h>
 

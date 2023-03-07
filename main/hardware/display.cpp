@@ -7,7 +7,6 @@
 #include "util/cores.h"
 #include "util/exceptions.h"
 #include "wifi/wifi_manager.h"
-
 #include <esp_log.h>
 #include <lvgl.h>
 

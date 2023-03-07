@@ -5,6 +5,7 @@
 #include "util/semaphore_lockable.h"
 #include "wifi/wifi_events_notify.h"
 
+#include "config/credentials.h"
 #include <esp_event.h>
 #include <esp_netif.h>
 #include <esp_wifi.h>
@@ -14,7 +15,7 @@
 class wifi_sta final : esp32::noncopyable
 {
   public:
-    wifi_sta(wifi_events_notify &events_notify_, const std::string &host_name, const std::string &ssid, const std::string &password);
+    wifi_sta(wifi_events_notify &events_notify_, const std::string &host_name, const credentials &password);
     ~wifi_sta();
 
     /// Sets the hostname
@@ -24,29 +25,23 @@ class wifi_sta final : esp32::noncopyable
     /// Initiates the connection to the AP.
     void connect_to_ap();
 
-    const std::string &get_ssid() const
+    const credentials &get_credentials() const
     {
-        return ssid_;
+        return credentials_;
     }
 
   private:
-    void connect() const;
-    void close_if();
-
-    static void wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
-
-    void wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data);
-
-    static std::string get_disconnect_reason_str(uint8_t reason);
-
     wifi_events_notify &events_notify_;
     std::string host_name_;
-    const std::string ssid_;
-    const std::string password_;
-
-    esp_netif_t *interface_{nullptr};
+    const credentials credentials_;
 
     esp_event_handler_instance_t instance_wifi_event_{};
     esp_event_handler_instance_t instance_ip_event_{};
     esp_netif_ip_info_t ip_info_{};
+
+    void connect() const;
+    void close_if();
+    static void wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
+    void wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data);
+    static std::string get_disconnect_reason_str(uint8_t reason);
 };

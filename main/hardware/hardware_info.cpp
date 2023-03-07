@@ -244,8 +244,8 @@ ui_interface::information_table_type hardware::get_information_table(information
     case information_type::config:
         return {
             {"Hostname", config::instance.instance.data.get_host_name()},
-            {"SSID", config::instance.instance.data.get_wifi_ssid()},
-            {"Web user name", config::instance.instance.data.get_web_user_name()},
+            {"SSID", config::instance.instance.data.get_wifi_credentials().get_user_name()},
+            {"Web user name", config::instance.instance.data.get_web_user_credentials().get_user_name()},
             {"Screen brightness (%)",
              esp32::string::to_string((100 * config::instance.instance.data.get_manual_screen_brightness().value_or(0)) / 256)},
         };

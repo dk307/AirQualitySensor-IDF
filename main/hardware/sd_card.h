@@ -1,9 +1,7 @@
 #pragma once
 
 #include "util/noncopyable.h"
-
 #include <sdmmc_cmd.h>
-
 #include <string>
 
 class sd_card final : esp32::noncopyable

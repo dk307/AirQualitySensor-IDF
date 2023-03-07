@@ -80,10 +80,8 @@ bool config::begin()
     }
 
     data.set_host_name(json_document[(HostNameId)].as<std::string>());
-    data.set_web_user_name(json_document[(WebUserNameId)].as<std::string>());
-    data.set_web_password(json_document[(WebPasswordId)].as<std::string>());
-    data.set_wifi_ssid(json_document[(SsidId)].as<std::string>());
-    data.set_wifi_password(json_document[(SsidPasswordId)].as<std::string>());
+    data.set_web_user_credentials(credentials(json_document[(WebUserNameId)].as<std::string>(), json_document[(WebPasswordId)].as<std::string>()));
+    data.set_wifi_credentials(credentials(json_document[(SsidId)].as<std::string>(), json_document[(SsidPasswordId)].as<std::string>()));
 
     const auto screen_brightness = json_document[ScreenBrightnessId];
     data.set_manual_screen_brightness(!screen_brightness.isNull() ? std::optional<uint8_t>(screen_brightness.as<uint8_t>()) : std::nullopt);
@@ -91,10 +89,10 @@ bool config::begin()
     ESP_LOGI(CONFIG_TAG, "Loaded Config from file");
 
     ESP_LOGI(CONFIG_TAG, "Hostname:%s", data.get_host_name().c_str());
-    ESP_LOGI(CONFIG_TAG, "Web user name:%s", data.get_web_user_name().c_str());
-    ESP_LOGI(CONFIG_TAG, "Web user password:%s", data.get_web_password().c_str());
-    ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", data.get_wifi_ssid().c_str());
-    ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", data.get_wifi_password().c_str());
+    ESP_LOGI(CONFIG_TAG, "Web user name:%s", data.get_web_user_credentials().get_user_name().c_str());
+    ESP_LOGI(CONFIG_TAG, "Web user password:%s", data.get_web_user_credentials().get_password().c_str());
+    ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", data.get_wifi_credentials().get_user_name().c_str());
+    ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", data.get_wifi_credentials().get_password().c_str());
     ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", data.get_manual_screen_brightness().value_or(0));
 
     return true;
@@ -120,10 +118,13 @@ void config::save_config()
     BasicJsonDocument<esp32::psram::json_allocator> json_document(2048);
 
     json_document[(HostNameId)] = data.get_host_name();
-    json_document[(WebUserNameId)] = data.get_web_user_name();
-    json_document[(WebPasswordId)] = data.get_web_password();
-    json_document[(SsidId)] = data.get_wifi_ssid();
-    json_document[(SsidPasswordId)] = data.get_wifi_password();
+    const auto web_cred = data.get_web_user_credentials();
+    json_document[(WebUserNameId)] = web_cred.get_user_name();
+    json_document[(WebPasswordId)] = web_cred.get_password();
+
+    const auto wifi_cred = data.get_wifi_credentials();
+    json_document[(SsidId)] = wifi_cred.get_user_name();
+    json_document[(SsidPasswordId)] = wifi_cred.get_password();
 
     const auto brightness = data.get_manual_screen_brightness();
     if (brightness.has_value())

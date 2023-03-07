@@ -3,7 +3,6 @@
 #include "operations/operations.h"
 #include "ui_screen.h"
 
-
 class ui_launcher_screen : public ui_screen
 {
   public:
@@ -35,6 +34,8 @@ class ui_launcher_screen : public ui_screen
                       event_callback<ui_launcher_screen, &ui_launcher_screen::show_information>);
         create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25, "S:display/image/hardware.png", "Hardware",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::hardware_info>);
+        create_button(LV_ALIGN_BOTTOM_RIGHT, -pad, -pad - 25, "S:display/image/hardware.png", "Wifi",
+                      event_callback<ui_launcher_screen, &ui_launcher_screen::wifi_setup>);
 
         init_confirm_win();
 
@@ -129,6 +130,12 @@ class ui_launcher_screen : public ui_screen
     {
         ESP_LOGI(UI_TAG, "Showing Hardware clicked");
         inter_screen_interface.show_hardware_info_screen();
+    }
+
+    void wifi_setup(lv_event_t *e)
+    {
+        ESP_LOGI(UI_TAG, "Starting wifi enrollment");
+        inter_screen_interface.show_wifi_enroll_screen();
     }
 
     void restart(lv_event_t *)

@@ -6,7 +6,6 @@
 #include "ui/ui_interface.h"
 #include "util/noncopyable.h"
 #include "util/psram_allocator.h"
-
 #include <bh1750.h>
 #include <i2cdev.h>
 #include <sht3x.h>
@@ -40,6 +39,8 @@ class hardware final : ui_interface, esp32::noncopyable
     sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index) override;
     wifi_status get_wifi_status() override;
     bool clean_sps_30() override;
+    void start_wifi_enrollment() override;
+    void stop_wifi_enrollment() override;
 
     esp_err_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count);
     esp_err_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);

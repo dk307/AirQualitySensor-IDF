@@ -6,7 +6,6 @@
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include "util/task_wrapper.h"
-
 #include <lvgl.h>
 
 class display final : esp32::noncopyable

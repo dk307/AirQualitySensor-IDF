@@ -88,10 +88,11 @@ void ui::init()
 
     ESP_LOGI(UI_TAG, "Initializing UI screens");
     main_screen_.init();
-    launcher_screen.init();
+    launcher_screen_.init();
     sensor_detail_screen_.init();
-    settings_screen.init();
-    hardware_info_screen.init();
+    settings_screen_.init();
+    hardware_info_screen_.init();
+    wifi_enroll_screen_.init();
     ESP_LOGI(UI_TAG, "UI screens initialized");
 }
 

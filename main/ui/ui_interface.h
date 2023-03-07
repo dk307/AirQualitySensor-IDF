@@ -26,5 +26,8 @@ class ui_interface
     virtual sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index) = 0;
     virtual wifi_status get_wifi_status() = 0;
 
+    virtual void start_wifi_enrollment() = 0;
+    virtual void stop_wifi_enrollment() = 0;
+
     virtual bool clean_sps_30() = 0;
 };

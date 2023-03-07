@@ -65,11 +65,11 @@ static constexpr char datatables_css_file_path[] = "/sd/web/datatables.min.css";
 
 web_server web_server::instance;
 
-std::string create_hash(const std::string &user, const std::string &password, const std::string &host)
+std::string create_hash(const credentials &cred, const std::string &host)
 {
     esp32::hash::hash<MBEDTLS_MD_SHA256> hasher;
-    hasher.update(user);
-    hasher.update(password);
+    hasher.update(cred.get_user_name());
+    hasher.update(cred.get_password());
     hasher.update(host);
     auto result = hasher.finish();
     return esp32::format_hex(result);
@@ -218,8 +218,7 @@ bool web_server::is_authenticated(esp32::http_request *request)
     {
         ESP_LOGV(WEBSERVER_TAG, "Found cookie:%s", cookie->c_str());
 
-        const std::string token =
-            create_hash(config::instance.data.get_web_user_name(), config::instance.data.get_web_password(), request->client_ip_address());
+        const std::string token = create_hash(config::instance.data.get_web_user_credentials(), request->client_ip_address());
 
         if (cookie->find_last_of(std::string(AuthCookieName) + token) != -1)
         {
@@ -241,15 +240,17 @@ void web_server::handle_login(esp32::http_request *request)
 
     if (user_name.has_value() && password.has_value())
     {
+        const auto current_credentials = config::instance.data.get_web_user_credentials();
+
         esp32::http_response response(request);
-        const bool correct_credentials = esp32::str_equals_case_insensitive(user_name.value(), config::instance.data.get_web_user_name()) &&
-                                         (password.value() == config::instance.data.get_web_password());
+        const bool correct_credentials = esp32::str_equals_case_insensitive(user_name.value(), current_credentials.get_user_name()) &&
+                                         (password.value() == current_credentials.get_password());
 
         if (correct_credentials)
         {
             ESP_LOGI(WEBSERVER_TAG, "User/Password correct");
 
-            const std::string token = create_hash(user_name.value(), password.value(), request->client_ip_address());
+            const std::string token = create_hash(current_credentials, request->client_ip_address());
             ESP_LOGD(WEBSERVER_TAG, "Token:%s", token.c_str());
 
             const auto cookie_header = std::string(AuthCookieName) + token;
@@ -294,8 +295,7 @@ void web_server::handle_web_login_update(esp32::http_request *request)
     if (user_name.has_value() && password.has_value())
     {
         ESP_LOGI(WEBSERVER_TAG, "Updating web username/password");
-        config::instance.data.set_web_password(user_name.value());
-        config::instance.data.set_wifi_password(password.value());
+        config::instance.data.set_web_user_credentials(credentials(user_name.value(), password.value()));
         config::instance.save();
         redirect_to_root(request);
     }

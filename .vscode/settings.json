@@ -83,7 +83,9 @@
         "sps30.h": "c",
         "hardware.h": "c",
         "source_location": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "esp_heap_caps.h": "c",
+        "esp_httpd_priv.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "credentials.h"
 #include "util/change_callback.h"
-#include "util/semaphore_lockable.h"
 #include "util/noncopyable.h"
-
+#include "util/semaphore_lockable.h"
 #include <ArduinoJson.h>
 #include <atomic>
 #include <mutex>
@@ -22,10 +22,8 @@ struct config_data
 
         const auto defaultUserIDPassword = "admin";
         host_name_.clear();
-        web_user_name_ = defaultUserIDPassword;
-        web_password_ = defaultUserIDPassword;
-        wifi_ssid_.clear();
-        wifi_password_.clear();
+        web_user_credentials_ = credentials(defaultUserIDPassword, defaultUserIDPassword);
+        wifi_credentials_ = credentials();
         manual_screen_brightness_.reset();
     }
 
@@ -34,54 +32,11 @@ struct config_data
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
         return host_name_;
     }
+
     void set_host_name(const std::string &host_name)
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
         host_name_ = host_name;
-    }
-
-    std::string get_web_user_name() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return web_user_name_;
-    }
-    void set_web_user_name(const std::string &web_user_name)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        web_user_name_ = web_user_name;
-    }
-
-    std::string get_web_password() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return web_password_;
-    }
-    void set_web_password(const std::string &web_password)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        web_password_ = web_password;
-    }
-
-    std::string get_wifi_ssid() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return wifi_ssid_;
-    }
-    void set_wifi_ssid(const std::string &wifi_ssid)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        wifi_ssid_ = wifi_ssid;
-    }
-
-    std::string get_wifi_password() const
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        return wifi_password_;
-    }
-    void set_wifi_password(const std::string &wifi_password)
-    {
-        std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        wifi_password_ = wifi_password;
     }
 
     std::optional<uint8_t> get_manual_screen_brightness() const
@@ -95,16 +50,35 @@ struct config_data
         manual_screen_brightness_ = screen_brightness;
     }
 
+    credentials get_web_user_credentials() const
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        return web_user_credentials_;
+    }
+
+    void set_web_user_credentials(const credentials &web_user_credentials)
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        web_user_credentials_ = web_user_credentials;
+    }
+
+    void set_wifi_credentials(const credentials &wifi_credentials)
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        wifi_credentials_ = wifi_credentials;
+    }
+
+    credentials get_wifi_credentials() const
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        return wifi_credentials_;
+    }
 
   private:
     std::string host_name_;
-    std::string web_user_name_;
-    std::string web_password_;
-    std::string wifi_ssid_;
-    std::string wifi_password_;
-
+    credentials web_user_credentials_;
+    credentials wifi_credentials_;
     std::optional<uint8_t> manual_screen_brightness_;
-
     mutable esp32::semaphore data_mutex_;
 };
 

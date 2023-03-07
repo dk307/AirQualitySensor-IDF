@@ -2,7 +2,6 @@
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
-
 #include <esp_log.h>
 #include <mutex>
 
@@ -14,8 +13,8 @@ void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[siz
     std::copy_n(source, to_copy, target);
 }
 
-wifi_sta::wifi_sta(wifi_events_notify &events_notify, const std::string &host_name, const std::string &ssid, const std::string &password)
-    : events_notify_(events_notify), host_name_(host_name), ssid_(ssid), password_(password)
+wifi_sta::wifi_sta(wifi_events_notify &events_notify, const std::string &host_name, const credentials &credentials)
+    : events_notify_(events_notify), host_name_(host_name), credentials_(credentials)
 {
     CHECK_THROW_WIFI(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_wifi_event_));
     CHECK_THROW_WIFI(esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_ip_event_));
@@ -26,9 +25,7 @@ wifi_sta::~wifi_sta()
     esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event_);
     esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event_);
     esp_wifi_disconnect();
-    close_if();
     esp_wifi_stop();
-    esp_wifi_deinit();
 }
 
 void wifi_sta::set_host_name(const std::string &name)
@@ -38,24 +35,20 @@ void wifi_sta::set_host_name(const std::string &name)
 
 void wifi_sta::connect_to_ap()
 {
-    ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", ssid_.c_str());
+    ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", credentials_.get_user_name().c_str());
 
     // Prepare to connect to the provided SSID and password
-    wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
-    CHECK_THROW_WIFI(esp_wifi_init(&init));
     CHECK_THROW_WIFI(esp_wifi_set_mode(WIFI_MODE_STA));
 
     wifi_config_t config{};
-    copy_min_to_buffer(ssid_.begin(), ssid_.length(), config.sta.ssid);
-    copy_min_to_buffer(password_.begin(), password_.length(), config.sta.password);
-    config.sta.threshold.authmode = password_.empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
+    copy_min_to_buffer(credentials_.get_user_name().begin(), credentials_.get_user_name().length(), config.sta.ssid);
+    copy_min_to_buffer(credentials_.get_password().begin(), credentials_.get_password().length(), config.sta.password);
+    config.sta.threshold.authmode = credentials_.get_password().empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
     config.sta.pmf_cfg.capable = true;
 
     CHECK_THROW_WIFI(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     CHECK_THROW_WIFI(esp_wifi_set_config(WIFI_IF_STA, &config));
 
-    close_if();
-    interface_ = esp_netif_create_default_wifi_sta();
     connect();
 }
 
@@ -77,7 +70,12 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t eve
     {
         if (event_id == WIFI_EVENT_STA_START)
         {
-            esp_netif_set_hostname(interface_, host_name_.c_str());
+            esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+            const auto err = esp_netif_set_hostname(netif, host_name_.c_str());
+            if (err != ESP_OK)
+            {
+                ESP_LOGW(WIFI_EVENT_TAG, "Failed to set hostname with error:%s", esp_err_to_name(err));
+            }
         }
         else if (event_id == WIFI_EVENT_STA_CONNECTED)
         {
@@ -109,15 +107,6 @@ void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t eve
             ip_info_.gw = ip_info_.ip;
             events_notify_.set_ip_lost();
         }
-    }
-}
-
-void wifi_sta::close_if()
-{
-    if (interface_)
-    {
-        esp_netif_destroy(interface_);
-        interface_ = nullptr;
     }
 }
 

@@ -4,10 +4,10 @@
 #include "util\task_wrapper.h"
 #include "wifi\wifi_events_notify.h"
 #include "wifi\wifi_sta.h"
-
+#include "wifi\smart_config_wifi_enroll.h"
+#include <atomic>
 #include <memory>
 #include <string>
-#include <atomic>
 
 struct wifi_status
 {
@@ -22,6 +22,9 @@ class wifi_manager final : public esp32::change_callback
 
     wifi_status get_wifi_status();
     static wifi_manager instance;
+
+    void start_wifi_enrollment();
+    void stop_wifi_enrollment();
 
     static void set_wifi_power_mode(wifi_ps_type_t mode);
 
