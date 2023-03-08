@@ -792,7 +792,7 @@ void web_server::handle_web_logging_start(esp32::http_request *request)
         return;
     }
 
-    if (logger::instance.enable_web_logging(std::bind(&web_server::send_log_data, this, std::placeholders::_1)))
+    if (logger::instance.enable_web_logging(std::bind(&web_server::received_log_data, this, std::placeholders::_1)))
     {
         send_empty_200(request);
     }
@@ -913,12 +913,17 @@ void web_server::send_empty_200(const esp32::http_request *request)
     response.send_empty_200();
 }
 
-void web_server::send_log_data(const std::string &c)
+void web_server::received_log_data(std::unique_ptr<std::string> log)
 {
     if (logging.connection_count())
     {
-        logging.send(c.c_str(), "logs", esp32::millis(), true);
+        queue_work<web_server, std::unique_ptr<std::string>, &web_server::send_log_data>(std::move(log));
     }
+}
+
+void web_server::send_log_data(std::unique_ptr<std::string> log)
+{
+    logging.send((*log).c_str(), "logs", esp32::millis(), true);
 }
 
 void web_server::on_set_logging_level(esp32::http_request *request)

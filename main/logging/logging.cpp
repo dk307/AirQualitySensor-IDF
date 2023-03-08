@@ -133,7 +133,7 @@ bool logger::enable_sd_logging()
     return true;
 }
 
-bool logger::enable_web_logging(const std::function<void(const std::string &)> &callbackP)
+bool logger::enable_web_logging(const std::function<void(std::unique_ptr<std::string>)> &callbackP)
 {
     std::lock_guard<esp32::semaphore> lock(hook_mutex_);
 

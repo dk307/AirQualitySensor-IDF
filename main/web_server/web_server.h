@@ -64,7 +64,9 @@ class web_server final : esp32::http_server
     void notify_sensor_change(sensor_id_index id);
     void send_sensor_data(sensor_id_index id);
 
-    void send_log_data(const std::string& c);
+    void received_log_data(std::unique_ptr<std::string> log);
+    void send_log_data(std::unique_ptr<std::string> log);
+
     void handle_web_logging_start(esp32::http_request *request);
     void handle_web_logging_stop(esp32::http_request *request);
     void handle_sd_card_logging_start(esp32::http_request *request);

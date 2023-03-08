@@ -12,7 +12,7 @@
 class web_callback_sink final : public logger_hook_sink
 {
   public:
-    web_callback_sink(const std::function<void(const std::string &)> &callback)
+    web_callback_sink(const std::function<void(std::unique_ptr<std::string>)> &callback)
         : background_log_task_(std::bind(&web_callback_sink::flush_callback, this)), callback_(callback)
     {
         background_log_task_.spawn_same("web_callback_sink", 8 * 1024, tskIDLE_PRIORITY);
@@ -37,8 +37,9 @@ class web_callback_sink final : public logger_hook_sink
             std::string *log;
             if (queue_.dequeue(log, portMAX_DELAY))
             {
-                callback_(*log);
-                delete log;
+                // transfer ownership
+                auto log_uni_ptr = std::unique_ptr<std::string>(log);
+                callback_(std::move(log_uni_ptr));
             }
         }
 
@@ -48,5 +49,5 @@ class web_callback_sink final : public logger_hook_sink
   private:
     esp32::static_queue<std::string *, 1024> queue_;
     esp32::task background_log_task_;
-    const std::function<void(const std::string &)> callback_;
+    const std::function<void(std::unique_ptr<std::string>)> callback_;
 };
