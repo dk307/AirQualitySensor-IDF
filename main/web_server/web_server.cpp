@@ -422,22 +422,28 @@ void web_server::notify_sensor_change(sensor_id_index id)
 {
     if (events.connection_count())
     {
-        const auto &sensor = hardware::instance.get_sensor(id);
-        const auto value = sensor.get_value();
-        const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
-
-        BasicJsonDocument<esp32::psram::json_allocator> json_document(128);
-
-        auto &&definition = get_sensor_definition(id);
-        json_document["value"] = value_str;
-        json_document["unit"] = definition.get_unit();
-        json_document["type"] = definition.get_name();
-        json_document["level"] = definition.calculate_level(value.value_or(0));
-
-        std::string json;
-        serializeJson(json_document, json);
-        events.send(json.c_str(), "sensor", esp32::millis(), true);
+        queue_work<web_server, sensor_id_index, &web_server::send_sensor_data>(id);
     }
+}
+
+void web_server::send_sensor_data(sensor_id_index id)
+{
+    ESP_LOGD(WEBSERVER_TAG, "Sending sensor info for %.*s", get_sensor_name(id).size(), get_sensor_name(id).data());
+    const auto &sensor = hardware::instance.get_sensor(id);
+    const auto value = sensor.get_value();
+    const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
+
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(128);
+
+    auto &&definition = get_sensor_definition(id);
+    json_document["value"] = value_str;
+    json_document["unit"] = definition.get_unit();
+    json_document["type"] = definition.get_name();
+    json_document["level"] = definition.calculate_level(value.value_or(0));
+
+    std::string json;
+    serializeJson(json_document, json);
+    events.send(json.c_str(), "sensor", esp32::millis(), true);
 }
 
 void web_server::handle_dir_list(esp32::http_request *request)

@@ -43,7 +43,7 @@ std::string hardware::get_chip_details()
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
 
-    std::string model;
+    std::string_view model;
     switch (chip_info.model)
     {
     case CHIP_ESP32:
@@ -74,7 +74,7 @@ std::string hardware::get_chip_details()
         flash_size_str = esp32::string::stringify_size(flash_size);
     }
 
-    return esp32::string::sprintf("%s Rev. %d Cores: %d Flash size: %s", model.c_str(), chip_info.revision, static_cast<int>(chip_info.cores),
+    return esp32::string::sprintf("%s Rev. %d Cores: %d Flash size: %s", model.data(), chip_info.revision, static_cast<int>(chip_info.cores),
                                   flash_size_str.c_str());
 }
 
@@ -203,7 +203,6 @@ ui_interface::information_table_type hardware::get_information_table(information
     case information_type::system:
         return {
             {"Version", get_version()},
-            // {"IDF Version", std::string(esp_get_idf_version())},
             {"Chip", get_chip_details()},
             {"Heap", get_heap_info_str(MALLOC_CAP_INTERNAL)},
             {"PsRam", get_heap_info_str(MALLOC_CAP_SPIRAM)},
@@ -226,14 +225,8 @@ ui_interface::information_table_type hardware::get_information_table(information
         }
         else
         {
-            // IP2STR()
-            // table.push_back({"Hostname", esp_netif_get_hostname()});
-            // table.push_back({"IP address(wifi)", WiFi.localIP().toString()});
             table.push_back({"Ssid", std::string(reinterpret_cast<char *>(&info.ssid[0]))});
             table.push_back({"RSSI", esp32::string::sprintf("%d db", info.rssi)});
-            // table.push_back({"Gateway address", WiFi.gatewayIP().toString()});
-            // table.push_back({"Subnet", WiFi.subnetMask().toString()});
-            // table.push_back({"DNS", WiFi.dnsIP().toString()});
             get_nw_info(table);
         }
 

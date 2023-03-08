@@ -156,7 +156,7 @@ void fs_card_file_response::send_response()
     auto auto_close_file = esp32::finally([&file_handle] { fclose(file_handle); });
 
     /* Retrieve the pointer to scratch buffer for temporary storage */
-    size_t chuck_size = 8192;
+    size_t chuck_size = 16 * 1024;
     const auto chunk = std::make_unique<char[]>(chuck_size);
 
     if (!chunk)

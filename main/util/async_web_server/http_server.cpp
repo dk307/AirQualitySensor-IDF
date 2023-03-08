@@ -28,7 +28,7 @@ void http_server::begin()
     config.ctrl_port = 32760;
     config.core_id = esp32::wifi_core;
 
-    ESP_ERROR_CHECK(httpd_start(&server_, &config));
+    CHECK_THROW_INIT(httpd_start(&server_, &config));
     ESP_LOGI(WEBSERVER_TAG, "Started web server on port:%d", port_);
 
     handlers_.reserve(config.max_uri_handlers);

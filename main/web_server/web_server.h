@@ -62,6 +62,7 @@ class web_server final : esp32::http_server
     static std::string get_file_sha256(const char *filename);
 
     void notify_sensor_change(sensor_id_index id);
+    void send_sensor_data(sensor_id_index id);
 
     void send_log_data(const std::string& c);
     void handle_web_logging_start(esp32::http_request *request);

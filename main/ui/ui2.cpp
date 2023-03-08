@@ -1,8 +1,5 @@
 #include "ui2.h"
 #include "ui_interface.h"
-// #include "config_manager.h"
-// #include "ntp_time.h"
-
 #include <memory>
 #include <tuple>
 
@@ -46,19 +43,19 @@ void ui::load_from_sd_card()
         ESP_LOGE(UI_TAG, "lv fs not ready");
     }
 
-    common_fonts.font_montserrat_regular_numbers_40 = lv_font_from_sd_card("S:/display/font/montserrat/ui_font_m40regularnumbers.bin");
-    common_fonts.font_big_panel = lv_font_from_sd_card("S:display/font/big_panel_top.bin");
-    common_fonts.font_montserrat_medium_48 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m48medium.bin");
-    common_fonts.font_montserrat_medium_14 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m14medium.bin");
-    common_fonts.font_montserrat_medium_units_18 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m18unitsmedium.bin");
-    common_fonts.font_temp_hum = lv_font_from_sd_card("S:display/font/temp_hum.bin");
+    common_fonts_.font_montserrat_regular_numbers_40 = lv_font_from_sd_card("S:/display/font/montserrat/ui_font_m40regularnumbers.bin");
+    common_fonts_.font_big_panel = lv_font_from_sd_card("S:display/font/big_panel_top.bin");
+    common_fonts_.font_montserrat_medium_48 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m48medium.bin");
+    common_fonts_.font_montserrat_medium_14 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m14medium.bin");
+    common_fonts_.font_montserrat_medium_units_18 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m18unitsmedium.bin");
+    common_fonts_.font_temp_hum = lv_font_from_sd_card("S:display/font/temp_hum.bin");
 
     ESP_LOGI(UI_TAG, "Loaded From SD Card");
 }
 
 void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 {
-    auto pThis = (ui *)var;
+    auto pThis = reinterpret_cast<ui *>(var);
     const auto op = v > 256 ? 512 - v : v;
     lv_style_set_img_opa(&pThis->no_wifi_image_style, op);
     lv_obj_refresh_style(pThis->no_wifi_image_, LV_PART_ANY, LV_STYLE_PROP_ANY);
@@ -202,4 +199,37 @@ void ui::wifi_changed()
 
         show_top_level_message(wifi_status.status, 5000);
     }
+}
+
+void ui::show_home_screen()
+{
+    main_screen_.show_screen();
+}
+
+void ui::show_setting_screen()
+{
+    settings_screen_.show_screen();
+}
+
+void ui::show_sensor_detail_screen(sensor_id_index index)
+{
+    sensor_detail_screen_.show_screen(index);
+}
+
+void ui::show_launcher_screen()
+{
+    lv_obj_add_flag(top_message_panel_, LV_OBJ_FLAG_HIDDEN);
+    launcher_screen_.show_screen();
+}
+
+void ui::show_hardware_info_screen()
+{
+    lv_obj_add_flag(top_message_panel_, LV_OBJ_FLAG_HIDDEN);
+    hardware_info_screen_.show_screen();
+}
+
+void ui::show_wifi_enroll_screen()
+{
+    lv_obj_add_flag(top_message_panel_, LV_OBJ_FLAG_HIDDEN);
+    wifi_enroll_screen_.show_screen();
 }

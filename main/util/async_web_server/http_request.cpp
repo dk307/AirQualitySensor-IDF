@@ -98,7 +98,7 @@ esp_err_t http_request::read_body(const std::function<esp_err_t(const std::vecto
         return ESP_OK;
     }
     std::vector<uint8_t> data;
-    data.reserve(std::min<size_t>(8196, content_length));
+    data.reserve(std::min<size_t>(16 * 1024, content_length));
 
     size_t received = 0;
     while (received < content_length)
