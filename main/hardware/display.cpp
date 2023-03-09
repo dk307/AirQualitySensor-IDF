@@ -13,8 +13,6 @@
 
 const int LV_TICK_PERIOD_MS = 1;
 
-const int task_notify_wifi_changed_bit = BIT(total_sensors + 1);
-const int set_main_screen_changed_bit = BIT(total_sensors + 2);
 
 /* Display flushing */
 void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)

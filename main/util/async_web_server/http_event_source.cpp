@@ -1,10 +1,8 @@
 #include "http_event_source.h"
-
 #include "logging/logging_tags.h"
 #include "util/helper.h"
-
-
 #include <esp_log.h>
+#include <mutex>
 #include <string>
 
 namespace esp32
@@ -37,9 +35,9 @@ void event_source_connection::destroy(void *ptr)
     delete connection;
 }
 
-void event_source_connection::send(const char *message, const char *event, uint32_t id, uint32_t reconnect)
+void event_source_connection::try_send(const char *message, const char *event, uint32_t id, uint32_t reconnect)
 {
-    if (this->fd_ == 0)
+    if (fd_ == 0)
     {
         return;
     }
@@ -83,14 +81,14 @@ void event_source_connection::send(const char *message, const char *event, uint3
     event_str.append(CRLF_STR, CRLF_LEN);
 
     // Sending chunked content prelude
-    auto pre_event_str = esp32::string::snprintf("%x" CRLF_STR, 4 * sizeof(event_str.size()) + CRLF_LEN, event_str.size());
-    httpd_socket_send(this->hd_, this->fd_, pre_event_str.c_str(), pre_event_str.size(), 0);
+    const auto pre_event_str = esp32::string::snprintf("%x" CRLF_STR, 4 * sizeof(event_str.size()) + CRLF_LEN, event_str.size());
+    httpd_socket_send(hd_, fd_, pre_event_str.c_str(), pre_event_str.size(), 0);
 
     // Sendiing content chunk
-    httpd_socket_send(this->hd_, this->fd_, event_str.c_str(), event_str.size(), 0);
+    httpd_socket_send(hd_, fd_, event_str.c_str(), event_str.size(), 0);
 
     // Indicate end of chunk
-    httpd_socket_send(this->hd_, this->fd_, CRLF_STR, CRLF_LEN, 0);
+    httpd_socket_send(hd_, fd_, CRLF_STR, CRLF_LEN, 0);
 }
 
 event_source::~event_source()
@@ -104,19 +102,27 @@ event_source::~event_source()
 void event_source::add_request(http_request *request)
 {
     auto connection = new event_source_connection(this, request);
+    std::lock_guard<esp32::semaphore> lock(connections_mutex_);
     connections_.insert(connection);
 }
 
-void event_source::send(const char *message, const char *event, uint32_t id, uint32_t reconnect)
+void event_source::try_send(const char *message, const char *event, uint32_t id, uint32_t reconnect)
 {
-    for (auto *ses : connections_)
+    std::set<event_source_connection *> connections_copy;
     {
-        ses->send(message, event, id, reconnect);
+        std::lock_guard<esp32::semaphore> lock(connections_mutex_);
+        connections_copy = connections_;
+    }
+
+    for (auto *ses : connections_copy)
+    {
+        ses->try_send(message, event, id, reconnect);
     }
 }
 
 size_t event_source::connection_count() const
 {
+    std::lock_guard<esp32::semaphore> lock(connections_mutex_);
     return connections_.size();
 }
 

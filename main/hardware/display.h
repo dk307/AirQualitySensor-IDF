@@ -41,9 +41,9 @@ class display final : esp32::noncopyable
         APP_COMMON_EVENT, SENSOR_VALUE_CHANGE,
         [this](esp_event_base_t, int32_t, sensor_id_index id) { xTaskNotify(lvgl_task_.handle(), BIT(static_cast<uint8_t>(id) + 1), eSetBits); }};
 
-    esp32::default_event_subscriber instance_wifi_change_event_{
-        APP_COMMON_EVENT, SENSOR_VALUE_CHANGE,
-        [this](esp_event_base_t, int32_t, void *) { xTaskNotify(lvgl_task_.handle(), WIFI_STATUS_CHANGED, eSetBits); }};
+    esp32::default_event_subscriber instance_wifi_change_event_{APP_COMMON_EVENT, WIFI_STATUS_CHANGED, [this](esp_event_base_t, int32_t, void *) {
+                                                                    xTaskNotify(lvgl_task_.handle(), task_notify_wifi_changed_bit, eSetBits);
+                                                                }};
 
     static void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
     static void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
@@ -51,4 +51,7 @@ class display final : esp32::noncopyable
     void create_timer();
     void gui_task();
     void set_main_screen();
+
+    const int task_notify_wifi_changed_bit = BIT(total_sensors + 1);
+    const int set_main_screen_changed_bit = BIT(total_sensors + 2);
 };

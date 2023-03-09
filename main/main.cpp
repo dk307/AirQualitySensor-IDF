@@ -23,15 +23,6 @@ ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 
 extern "C" void app_main(void)
 {
-    // esp_log_level_set(WIFI_TAG, ESP_LOG_DEBUG);
-    // esp_log_level_set("wifi:Init", ESP_LOG_DEBUG);
-    // esp_log_level_set("wpa", ESP_LOG_DEBUG);
-    esp_log_level_set("sensor_sps30", ESP_LOG_ERROR);
-    esp_log_level_set("sensor_sht31", ESP_LOG_ERROR);
-    esp_log_level_set("sensor_bh1750", ESP_LOG_ERROR);
-    esp_log_level_set("webserver", ESP_LOG_DEBUG);
-
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGD(OPERATIONS_TAG, "Starting ....");
 
     try

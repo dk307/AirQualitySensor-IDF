@@ -1,26 +1,25 @@
 #pragma once
 
 #include "util/noncopyable.h"
-
 #include <bits/functexcept.h>
 #include <errno.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
-
+#include <type_traits>
 
 namespace esp32
 {
-template <class T, std::size_t TSize> class static_queue : esp32::noncopyable
+template <class T, std::size_t TSize>
+    requires std::is_trivially_copyable_v<T>
+class static_queue : esp32::noncopyable
 {
   public:
-    static_assert(std::is_trivial<T>::value, "T must be POD");
     constexpr static size_t item_size = sizeof(T);
     constexpr static size_t queue_size = TSize;
 
     static_queue()
     {
         queue_ = xQueueCreateStatic(TSize, item_size, reinterpret_cast<uint8_t *>(queue_data_.data()), &static_queue_esp_);
-
         configASSERT(queue_);
     }
 

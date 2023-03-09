@@ -21,7 +21,6 @@
 #include <esp_wifi.h>
 #include <memory>
 
-
 hardware hardware::instance;
 
 void hardware::set_screen_brightness(uint8_t value)
@@ -79,6 +78,7 @@ void hardware::stop_wifi_enrollment()
 void hardware::begin()
 {
     display_instance_.start();
+    current_brightness_ = display_instance_.get_brightness();
     CHECK_THROW_ESP(i2cdev_init());
     sensor_refresh_task.spawn_pinned("sensor task", 8 * 1024, esp32::task::default_priority, esp32::hardware_core);
 }
@@ -101,7 +101,7 @@ void hardware::set_sensor_value(sensor_id_index index, const std::optional<senso
 
     if (changed)
     {
-        CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, SENSOR_VALUE_CHANGE,  index));
+        CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, SENSOR_VALUE_CHANGE, index));
     }
 }
 
@@ -150,14 +150,13 @@ void hardware::sensor_task_ftn()
         do
         {
             read_bh1750_sensor();
+            set_auto_display_brightness();
+
             read_sht3x_sensor();
             read_sps30_sensor();
-            set_auto_display_brightness();
 
             vTaskDelay(500);
         } while (true);
-
-        vTaskDelete(NULL);
     }
     catch (const std::exception &ex)
     {
@@ -166,6 +165,8 @@ void hardware::sensor_task_ftn()
         vTaskDelay(pdMS_TO_TICKS(60 * 1000));
         operations::instance.reboot();
     }
+
+    vTaskDelete(NULL);
 }
 
 void hardware::read_bh1750_sensor()
@@ -189,13 +190,13 @@ void hardware::read_bh1750_sensor()
         if (lux.has_value())
         {
             const auto value = round_value(lux.value());
-            ESP_LOGI(SENSOR_BH1750_TAG, "Setting new value:%d", value.value_or(std::numeric_limits<sensor_value::value_type>::max()));
+            ESP_LOGI(SENSOR_BH1750_TAG, "Setting new value:%d lux", value.value_or(std::numeric_limits<sensor_value::value_type>::max()));
             set_sensor_value(sensor_id_index::light_intensity, value);
             bh1750_sensor_last_read = now;
         }
         else
         {
-            ESP_LOGE(SENSOR_BH1750_TAG, "Failed to read from BH1750");
+            ESP_LOGW(SENSOR_BH1750_TAG, "Failed to read from BH1750");
             set_sensor_value(sensor_id_index::light_intensity, std::nullopt);
         }
     }
@@ -302,9 +303,16 @@ std::optional<sensor_value::value_type> hardware::round_value(float val, int pla
 
 uint8_t hardware::lux_to_intensity(sensor_value::value_type lux)
 {
-    // https://learn.microsoft.com/en-us/windows/win32/sensorsapi/understanding-and-interpreting-lux-values
-    const auto intensity = (std::log10(lux) / 5) * 255;
-    return intensity;
+    if (lux != 0)
+    {
+        // https://learn.microsoft.com/en-us/windows/win32/sensorsapi/understanding-and-interpreting-lux-values
+        const auto intensity = (std::log10(lux) / 5) * 255;
+        return intensity;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void hardware::set_auto_display_brightness()
@@ -315,14 +323,16 @@ void hardware::set_auto_display_brightness()
     if (config_brightness.has_value())
     {
         required_brightness = config_brightness.value();
+        ESP_LOGD(SENSOR_BH1750_TAG, "Configured brightness:%d", required_brightness);
     }
     else
     {
         const auto avg_lux = light_sensor_values.get_average();
-        ESP_LOGV(SENSOR_BH1750_TAG, "Average lux:%d", avg_lux.value_or(128));
+        ESP_LOGD(SENSOR_BH1750_TAG, "Average lux:%d", avg_lux.value_or(128));
         required_brightness = lux_to_intensity(avg_lux.value_or(128));
     }
 
+    ESP_LOGD(SENSOR_BH1750_TAG, "Required brightness:%d", required_brightness);
     set_screen_brightness(required_brightness);
 }
 

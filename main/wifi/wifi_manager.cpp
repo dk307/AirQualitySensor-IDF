@@ -145,7 +145,6 @@ void wifi_manager::wifi_task_ftn()
             {
                 ESP_LOGI(WIFI_TAG, "Config Changed");
             }
-
         } while (true);
     }
     catch (const std::exception &ex)
@@ -207,7 +206,7 @@ std::string wifi_manager::get_rfc_name()
     if (rfc_name.empty())
     {
         uint64_t mac_address = 0LL;
-        esp_efuse_mac_get_default((uint8_t *)(&mac_address));
+        esp_efuse_mac_get_default(reinterpret_cast<uint8_t *>(&mac_address));
 
         uint64_t chipId = 0;
         for (auto i = 0; i < 17; i = i + 8)

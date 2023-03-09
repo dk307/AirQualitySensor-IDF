@@ -8,7 +8,6 @@
 #include "util/misc.h"
 #include "wifi/wifi_manager.h"
 #include "wifi/wifi_sta.h"
-
 #include <driver/i2c.h>
 #include <esp_chip_info.h>
 #include <esp_efuse.h>

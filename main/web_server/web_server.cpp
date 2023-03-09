@@ -440,7 +440,7 @@ void web_server::send_sensor_data(sensor_id_index id)
 
     std::string json;
     serializeJson(json_document, json);
-    events.send(json.c_str(), "sensor", esp32::millis(), true);
+    events.try_send(json.c_str(), "sensor", esp32::millis(), true);
 }
 
 void web_server::handle_dir_list(esp32::http_request *request)
@@ -920,7 +920,7 @@ void web_server::received_log_data(std::unique_ptr<std::string> log)
 
 void web_server::send_log_data(std::unique_ptr<std::string> log)
 {
-    logging.send((*log).c_str(), "logs", esp32::millis(), true);
+    logging.try_send((*log).c_str(), "logs", esp32::millis(), true);
 }
 
 void web_server::on_set_logging_level(esp32::http_request *request)
