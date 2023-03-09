@@ -35,8 +35,14 @@ extern "C" void app_main(void)
 
     try
     {
-        ESP_ERROR_CHECK(nvs_flash_init());
-        ESP_ERROR_CHECK(esp_event_loop_create_default());
+        auto err = nvs_flash_init();
+        if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+        {
+            CHECK_THROW_ESP(nvs_flash_erase());
+            CHECK_THROW_ESP(nvs_flash_init());
+        }
+
+        CHECK_THROW_ESP(esp_event_loop_create_default());
 
         // order is important
         sd_card::instance.begin();
