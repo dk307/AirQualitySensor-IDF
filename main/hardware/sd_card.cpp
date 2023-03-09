@@ -38,10 +38,10 @@ void sd_card::begin()
     bus_cfg.quadhd_io_num = -1;
     bus_cfg.max_transfer_sz = 4092;
 
-    CHECK_THROW_INIT(spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA));
+    CHECK_THROW_ESP(spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA));
 
     ESP_LOGI(HARDWARE_TAG, "Mounting filesystem");
-    CHECK_THROW_INIT(esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_));
+    CHECK_THROW_ESP(esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_));
     ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");
 
     ESP_LOGI(HARDWARE_TAG, "%s", get_info().c_str());

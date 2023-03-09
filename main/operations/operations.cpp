@@ -46,12 +46,12 @@ void operations::mark_running_parition_as_valid()
     const esp_partition_t *running = esp_ota_get_running_partition();
     esp_ota_img_states_t ota_state{};
 
-    CHECK_THROW_INIT(esp_ota_get_state_partition(running, &ota_state));
+    CHECK_THROW_ESP(esp_ota_get_state_partition(running, &ota_state));
 
     if (ota_state == ESP_OTA_IMG_PENDING_VERIFY)
     {
         ESP_LOGI(OPERATIONS_TAG, "Marking running partition as valid");
-        CHECK_THROW_INIT(esp_ota_mark_app_valid_cancel_rollback());
+        CHECK_THROW_ESP(esp_ota_mark_app_valid_cancel_rollback());
     }
     else
     {

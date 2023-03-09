@@ -54,25 +54,6 @@ class esp_exception : public std::exception
     std::string message_;
     const esp_err_t error_;
 };
-
-class init_failure_exception : public esp_exception
-{
-  public:
-    using esp_exception::esp_exception;
-};
-
-class http_request_exception : public esp_exception
-{
-  public:
-    using esp_exception::esp_exception;
-};
-
-class wifi_op_exception : public esp_exception
-{
-  public:
-    using esp_exception::esp_exception;
-};
-
 } // namespace esp32
 
 #define CHECK_THROW(error_, exception_type_)                                                                                                         \
@@ -92,6 +73,4 @@ class wifi_op_exception : public esp_exception
     } while (0)
 
 #define CHECK_THROW_ESP(error_) CHECK_THROW(error_, esp32::esp_exception);
-#define CHECK_THROW_INIT(error_) CHECK_THROW(error_, esp32::init_failure_exception);
-#define CHECK_THROW_INIT2(error_, message_) CHECK_THROW2(error_, message_, esp32::init_failure_exception);
-#define CHECK_THROW_WIFI(error_) CHECK_THROW(error_, esp32::wifi_op_exception);
+#define CHECK_THROW_ESP2(error_, message_) CHECK_THROW2(error_, message_, esp32::esp_exception);

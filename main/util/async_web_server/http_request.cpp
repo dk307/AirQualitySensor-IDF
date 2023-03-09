@@ -25,7 +25,7 @@ std::optional<std::string> http_request::get_header(const char *header) const
     std::string buf;
     buf.resize(buf_len);
 
-    CHECK_HTTP_REQUEST(httpd_req_get_hdr_value_str(req_, header, buf.data(), buf_len + 1));
+    CHECK_THROW_ESP(httpd_req_get_hdr_value_str(req_, header, buf.data(), buf_len + 1));
     return buf;
 }
 
@@ -43,7 +43,7 @@ std::vector<std::optional<std::string>> http_request::get_url_arguments(const st
     std::vector<char> query_str;
     query_str.resize(query_len + 1);
 
-    CHECK_HTTP_REQUEST(httpd_req_get_url_query_str(req_, query_str.data(), query_str.size()));
+    CHECK_THROW_ESP(httpd_req_get_url_query_str(req_, query_str.data(), query_str.size()));
 
     extract_parameters(query_str, names, result);
     return result;
@@ -74,13 +74,13 @@ std::vector<std::optional<std::string>> http_request::get_form_url_encoded_argum
 
     if (req_->content_len > 16 * 1024) // 16k max size
     {
-        CHECK_HTTP_REQUEST(ESP_ERR_NO_MEM);
+        CHECK_THROW_ESP(ESP_ERR_NO_MEM);
     }
 
     std::vector<char> data;
     data.reserve(req_->content_len + 1);
 
-    CHECK_HTTP_REQUEST(read_body([&data](const std::vector<uint8_t> &chunk) {
+    CHECK_THROW_ESP(read_body([&data](const std::vector<uint8_t> &chunk) {
         data.insert(data.end(), chunk.cbegin(), chunk.cend());
         return ESP_OK;
     }));
@@ -156,7 +156,7 @@ std::string http_request::client_ip_address() const
         return buf;
     }
 
-    CHECK_HTTP_REQUEST(ESP_FAIL);
+    CHECK_THROW_ESP(ESP_FAIL);
 }
 
 bool http_request::url_decode_in_place(std::string &url)

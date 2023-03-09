@@ -19,12 +19,12 @@ event_source_connection::event_source_connection(event_source *source, http_requ
     hd_ = req->handle;
     fd_ = httpd_req_to_sockfd(req);
 
-    CHECK_HTTP_REQUEST(httpd_resp_set_status(req, HTTPD_200));
-    CHECK_HTTP_REQUEST(httpd_resp_set_type(req, "text/event-stream"));
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req, "Cache-Control", "no-cache"));
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req, "Connection", "keep-alive"));
+    CHECK_THROW_ESP(httpd_resp_set_status(req, HTTPD_200));
+    CHECK_THROW_ESP(httpd_resp_set_type(req, "text/event-stream"));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req, "Cache-Control", "no-cache"));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req, "Connection", "keep-alive"));
 
-    CHECK_HTTP_REQUEST(httpd_resp_send_chunk(req, CRLF_STR, CRLF_LEN));
+    CHECK_THROW_ESP(httpd_resp_send_chunk(req, CRLF_STR, CRLF_LEN));
     req->sess_ctx = this;
     req->free_ctx = event_source_connection::destroy;
 }

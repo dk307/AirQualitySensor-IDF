@@ -38,7 +38,7 @@ void wifi_sta::connect_to_ap()
     ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", credentials_.get_user_name().c_str());
 
     // Prepare to connect to the provided SSID and password
-    CHECK_THROW_WIFI(esp_wifi_set_mode(WIFI_MODE_STA));
+    CHECK_THROW_ESP(esp_wifi_set_mode(WIFI_MODE_STA));
 
     wifi_config_t config{};
     copy_min_to_buffer(credentials_.get_user_name().begin(), credentials_.get_user_name().length(), config.sta.ssid);
@@ -46,16 +46,16 @@ void wifi_sta::connect_to_ap()
     config.sta.threshold.authmode = credentials_.get_password().empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
     config.sta.pmf_cfg.capable = true;
 
-    CHECK_THROW_WIFI(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    CHECK_THROW_WIFI(esp_wifi_set_config(WIFI_IF_STA, &config));
+    CHECK_THROW_ESP(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    CHECK_THROW_ESP(esp_wifi_set_config(WIFI_IF_STA, &config));
 
     connect();
 }
 
 void wifi_sta::connect() const
 {
-    CHECK_THROW_WIFI(esp_wifi_start());
-    CHECK_THROW_WIFI(esp_wifi_connect());
+    CHECK_THROW_ESP(esp_wifi_start());
+    CHECK_THROW_ESP(esp_wifi_connect());
 }
 
 void wifi_sta::wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data)

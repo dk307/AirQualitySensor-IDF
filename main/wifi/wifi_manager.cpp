@@ -14,10 +14,10 @@ wifi_manager wifi_manager::instance;
 
 void wifi_manager::begin()
 {
-    CHECK_THROW_INIT(esp_netif_init());
+    CHECK_THROW_ESP(esp_netif_init());
 
     wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
-    CHECK_THROW_WIFI(esp_wifi_init(&init));
+    CHECK_THROW_ESP(esp_wifi_init(&init));
 
     esp_netif_create_default_wifi_sta();
 
@@ -244,5 +244,5 @@ wifi_status wifi_manager::get_wifi_status()
 
 void wifi_manager::set_wifi_power_mode(wifi_ps_type_t mode)
 {
-    CHECK_THROW_WIFI(esp_wifi_set_ps(mode));
+    CHECK_THROW_ESP(esp_wifi_set_ps(mode));
 }

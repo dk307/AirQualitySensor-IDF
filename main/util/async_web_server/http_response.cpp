@@ -21,27 +21,27 @@ void http_response::add_common_headers()
 
 void http_response::add_header(const char *field, const char *value)
 {
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, field, value));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, field, value));
 }
 
 void http_response::redirect(const std::string &url)
 {
-    CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, "302 Found"));
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Location", url.c_str()));
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Cache-Control", "no-cache"));
-    CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, nullptr, 0));
+    CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, "302 Found"));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Location", url.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Cache-Control", "no-cache"));
+    CHECK_THROW_ESP(httpd_resp_send(req_->req_, nullptr, 0));
 }
 
 void http_response::send_empty_200()
 {
     add_common_headers();
-    CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, "", HTTPD_RESP_USE_STRLEN));
+    CHECK_THROW_ESP(httpd_resp_send(req_->req_, "", HTTPD_RESP_USE_STRLEN));
 }
 
 void http_response::send_error(httpd_err_code_t code, const char *message)
 {
     add_common_headers();
-    CHECK_HTTP_REQUEST(httpd_resp_send_err(req_->req_, code, message));
+    CHECK_THROW_ESP(httpd_resp_send_err(req_->req_, code, message));
 }
 
 void array_response::send_response()
@@ -50,10 +50,10 @@ void array_response::send_response()
     add_common_headers();
 
     // content type
-    CHECK_HTTP_REQUEST(httpd_resp_set_type(req_->req_, content_type_.data()));
+    CHECK_THROW_ESP(httpd_resp_set_type(req_->req_, content_type_.data()));
     if (is_gz_)
     {
-        CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
+        CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
     }
 
     if (sha256_.has_value())
@@ -61,19 +61,19 @@ void array_response::send_response()
         const auto match_sha256 = req_->get_header("If-None-Match");
         if (match_sha256.has_value() && (match_sha256.value() == sha256_.value()))
         {
-            CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, "304 Not Modified"));
-            CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, "", 0));
+            CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, "304 Not Modified"));
+            CHECK_THROW_ESP(httpd_resp_send(req_->req_, "", 0));
             return;
         }
     }
 
-    CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, HTTPD_200));
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Connection", "keep-alive"));
+    CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, HTTPD_200));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Connection", "keep-alive"));
     if (sha256_.has_value())
     {
-        CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "ETag", sha256_.value().data()));
+        CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "ETag", sha256_.value().data()));
     }
-    CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_.data()), buf_.size()));
+    CHECK_THROW_ESP(httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_.data()), buf_.size()));
 }
 
 void array_response::send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view &content_type)
@@ -94,7 +94,7 @@ void fs_card_file_response::send_response()
     if (!download_ && !esp32::filesystem::exists(path) && esp32::filesystem::exists(gz_path))
     {
         path = gz_path;
-        CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
+        CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
     }
     else
     {
@@ -123,25 +123,25 @@ void fs_card_file_response::send_response()
     const auto existing_etag = req_->get_header("If-None-Match");
     if (existing_etag.has_value() && (existing_etag.value() == etag))
     {
-        CHECK_HTTP_REQUEST(httpd_resp_set_status(req_->req_, "304 Not Modified"));
-        CHECK_HTTP_REQUEST(httpd_resp_send(req_->req_, "", 0));
+        CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, "304 Not Modified"));
+        CHECK_THROW_ESP(httpd_resp_send(req_->req_, "", 0));
         return;
     }
 
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "ETag", etag.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "ETag", etag.c_str()));
 
     // Content dispostion
     const auto filename = path.filename();
     const auto content_disposition_header = download_ ? esp32::string::sprintf("attachment; filename=\"%s\"", filename.c_str())
                                                       : esp32::string::sprintf("inline; filename=\"%s\"", filename.c_str());
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Disposition", content_disposition_header.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Disposition", content_disposition_header.c_str()));
 
     // content type
-    CHECK_HTTP_REQUEST(httpd_resp_set_type(req_->req_, content_type_));
+    CHECK_THROW_ESP(httpd_resp_set_type(req_->req_, content_type_));
 
     // Content-Length
     const auto size = esp32::string::to_string(file_info.size());
-    CHECK_HTTP_REQUEST(httpd_resp_set_hdr(req_->req_, "Content-Length", size.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Length", size.c_str()));
 
     ESP_LOGD(WEBSERVER_TAG, "Sending file %s", path.c_str());
 
@@ -161,7 +161,7 @@ void fs_card_file_response::send_response()
 
     if (!chunk)
     {
-        CHECK_HTTP_REQUEST(ESP_ERR_NO_MEM);
+        CHECK_THROW_ESP(ESP_ERR_NO_MEM);
     }
 
     do
@@ -179,8 +179,8 @@ void fs_card_file_response::send_response()
                 ESP_LOGE(WEBSERVER_TAG, "File sending failed for %s with %s", path.c_str(), esp_err_to_name(send_error));
 
                 /* Abort sending file */
-                CHECK_HTTP_REQUEST(httpd_resp_sendstr_chunk(req_->req_, NULL));
-                CHECK_HTTP_REQUEST(httpd_resp_send_err(req_->req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file"));
+                CHECK_THROW_ESP(httpd_resp_sendstr_chunk(req_->req_, NULL));
+                CHECK_THROW_ESP(httpd_resp_send_err(req_->req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file"));
             }
         }
     } while (chuck_size != 0);

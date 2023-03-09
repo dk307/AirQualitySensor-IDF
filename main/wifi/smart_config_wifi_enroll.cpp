@@ -27,8 +27,8 @@ smart_config_enroll::~smart_config_enroll()
 void smart_config_enroll::start()
 {
     ESP_LOGI(WIFI_TAG, "Starting Smart Config version:%s", esp_smartconfig_get_version());
-    CHECK_THROW_WIFI(esp_wifi_set_mode(WIFI_MODE_STA));
-    CHECK_THROW_WIFI(esp_wifi_start());
+    CHECK_THROW_ESP(esp_wifi_set_mode(WIFI_MODE_STA));
+    CHECK_THROW_ESP(esp_wifi_start());
 }
 
 void smart_config_enroll::wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data)

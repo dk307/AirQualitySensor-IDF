@@ -58,7 +58,7 @@ void display::start()
 
     if (!display_device_.init())
     {
-        CHECK_THROW_INIT2(ESP_FAIL, "Failed to init display");
+        CHECK_THROW_ESP2(ESP_FAIL, "Failed to init display");
     }
 
     display_device_.setRotation(1);
@@ -80,7 +80,7 @@ void display::start()
 
     if (!disp_draw_buf_ || !disp_draw_buf2_)
     {
-        CHECK_THROW_INIT2(ESP_ERR_NO_MEM, "Failed to allocate lvgl display buffer");
+        CHECK_THROW_ESP2(ESP_ERR_NO_MEM, "Failed to allocate lvgl display buffer");
     }
 
     lv_disp_draw_buf_init(&draw_buf_, disp_draw_buf_, disp_draw_buf2_, screenWidth * buffer_size);
@@ -117,7 +117,7 @@ void display::start()
         {
             esp_timer_delete(lv_periodic_timer_);
         }
-        CHECK_THROW_INIT2(err, "Create task for LVGL failed");
+        CHECK_THROW_ESP2(err, "Create task for LVGL failed");
     }
 
     display_device_.setBrightness(128);
