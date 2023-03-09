@@ -10,8 +10,14 @@ typedef enum
     /** App init done*/
     APP_INIT_DONE,
 
-    /** Sensor int done. Data is sensor_id_index */
+    /** Sensor init done. Data is sensor_id_index */
     SENSOR_VALUE_CHANGE,
+
+    /** Config changed, no data */
+    CONFIG_CHANGE,
+
+    /** wifi status changed, no data  */
+    WIFI_STATUS_CHANGED,
 
     /** Node reboot has been triggered. The associated event data is the time in seconds
      * (type: uint8_t) after which the node will reboot. Note that this time may not be

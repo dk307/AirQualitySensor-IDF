@@ -56,6 +56,7 @@ void display::start()
 
     instance_set_main_screen_event_.subscribe();
     instance_sensor_change_event_.subscribe();
+    instance_wifi_change_event_.subscribe();
 
     lv_init();
     lv_fs_if_fatfs_init();

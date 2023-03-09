@@ -1,16 +1,17 @@
 #pragma once
 
 #include "credentials.h"
-#include "util/change_callback.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include <ArduinoJson.h>
 #include <atomic>
 #include <mutex>
 #include <optional>
+#include <vector>
 
-struct config_data
+class config_data : esp32::noncopyable
 {
+  public:
     config_data()
     {
         setDefaults();
@@ -82,7 +83,7 @@ struct config_data
     mutable esp32::semaphore data_mutex_;
 };
 
-class config : public esp32::change_callback
+class config : public esp32::noncopyable
 {
   public:
     bool begin();

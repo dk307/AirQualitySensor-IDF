@@ -21,7 +21,7 @@ void wifi_manager::begin()
 
     esp_netif_create_default_wifi_sta();
 
-    config::instance.add_callback([this] { events_notify_.set_config_changed(); });
+    instance_config_change_event_.subscribe();
     wifi_task_.spawn_pinned("wifi task", 8 * 1024, esp32::task::default_priority, esp32::wifi_core);
 }
 
@@ -87,7 +87,7 @@ void wifi_manager::wifi_task_ftn()
                 {
                     ESP_LOGW(WIFI_TAG, "Failed to connect to Wifi");
                 }
-                call_change_listeners();
+                post_wifi_status_changed();
             }
 
             const auto bits_set = events_notify_.wait_for_events(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
@@ -138,7 +138,7 @@ void wifi_manager::wifi_task_ftn()
             {
                 ESP_LOGI(WIFI_TAG, "Wifi disconnected");
                 connected_to_ap_ = false;
-                call_change_listeners();
+                post_wifi_status_changed();
             }
 
             if (bits_set & wifi_events_notify::CONFIG_CHANGED)
@@ -167,7 +167,7 @@ void wifi_manager::disconnect()
 
     if (changed)
     {
-        call_change_listeners();
+        post_wifi_status_changed();
     }
 }
 
@@ -222,6 +222,8 @@ std::string wifi_manager::get_rfc_name()
 
 wifi_status wifi_manager::get_wifi_status()
 {
+    wifi_status status{};
+
     if (connected_to_ap_)
     {
         esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
@@ -235,9 +237,9 @@ wifi_status wifi_manager::get_wifi_status()
                 {
                     auto ssid = get_ssid();
                     return {true, esp32::string::sprintf("Connected to %.*s", ssid.size(), ssid.data())};
-                }
             }
         }
+    }
     }
     return {false, "Not connected to Wifi"};
 }
@@ -245,4 +247,9 @@ wifi_status wifi_manager::get_wifi_status()
 void wifi_manager::set_wifi_power_mode(wifi_ps_type_t mode)
 {
     CHECK_THROW_ESP(esp_wifi_set_ps(mode));
+}
+
+void wifi_manager::post_wifi_status_changed()
+{
+    CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, WIFI_STATUS_CHANGED));
 }

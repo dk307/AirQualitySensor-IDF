@@ -5,9 +5,10 @@
 #include "util/hash/hash.h"
 #include "util/helper.h"
 #include "util/psram_allocator.h"
-
 #include <esp_log.h>
 #include <filesystem>
+#include "util/default_event.h"
+#include "app_events.h"
 
 static const char ConfigFilePath[] = "/sd/config.json";
 static const char ConfigChecksumFilePath[] = "/sd/config_checksum.json";
@@ -155,7 +156,7 @@ void config::save_config()
     }
 
     ESP_LOGI(CONFIG_TAG, "Saving Configuration done");
-    call_change_listeners();
+    CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, CONFIG_CHANGE));
 }
 
 std::string config::read_file(const char *file_name)

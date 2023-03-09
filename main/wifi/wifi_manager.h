@@ -1,6 +1,8 @@
 #pragma once
 
-#include "util\change_callback.h"
+#include "app_events.h"
+#include "util\default_event.h"
+#include "util\noncopyable.h"
 #include "util\task_wrapper.h"
 #include "wifi\smart_config_wifi_enroll.h"
 #include "wifi\wifi_events_notify.h"
@@ -16,7 +18,7 @@ struct wifi_status
     std::string status;
 };
 
-class wifi_manager final : public esp32::change_callback
+class wifi_manager final : public esp32::noncopyable
 {
   public:
     void begin();
@@ -37,11 +39,15 @@ class wifi_manager final : public esp32::change_callback
     std::unique_ptr<wifi_sta> wifi_instance_;
     esp32::task wifi_task_;
 
+    esp32::default_event_subscriber instance_config_change_event_{APP_COMMON_EVENT, CONFIG_CHANGE,
+                                                                  [this](esp_event_base_t, int32_t, void *) { events_notify_.set_config_changed(); }};
+
     std::atomic_bool connected_to_ap_{false};
 
     bool connect_saved_wifi();
     void wifi_task_ftn();
     void disconnect();
+    void post_wifi_status_changed();
 
     std::string_view get_ssid();
 
