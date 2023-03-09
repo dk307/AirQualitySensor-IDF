@@ -3,27 +3,23 @@
 #include "util/exceptions.h"
 #include "util/helper.h"
 #include <esp_log.h>
-#include <esp_smartconfig.h>
 #include <esp_wifi.h>
 #include <freertos/FreeRTOS.h>
 #include <smartconfig_ack.h>
 
 smart_config_enroll::smart_config_enroll(wifi_events_notify &events_notify) : events_notify_(events_notify)
 {
-    CHECK_THROW_WIFI(
-        esp_event_handler_instance_register(SC_EVENT, ESP_EVENT_ANY_ID, &smart_config_enroll::wifi_event_callback, this, &instance_sc_event_));
-    CHECK_THROW_WIFI(
-        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &smart_config_enroll::wifi_event_callback, this, &instance_wifi_event_));
-    CHECK_THROW_WIFI(
-        esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &smart_config_enroll::wifi_event_callback, this, &instance_ip_event_));
+    instance_sc_event_.subscribe();
+    instance_ip_event_.subscribe();
+    instance_wifi_event_.subscribe();
 }
 
 smart_config_enroll::~smart_config_enroll()
 {
     esp_smartconfig_stop();
-    esp_event_handler_instance_unregister(SC_EVENT, ESP_EVENT_ANY_ID, instance_sc_event_);
-    esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event_);
-    esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event_);
+    instance_sc_event_.unsubscribe();
+    instance_ip_event_.unsubscribe();
+    instance_wifi_event_.unsubscribe();
     esp_wifi_disconnect();
     esp_wifi_stop();
 }
@@ -35,13 +31,7 @@ void smart_config_enroll::start()
     CHECK_THROW_WIFI(esp_wifi_start());
 }
 
-void smart_config_enroll::wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
-{
-    auto instance = reinterpret_cast<smart_config_enroll *>(event_handler_arg);
-    instance->wifi_event_callback_impl(event_base, event_id, event_data);
-}
-
-void smart_config_enroll::wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data)
+void smart_config_enroll::wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {

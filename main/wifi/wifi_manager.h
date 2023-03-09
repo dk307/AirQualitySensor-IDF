@@ -2,12 +2,13 @@
 
 #include "util\change_callback.h"
 #include "util\task_wrapper.h"
+#include "wifi\smart_config_wifi_enroll.h"
 #include "wifi\wifi_events_notify.h"
 #include "wifi\wifi_sta.h"
-#include "wifi\smart_config_wifi_enroll.h"
 #include <atomic>
 #include <memory>
 #include <string>
+
 
 struct wifi_status
 {
@@ -29,7 +30,7 @@ class wifi_manager final : public esp32::change_callback
     static void set_wifi_power_mode(wifi_ps_type_t mode);
 
   private:
-    wifi_manager() : wifi_task_(std::bind(&wifi_manager::wifi_task_ftn, this))
+    wifi_manager() : wifi_task_([this] { wifi_task_ftn(); })
     {
     }
     wifi_events_notify events_notify_;

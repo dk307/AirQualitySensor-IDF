@@ -1,8 +1,11 @@
 #pragma once
 
+#include "util\default_event_subscriber.h"
 #include "util\noncopyable.h"
 #include "wifi_events_notify.h"
-#include <esp_event.h>
+#include <esp_netif_types.h>
+#include <esp_smartconfig.h>
+#include <esp_wifi_types.h>
 #include <string>
 
 class smart_config_enroll : esp32::noncopyable
@@ -24,13 +27,15 @@ class smart_config_enroll : esp32::noncopyable
 
   private:
     wifi_events_notify &events_notify_;
-    esp_event_handler_instance_t instance_wifi_event_{};
-    esp_event_handler_instance_t instance_ip_event_{};
-    esp_event_handler_instance_t instance_sc_event_{};
+    const esp32::default_event_subscriber::callback_t event_callback = [this](esp_event_base_t event_base, int32_t event_id, void *event_data) {
+        wifi_event_callback(event_base, event_id, event_data);
+    };
+    esp32::default_event_subscriber instance_wifi_event_{IP_EVENT, ESP_EVENT_ANY_ID, event_callback};
+    esp32::default_event_subscriber instance_ip_event_{WIFI_EVENT, ESP_EVENT_ANY_ID, event_callback};
+    esp32::default_event_subscriber instance_sc_event_{SC_EVENT, ESP_EVENT_ANY_ID, event_callback};
 
     std::string ssid_;
     std::string password_;
 
-    static void wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
-    void wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data);
+    void wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data);
 };

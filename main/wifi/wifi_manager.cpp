@@ -51,13 +51,13 @@ bool wifi_manager::connect_saved_wifi()
 
 void wifi_manager::start_wifi_enrollment()
 {
-    ESP_LOGI(WIFI_TAG, "Signalled starting DPE enrollement");
+    ESP_LOGI(WIFI_TAG, "Signalled starting Wifi enrollement");
     events_notify_.set_start_wifi_enrollement();
 }
 
 void wifi_manager::stop_wifi_enrollment()
 {
-    ESP_LOGI(WIFI_TAG, "Signalled cancel DPE enrollement");
+    ESP_LOGI(WIFI_TAG, "Signalled cancel Wifi enrollement");
     events_notify_.set_wifi_enrollement_cencelled();
 }
 

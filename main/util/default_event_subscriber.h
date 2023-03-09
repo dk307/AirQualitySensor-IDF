@@ -40,7 +40,7 @@ class default_event_subscriber : noncopyable
   private:
     const esp_event_base_t event_base_;
     const int32_t event_id_;
-    callback_t callback_;
+    const callback_t callback_;
     esp_event_handler_instance_t instance_event_{};
 
     static void event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)

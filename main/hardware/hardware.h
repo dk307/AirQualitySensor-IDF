@@ -46,7 +46,7 @@ class hardware final : ui_interface, esp32::noncopyable
     esp_err_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);
 
   private:
-    hardware() : sensor_refresh_task(std::bind(&hardware::sensor_task_ftn, this))
+    hardware() : sensor_refresh_task([this] { sensor_task_ftn(); })
     {
     }
 

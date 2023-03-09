@@ -11,7 +11,7 @@
 class display final : esp32::noncopyable
 {
   public:
-    display(ui_interface &ui_interface_) : lvgl_task_(std::bind(&display::gui_task, this)), ui_instance_(ui_interface_)
+    display(ui_interface &ui_interface_) : lvgl_task_([this] { display::gui_task(); }), ui_instance_(ui_interface_)
     {
     }
 

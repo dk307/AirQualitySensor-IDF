@@ -792,7 +792,7 @@ void web_server::handle_web_logging_start(esp32::http_request *request)
         return;
     }
 
-    if (logger::instance.enable_web_logging(std::bind(&web_server::received_log_data, this, std::placeholders::_1)))
+    if (logger::instance.enable_web_logging([this](std::unique_ptr<std::string> log) { received_log_data(std::move(log)); }))
     {
         send_empty_200(request);
     }
