@@ -1,4 +1,5 @@
 #include "hardware/hardware.h"
+#include "app_events.h"
 #include "config/config_manager.h"
 #include "hardware/display.h"
 #include "hardware/sd_card.h"
@@ -19,6 +20,7 @@
 #include <esp_timer.h>
 #include <esp_wifi.h>
 #include <memory>
+
 
 hardware hardware::instance;
 
@@ -83,17 +85,23 @@ void hardware::begin()
 
 void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
 {
+    bool changed;
     const auto i = static_cast<size_t>(index);
     if (value.has_value())
     {
         (*sensors_history)[i].add_value(value.value());
-        sensors[i].set_value(value.value());
+        changed = sensors[i].set_value(value.value());
     }
     else
     {
         ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
         (*sensors_history)[i].clear();
-        sensors[i].set_invalid_value();
+        changed = sensors[i].set_invalid_value();
+    }
+
+    if (changed)
+    {
+        CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, SENSOR_VALUE_CHANGE,  index));
     }
 }
 

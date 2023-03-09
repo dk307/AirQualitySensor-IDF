@@ -1,8 +1,10 @@
 #pragma once
 
+#include "app_events.h"
 #include "lgfx_device.h"
 #include "ui/ui2.h"
 #include "ui/ui_interface.h"
+#include "util/default_event.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include "util/task_wrapper.h"
@@ -17,7 +19,6 @@ class display final : esp32::noncopyable
 
     void start();
 
-    void set_main_screen();
     uint8_t get_brightness();
     void set_brightness(uint8_t value);
 
@@ -33,11 +34,17 @@ class display final : esp32::noncopyable
     lv_color_t *disp_draw_buf_{};
     lv_color_t *disp_draw_buf2_{};
     ui ui_instance_;
+    esp32::default_event_subscriber instance_set_main_screen_event_{APP_COMMON_EVENT, APP_INIT_DONE,
+                                                                    [this](esp_event_base_t, int32_t, void *) { set_main_screen(); }};
+
+    esp32::default_event_subscriber_typed<sensor_id_index> instance_sensor_change_event_{
+        APP_COMMON_EVENT, SENSOR_VALUE_CHANGE,
+        [this](esp_event_base_t, int32_t, sensor_id_index id) { xTaskNotify(lvgl_task_.handle(), BIT(static_cast<uint8_t>(id) + 1), eSetBits); }};
 
     static void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
     static void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
     static void lv_tick_task(void *arg);
     void create_timer();
     void gui_task();
-    void set_callbacks();
+    void set_main_screen();
 };

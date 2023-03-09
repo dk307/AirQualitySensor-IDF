@@ -1,15 +1,14 @@
 #pragma once
 
 #include "sensor/sensor_id.h"
-#include "util/change_callback.h"
 #include "util/circular_buffer.h"
 #include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
-
 #include <atomic>
 #include <math.h>
 #include <mutex>
 #include <optional>
+#include <vector>
 
 class sensor_definition_display
 {
@@ -79,7 +78,7 @@ class sensor_definition
     const uint8_t display_definitions_count_;
 };
 
-template <class T> class sensor_value_t : public esp32::change_callback
+template <class T> class sensor_value_t
 {
   public:
     typedef T value_type;
@@ -89,25 +88,29 @@ template <class T> class sensor_value_t : public esp32::change_callback
         return value.load();
     }
 
-    void set_value(T value_)
+    bool set_value(T value_)
     {
-        set_value_(value_);
+        return set_value_(value_);
     }
 
-    void set_invalid_value()
+    bool set_invalid_value()
     {
-        set_value_(std::nullopt);
+        return set_value_(std::nullopt);
     }
 
   private:
     std::atomic<std::optional<T>> value;
 
-    void set_value_(std::optional<value_type> value_)
+    /**
+     * Returns true if changed
+     */
+    bool set_value_(std::optional<value_type> value_)
     {
         if (value.exchange(value_) != value_)
         {
-            call_change_listeners();
+            return true;
         }
+        return false;
     }
 };
 

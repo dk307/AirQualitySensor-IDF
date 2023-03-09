@@ -2,7 +2,7 @@
 #pragma once
 
 #include "config/credentials.h"
-#include "util/default_event_subscriber.h"
+#include "util/default_event.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include "wifi/wifi_events_notify.h"

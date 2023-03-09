@@ -2,10 +2,13 @@
 
 #include <vector>
 
+#include "app_events.h"
 #include "sensor/sensor.h"
 #include "util/async_web_server/http_event_source.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_server.h"
+#include "util/default_event.h"
+
 
 class web_server final : esp32::http_server
 {
@@ -18,7 +21,7 @@ class web_server final : esp32::http_server
     {
     }
 
-    template <const uint8_t data[], const auto len, const char * sha256> void handle_array_page_with_auth(esp32::http_request *request);
+    template <const uint8_t data[], const auto len, const char *sha256> void handle_array_page_with_auth(esp32::http_request *request);
 
     // handlers
     void handle_login(esp32::http_request *request);
@@ -75,4 +78,7 @@ class web_server final : esp32::http_server
 
     esp32::event_source events;
     esp32::event_source logging;
+
+    esp32::default_event_subscriber_typed<sensor_id_index> instance_sensor_change_event_{
+        APP_COMMON_EVENT, SENSOR_VALUE_CHANGE, [this](esp_event_base_t, int32_t, sensor_id_index id) { notify_sensor_change(id); }};
 };

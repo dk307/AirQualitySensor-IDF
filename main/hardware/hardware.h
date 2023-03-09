@@ -27,11 +27,6 @@ class hardware final : ui_interface, esp32::noncopyable
         return (*sensors_history)[static_cast<uint8_t>(index)];
     }
 
-    void set_main_screen()
-    {
-        display_instance_.set_main_screen();
-    }
-
     // ui_interface
     information_table_type get_information_table(information_type type) override;
     void set_screen_brightness(uint8_t value) override;

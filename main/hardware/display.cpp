@@ -5,6 +5,7 @@
 #include "lvgl_fs/lvgl_fs_sd_card.h"
 #include "ui/ui2.h"
 #include "util/cores.h"
+#include "util/default_event.h"
 #include "util/exceptions.h"
 #include "wifi/wifi_manager.h"
 #include <esp_log.h>
@@ -52,6 +53,9 @@ void display::touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 void display::start()
 {
     ESP_LOGI(DISPLAY_TAG, "Setting up display");
+
+    instance_set_main_screen_event_.subscribe();
+    instance_sensor_change_event_.subscribe();
 
     lv_init();
     lv_fs_if_fatfs_init();
@@ -124,19 +128,6 @@ void display::start()
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 }
 
-void display::set_callbacks()
-{
-    for (auto i = 0; i < total_sensors; i++)
-    {
-        const auto id = static_cast<sensor_id_index>(i);
-        hardware::instance.get_sensor(id).add_callback([i, this] { xTaskNotify(lvgl_task_.handle(), BIT(i + 1), eSetBits); });
-    }
-
-    wifi_manager::instance.add_callback([this] { xTaskNotify(lvgl_task_.handle(), task_notify_wifi_changed_bit, eSetBits); });
-
-    ESP_LOGI(DISPLAY_TAG, "Display Ready");
-}
-
 void display::set_main_screen()
 {
     xTaskNotify(lvgl_task_.handle(), set_main_screen_changed_bit, eSetBits);
@@ -176,8 +167,6 @@ void display::gui_task()
         ui_instance_.load_boot_screen();
         lv_task_handler();
         ui_instance_.init();
-
-        set_callbacks();
 
         do
         {

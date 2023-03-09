@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util\default_event_subscriber.h"
+#include "util\default_event.h"
 #include "util\noncopyable.h"
 #include "wifi_events_notify.h"
 #include <esp_netif_types.h>

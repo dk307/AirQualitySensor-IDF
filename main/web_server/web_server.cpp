@@ -149,11 +149,8 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_stop>("/api/log/sdstop", HTTP_POST);
     add_handler_ftn<web_server, &web_server::on_set_logging_level>("/api/log/loglevel", HTTP_POST);
 
-    for (auto i = 0; i < total_sensors; i++)
-    {
-        const auto id = static_cast<sensor_id_index>(i);
-        hardware::instance.get_sensor(id).add_callback([id, this] { notify_sensor_change(id); });
-    }
+
+    instance_sensor_change_event_.subscribe();
 }
 
 bool web_server::check_authenticated(esp32::http_request *request)

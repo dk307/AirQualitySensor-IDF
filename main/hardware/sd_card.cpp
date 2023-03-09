@@ -49,6 +49,8 @@ void sd_card::begin()
 
 std::string sd_card::get_info()
 {
+#define SD_OCR_SDHC_CAP (1 << 30)
+
     std::string info;
     info.reserve(256);
 
@@ -64,7 +66,7 @@ std::string sd_card::get_info()
     }
     else
     {
-#define SD_OCR_SDHC_CAP (1 << 30)
+
         type = (sd_card_->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC";
     }
 
