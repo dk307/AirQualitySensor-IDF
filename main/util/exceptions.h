@@ -91,6 +91,7 @@ class wifi_op_exception : public esp_exception
             throw exception_type_(std::source_location::current(), message, result);                                                                 \
     } while (0)
 
+#define CHECK_THROW_ESP(error_) CHECK_THROW(error_, esp32::esp_exception);
 #define CHECK_THROW_INIT(error_) CHECK_THROW(error_, esp32::init_failure_exception);
 #define CHECK_THROW_INIT2(error_, message_) CHECK_THROW2(error_, message_, esp32::init_failure_exception);
 #define CHECK_THROW_WIFI(error_) CHECK_THROW(error_, esp32::wifi_op_exception);

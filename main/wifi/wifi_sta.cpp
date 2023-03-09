@@ -16,14 +16,14 @@ void copy_min_to_buffer(InputIt source, SourceLen source_length, T (&target)[siz
 wifi_sta::wifi_sta(wifi_events_notify &events_notify, const std::string &host_name, const credentials &credentials)
     : events_notify_(events_notify), host_name_(host_name), credentials_(credentials)
 {
-    CHECK_THROW_WIFI(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_wifi_event_));
-    CHECK_THROW_WIFI(esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &wifi_sta::wifi_event_callback, this, &instance_ip_event_));
+    instance_wifi_event_.subscribe();
+    instance_ip_event_.subscribe();
 }
 
 wifi_sta::~wifi_sta()
 {
-    esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, instance_ip_event_);
-    esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_wifi_event_);
+    instance_wifi_event_.unsubscribe();
+    instance_ip_event_.unsubscribe();
     esp_wifi_disconnect();
     esp_wifi_stop();
 }
@@ -58,13 +58,7 @@ void wifi_sta::connect() const
     CHECK_THROW_WIFI(esp_wifi_connect());
 }
 
-void wifi_sta::wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
-{
-    auto instance = reinterpret_cast<wifi_sta *>(event_handler_arg);
-    instance->wifi_event_callback_impl(event_base, event_id, event_data);
-}
-
-void wifi_sta::wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data)
+void wifi_sta::wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT)
     {

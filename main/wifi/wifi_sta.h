@@ -1,11 +1,11 @@
 
 #pragma once
 
+#include "config/credentials.h"
+#include "util/default_event_subscriber.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include "wifi/wifi_events_notify.h"
-
-#include "config/credentials.h"
 #include <esp_event.h>
 #include <esp_netif.h>
 #include <esp_wifi.h>
@@ -35,13 +35,16 @@ class wifi_sta final : esp32::noncopyable
     std::string host_name_;
     const credentials credentials_;
 
-    esp_event_handler_instance_t instance_wifi_event_{};
-    esp_event_handler_instance_t instance_ip_event_{};
+    esp32::default_event_subscriber instance_wifi_event_{
+        WIFI_EVENT, ESP_EVENT_ANY_ID,
+        std::bind(&wifi_sta::wifi_event_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)};
+
+    esp32::default_event_subscriber instance_ip_event_{
+        IP_EVENT, ESP_EVENT_ANY_ID,
+        std::bind(&wifi_sta::wifi_event_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)};
     esp_netif_ip_info_t ip_info_{};
 
     void connect() const;
-    void close_if();
-    static void wifi_event_callback(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
-    void wifi_event_callback_impl(esp_event_base_t event_base, int32_t event_id, void *event_data);
+    void wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data);
     static std::string get_disconnect_reason_str(uint8_t reason);
 };
