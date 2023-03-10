@@ -149,7 +149,6 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_stop>("/api/log/sdstop", HTTP_POST);
     add_handler_ftn<web_server, &web_server::on_set_logging_level>("/api/log/loglevel", HTTP_POST);
 
-
     instance_sensor_change_event_.subscribe();
 }
 
@@ -217,13 +216,13 @@ bool web_server::is_authenticated(esp32::http_request *request)
 
         const std::string token = create_hash(config::instance.data.get_web_user_credentials(), request->client_ip_address());
 
-        if (cookie->find_last_of(std::string(AuthCookieName) + token) != -1)
+        if (cookie == (std::string(AuthCookieName) + token))
         {
             ESP_LOGV(WEBSERVER_TAG, "Authentication Successful");
             return true;
         }
     }
-    ESP_LOGI(WEBSERVER_TAG, "Authentication Failed");
+    ESP_LOGD(WEBSERVER_TAG, "Authentication Failed");
     return false;
 }
 
@@ -240,7 +239,7 @@ void web_server::handle_login(esp32::http_request *request)
         const auto current_credentials = config::instance.data.get_web_user_credentials();
 
         esp32::http_response response(request);
-        const bool correct_credentials = esp32::str_equals_case_insensitive(user_name.value(), current_credentials.get_user_name()) &&
+        const bool correct_credentials = esp32::string::equals_case_insensitive(user_name.value(), current_credentials.get_user_name()) &&
                                          (password.value() == current_credentials.get_password());
 
         if (correct_credentials)
@@ -712,7 +711,7 @@ void web_server::handle_file_upload(esp32::http_request *request)
     ESP_LOGD(WEBSERVER_TAG, "Expected file hash: %s", hash_arg.value().c_str());
 
     // check hash is same as expected
-    if (!esp32::str_equals_case_insensitive(file_hash, hash_arg.value()))
+    if (!esp32::string::equals_case_insensitive(file_hash, hash_arg.value()))
     {
         log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Written file hash does not match");
         return;

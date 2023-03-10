@@ -69,12 +69,12 @@ std::string stringify_size(uint64_t bytes, int max_unit)
     return sprintf("%llu %s", static_cast<uint64_t>(std::round(dblBytes)), suffix[i]);
 }
 
-} // namespace string
-
-bool str_equals_case_insensitive(const std::string &a, const std::string &b)
+bool equals_case_insensitive(const std::string &a, const std::string &b)
 {
     return strcasecmp(a.c_str(), b.c_str()) == 0;
 }
+
+} // namespace string
 
 bool str_startswith(const std::string &str, const std::string &start)
 {

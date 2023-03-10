@@ -63,6 +63,9 @@ inline std::string to_string(long double value)
 
 std::string stringify_size(uint64_t bytes, int max_unit = 128);
 
+/// Compare strings for equality in case-insensitive manner.
+bool equals_case_insensitive(const std::string &a, const std::string &b);
+
 } // namespace string
 
 // std::byteswap from C++23
@@ -152,9 +155,6 @@ inline std::string ltrim_copy(std::string s)
     ltrim(s);
     return s;
 }
-
-/// Compare strings for equality in case-insensitive manner.
-bool str_equals_case_insensitive(const std::string &a, const std::string &b);
 
 /// Check whether a string starts with a value.
 bool str_startswith(const std::string &str, const std::string &start);

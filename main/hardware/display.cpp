@@ -13,7 +13,6 @@
 
 const int LV_TICK_PERIOD_MS = 1;
 
-
 /* Display flushing */
 void display::display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
@@ -205,8 +204,7 @@ void display::gui_task()
     catch (const std::exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "UI Task Failure:%s", ex.what());
-        vTaskDelay(pdMS_TO_TICKS(5000));
-        operations::instance.reboot();
+        throw;
     }
 
     vTaskDelete(NULL);

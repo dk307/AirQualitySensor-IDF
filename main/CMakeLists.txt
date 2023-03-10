@@ -22,6 +22,7 @@ idf_component_register(SRCS "main.cpp"
                             "util/async_web_server/http_response.cpp"
                             "util/async_web_server/http_event_source.cpp"
                             "util/ota.cpp"
+                            "util/timer/timer.cpp"
                             "http_ota/http.c"
                             "web_server/web_server.cpp"
                             "operations/operations.cpp"
@@ -29,7 +30,7 @@ idf_component_register(SRCS "main.cpp"
 
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi 
-                             esp_hw_support app_update esp_http_server esp-tls
+                             esp_hw_support app_update esp_http_server esp-tls espcoredump
                              esp_idf_lib_helpers i2cdev bh1750 sht3x)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>)

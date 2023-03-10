@@ -2,8 +2,8 @@
 #include "http_request.h"
 #include "logging/logging_tags.h"
 #include "util/cores.h"
-
 #include <esp_log.h>
+#include "util/task_wrapper.h"
 
 namespace esp32
 {
@@ -24,6 +24,7 @@ void http_server::begin()
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = port_;
+    config.task_priority = esp32::task::default_priority;
     config.max_uri_handlers = 40;
     config.ctrl_port = 32760;
     config.core_id = esp32::wifi_core;

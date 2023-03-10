@@ -150,9 +150,7 @@ void wifi_manager::wifi_task_ftn()
     catch (const std::exception &ex)
     {
         ESP_LOGE(WIFI_TAG, "Wifi Task Failure:%s", ex.what());
-        // Long wait is intentional to debug wifi issues
-        vTaskDelay(pdMS_TO_TICKS(60 * 1000));
-        operations::instance.reboot();
+        throw;
     }
 
     vTaskDelete(NULL);

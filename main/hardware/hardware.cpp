@@ -161,9 +161,7 @@ void hardware::sensor_task_ftn()
     catch (const std::exception &ex)
     {
         ESP_LOGI(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
-        // Long wait is intentional to debug hardware iisues
-        vTaskDelay(pdMS_TO_TICKS(60 * 1000));
-        operations::instance.reboot();
+        throw;
     }
 
     vTaskDelete(NULL);

@@ -64,7 +64,6 @@ extern "C" void app_main(void)
     {
         ESP_LOGI(OPERATIONS_TAG, "Init Failure:%s", ex.what());
         operations::try_mark_running_parition_as_invalid();
-        vTaskDelay(pdMS_TO_TICKS(5000));
-        operations::instance.reboot();
-    }
+        throw;
+     }
 }

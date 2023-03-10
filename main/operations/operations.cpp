@@ -1,9 +1,9 @@
 #include "operations.h"
-
+#include "app_events.h"
 #include "config/config_manager.h"
 #include "logging/logging_tags.h"
+#include "util/default_event.h"
 #include "util/exceptions.h"
-
 #include <esp_log.h>
 #include <esp_ota_ops.h>
 #include <nvs_flash.h>
@@ -25,20 +25,13 @@ void operations::factory_reset()
     ESP_LOGW(OPERATIONS_TAG, "Doing Factory Reset");
     nvs_flash_erase();
     config::erase();
-    reset();
+    reboot_timer_no_exception(0);
 }
 
 void operations::reboot()
 {
-    reset();
-}
-
-[[noreturn]] void operations::reset()
-{
     ESP_LOGI(OPERATIONS_TAG, "Restarting...");
-    reset_pending.store(true);
-    vTaskDelay(pdMS_TO_TICKS(2000)); // for http response, etc to finish
-    esp_restart();
+    reboot_timer_no_exception(2);
 }
 
 void operations::mark_running_parition_as_valid()
@@ -87,4 +80,43 @@ bool operations::try_mark_running_parition_as_invalid()
         ESP_LOGI(OPERATIONS_TAG, "Failed to get running partition state with %s", esp_err_to_name(error));
     }
     return false;
+}
+
+void operations::reboot_timer_no_exception(uint8_t seconds)
+{
+    try
+    {
+        reboot_timer(seconds);
+    }
+    catch (...)
+    {
+        esp_restart();
+    }
+}
+
+void operations::reboot_timer(uint8_t seconds)
+{
+    reset_pending.store(true);
+
+    /* If specified time is 0, reboot immediately */
+    if (seconds == 0)
+    {
+        CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, APP_EVENT_REBOOT, seconds));
+        esp_restart();
+        return;
+    }
+    else if (reboot_timer_)
+    {
+        return;
+    }
+
+    reboot_timer_ = std::make_unique<esp32::timer::timer>(
+        [] {
+            ESP_LOGI(OPERATIONS_TAG, "Restarting now");
+            esp_restart();
+        },
+        "reboot_timer");
+    reboot_timer_->start_one_shot(std::chrono::seconds(seconds));
+    CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, APP_EVENT_REBOOT, seconds));
+    return;
 }

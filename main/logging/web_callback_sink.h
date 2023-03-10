@@ -1,11 +1,9 @@
 #pragma once
 
 #include "logger_hook_sink.h"
-
 #include "util/semaphore_lockable.h"
 #include "util/static_queue.h"
 #include "util/task_wrapper.h"
-
 #include <functional>
 #include <mutex>
 

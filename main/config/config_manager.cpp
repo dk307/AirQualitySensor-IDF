@@ -1,5 +1,7 @@
 #include "config_manager.h"
+#include "app_events.h"
 #include "logging/logging_tags.h"
+#include "util/default_event.h"
 #include "util/filesystem/file_info.h"
 #include "util/filesystem/filesystem.h"
 #include "util/hash/hash.h"
@@ -7,8 +9,7 @@
 #include "util/psram_allocator.h"
 #include <esp_log.h>
 #include <filesystem>
-#include "util/default_event.h"
-#include "app_events.h"
+
 
 static const char ConfigFilePath[] = "/sd/config.json";
 static const char ConfigChecksumFilePath[] = "/sd/config_checksum.json";
@@ -61,7 +62,7 @@ bool config::begin()
 
     const auto checksum = md5_hash(config_data);
 
-    if (!esp32::str_equals_case_insensitive(checksum, read_checksum))
+    if (!esp32::string::equals_case_insensitive(checksum, read_checksum))
     {
         ESP_LOGE(CONFIG_TAG, "Config data checksum mismatch Expected from file:%s Expected:%s", read_checksum.c_str(), checksum.c_str());
         reset();
@@ -196,7 +197,7 @@ std::string config::get_all_config_as_json()
     return read_file((ConfigFilePath));
 }
 
-bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &hashMd5)
+bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &hash)
 {
     BasicJsonDocument<esp32::psram::json_allocator> json_doc(2048);
     if (!deserialize_to_json(json, json_doc))
@@ -205,11 +206,11 @@ bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const 
     }
 
     const auto checksum_value = esp32::hash::md5(json.data(), json.size());
-    const auto expected_md5 = esp32::format_hex(checksum_value.data(), checksum_value.size());
+    const auto expected_hash = esp32::format_hex(checksum_value.data(), checksum_value.size());
 
-    if (!esp32::str_equals_case_insensitive(expected_md5, hashMd5))
+    if (!esp32::string::equals_case_insensitive(expected_hash, hash))
     {
-        ESP_LOGE(CONFIG_TAG, "Uploaded Md5 for config does not match. File md5:%s", expected_md5.c_str());
+        ESP_LOGE(CONFIG_TAG, "Uploaded hash for config does not match. File hash:%s", expected_hash.c_str());
         return false;
     }
 
@@ -218,7 +219,7 @@ bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const 
         return false;
     }
 
-    if (write_to_file((ConfigChecksumFilePath), hashMd5.c_str(), hashMd5.length()) != hashMd5.length())
+    if (write_to_file((ConfigChecksumFilePath), hash.c_str(), hash.length()) != hash.length())
     {
         return false;
     }
