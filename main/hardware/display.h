@@ -34,16 +34,8 @@ class display final : esp32::noncopyable
     lv_color_t *disp_draw_buf_{};
     lv_color_t *disp_draw_buf2_{};
     ui ui_instance_;
-    esp32::default_event_subscriber instance_set_main_screen_event_{APP_COMMON_EVENT, APP_INIT_DONE,
-                                                                    [this](esp_event_base_t, int32_t, void *) { set_main_screen(); }};
-
-    esp32::default_event_subscriber_typed<sensor_id_index> instance_sensor_change_event_{
-        APP_COMMON_EVENT, SENSOR_VALUE_CHANGE,
-        [this](esp_event_base_t, int32_t, sensor_id_index id) { xTaskNotify(lvgl_task_.handle(), BIT(static_cast<uint8_t>(id) + 1), eSetBits); }};
-
-    esp32::default_event_subscriber instance_wifi_change_event_{APP_COMMON_EVENT, WIFI_STATUS_CHANGED, [this](esp_event_base_t, int32_t, void *) {
-                                                                    xTaskNotify(lvgl_task_.handle(), task_notify_wifi_changed_bit, eSetBits);
-                                                                }};
+    esp32::default_event_subscriber instance_app_common_event_{
+        APP_COMMON_EVENT, ESP_EVENT_ANY_ID, [this](esp_event_base_t base, int32_t event, void *data) { app_event_handler(base, event, data); }};
 
     static void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
     static void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
@@ -51,7 +43,9 @@ class display final : esp32::noncopyable
     void create_timer();
     void gui_task();
     void set_main_screen();
+    void app_event_handler(esp_event_base_t, int32_t, void *);
 
     const int task_notify_wifi_changed_bit = BIT(total_sensors + 1);
     const int set_main_screen_changed_bit = BIT(total_sensors + 2);
+    const int task_notify_restarting_bit = BIT(total_sensors + 3);
 };

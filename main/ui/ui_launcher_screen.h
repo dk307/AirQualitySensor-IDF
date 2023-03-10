@@ -159,11 +159,9 @@ class ui_launcher_screen : public ui_screen
         switch (type)
         {
         case confirm_type::restart:
-            inter_screen_interface.show_top_level_message("Restarting", 60000);
             operations::instance.reboot();
             break;
         case confirm_type::factory_reset:
-            inter_screen_interface.show_top_level_message("Factory Reseting", 60000);
             operations::instance.factory_reset();
             break;
         }

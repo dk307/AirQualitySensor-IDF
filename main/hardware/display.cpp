@@ -51,9 +51,7 @@ void display::start()
 {
     ESP_LOGI(DISPLAY_TAG, "Setting up display");
 
-    instance_set_main_screen_event_.subscribe();
-    instance_sensor_change_event_.subscribe();
-    instance_wifi_change_event_.subscribe();
+    instance_app_common_event_.subscribe();
 
     lv_init();
     lv_fs_if_fatfs_init();
@@ -187,6 +185,10 @@ void display::gui_task()
                 {
                     ui_instance_.set_main_screen();
                 }
+                if (notification_value & task_notify_restarting_bit)
+                {
+                    ui_instance_.show_top_level_message("Restarting", 600000);
+                }
 
                 for (auto i = 1; i <= total_sensors; i++)
                 {
@@ -208,4 +210,25 @@ void display::gui_task()
     }
 
     vTaskDelete(NULL);
+}
+
+void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
+{
+    switch (event)
+    {
+    case APP_INIT_DONE:
+        set_main_screen();
+        break;
+    case SENSOR_VALUE_CHANGE: {
+        const auto id = (*reinterpret_cast<sensor_id_index *>(data));
+        xTaskNotify(lvgl_task_.handle(), BIT(static_cast<uint8_t>(id) + 1), eSetBits);
+    }
+    break;
+    case WIFI_STATUS_CHANGED:
+        xTaskNotify(lvgl_task_.handle(), task_notify_wifi_changed_bit, eSetBits);
+        break;
+    case APP_EVENT_REBOOT:
+        xTaskNotify(lvgl_task_.handle(), task_notify_restarting_bit, eSetBits);
+        break;
+    }
 }
