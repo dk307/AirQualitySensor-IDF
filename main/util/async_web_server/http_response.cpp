@@ -175,7 +175,6 @@ void fs_card_file_response::send_response()
             const auto send_error = httpd_resp_send_chunk(req_->req_, chunk.get(), chuck_size);
             if (send_error != ESP_OK)
             {
-                fclose(file_handle);
                 ESP_LOGE(WEBSERVER_TAG, "File sending failed for %s with %s", path.c_str(), esp_err_to_name(send_error));
 
                 /* Abort sending file */
