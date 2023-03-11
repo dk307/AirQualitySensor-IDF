@@ -21,7 +21,7 @@ class sd_card_sink final : public logger_hook_sink
   public:
     sd_card_sink() : background_log_task_([this] { flush_to_disk_task(); })
     {
-        background_log_task_.spawn_pinned("sd_card_sink", 8 * 1024, tskIDLE_PRIORITY, esp32::main_task_core);
+        background_log_task_.spawn_pinned("sd_card_sink", 3 * 1024, tskIDLE_PRIORITY, esp32::main_task_core);
     }
 
     ~sd_card_sink()

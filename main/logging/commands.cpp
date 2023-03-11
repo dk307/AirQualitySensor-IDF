@@ -11,24 +11,26 @@
 
 static void up_time_cli_handler()
 {
-    ESP_LOGI(COMMAND_TAG, "Uptime of the device: %lld milliseconds", esp_timer_get_time() / 1000);
+    ESP_LOGI(COMMAND_TAG, "Uptime: %lld milliseconds", esp_timer_get_time() / 1000);
 }
 
 static void task_dump_cli_handler()
 {
-    int num_of_tasks = uxTaskGetNumberOfTasks();
-    auto task_array = reinterpret_cast<TaskStatus_t *>(heap_caps_calloc(num_of_tasks, sizeof(TaskStatus_t), MALLOC_CAP_SPIRAM));
+    auto num_of_tasks = uxTaskGetNumberOfTasks();
+    const auto task_array = reinterpret_cast<TaskStatus_t *>(heap_caps_calloc(num_of_tasks, sizeof(TaskStatus_t), MALLOC_CAP_SPIRAM));
     if (!task_array)
     {
         ESP_LOGE(COMMAND_TAG, "Memory allocation for task list failed.");
         return;
     }
+
     num_of_tasks = uxTaskGetSystemState(task_array, num_of_tasks, NULL);
-    ESP_LOGI(COMMAND_TAG, "         Name\tNumber\tPriority\tStackWaterMark");
+
+    ESP_LOGI(COMMAND_TAG, "Name            Number  Priority        Runtime   StackWaterMark");
     for (int i = 0; i < num_of_tasks; i++)
     {
-        ESP_LOGI(COMMAND_TAG, "%16s\t%d\t%d\t%" PRIu32 "", task_array[i].pcTaskName, task_array[i].xTaskNumber, task_array[i].uxCurrentPriority,
-                 task_array[i].usStackHighWaterMark);
+        ESP_LOGI(COMMAND_TAG, "%-16s   %4d   %6d   %12lu  %15lu", task_array[i].pcTaskName, task_array[i].xTaskNumber,
+                 task_array[i].uxCurrentPriority, task_array[i].ulRunTimeCounter, task_array[i].usStackHighWaterMark);
     }
     free(task_array);
 }
@@ -48,14 +50,14 @@ static void cpu_dump_cli_handler()
 
 static void mem_dump_cli_handler()
 {
-    ESP_LOGI(COMMAND_TAG, "\tDescription\tInternal\tSPIRAM\n");
-    ESP_LOGI(COMMAND_TAG, "Current Free Memory\t%s\t\t%s\n",
+    ESP_LOGI(COMMAND_TAG, "Description           Internal    SPIRAM");
+    ESP_LOGI(COMMAND_TAG, "Current Free Memory   %8s   %6s",
              esp32::string::stringify_size(heap_caps_get_free_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_SPIRAM), 1).c_str(),
              esp32::string::stringify_size(heap_caps_get_free_size(MALLOC_CAP_SPIRAM), 1).c_str());
-    ESP_LOGI(COMMAND_TAG, "Largest Free Block\t%s\t\t%s\n",
+    ESP_LOGI(COMMAND_TAG, "Largest Free Block    %8s   %6s",
              esp32::string::stringify_size(heap_caps_get_largest_free_block(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL), 1).c_str(),
              esp32::string::stringify_size(heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM), 1).c_str());
-    ESP_LOGI(COMMAND_TAG, "Min. Ever Free Size\t%s\t\t%s\n",
+    ESP_LOGI(COMMAND_TAG, "Min. Ever Free Size   %8s   %6s",
              esp32::string::stringify_size(heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL), 1).c_str(),
              esp32::string::stringify_size(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM), 1).c_str());
 }
@@ -74,7 +76,7 @@ static void sock_dump_cli_handler()
 
 #define TOTAL_NUM_SOCKETS MEMP_NUM_NETCONN
 
-    ESP_LOGI(COMMAND_TAG, "sock_fd\tprotocol\tlocal_addr\t\tpeer_addr\n");
+    ESP_LOGI(COMMAND_TAG, "sock_fd   protocol   local_addr        local_port   peer_addr          peer_addr_port");
     for (i = LWIP_SOCKET_OFFSET; i < LWIP_SOCKET_OFFSET + TOTAL_NUM_SOCKETS; i++)
     {
         memset(&local_sock, 0, sizeof(struct sockaddr_in));
@@ -96,7 +98,7 @@ static void sock_dump_cli_handler()
             inet_ntop(AF_INET, &local_sock.sin_addr, local_ip_addr, sizeof(local_ip_addr));
             local_port = ntohs(local_sock.sin_port);
             getsockopt(i, SOL_SOCKET, SO_TYPE, &sock_type, &sock_type_len);
-            log = esp32::string::sprintf("%d\t%d:%s\t%16s:%d", i, sock_type,
+            log = esp32::string::sprintf("%7d   %-8s   %-15s   %10d",  sock_type,
                                          sock_type == SOCK_STREAM  ? "tcp"
                                          : sock_type == SOCK_DGRAM ? "udp"
                                                                    : "raw",
@@ -107,10 +109,10 @@ static void sock_dump_cli_handler()
             {
                 inet_ntop(AF_INET, &peer_sock.sin_addr, peer_ip_addr, sizeof(peer_ip_addr));
                 peer_port = ntohs(peer_sock.sin_port);
-                log+= esp32::string::sprintf("\t%16s:%d", peer_ip_addr, peer_port);
+                log += esp32::string::sprintf("   %-15s   %15d", peer_ip_addr, peer_port);
             }
-            
-            ESP_LOGI(COMMAND_TAG, "%s",  log.c_str());
+
+            ESP_LOGI(COMMAND_TAG, "%s", log.c_str());
         }
     }
     ESP_LOGI(COMMAND_TAG, "Remaining sockets: %d", TOTAL_NUM_SOCKETS - used_sockets);
