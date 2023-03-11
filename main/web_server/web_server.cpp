@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
 static const char html_media_type[] = "text/html";
@@ -126,6 +125,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_restart_device>("/restart.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_factory_reset>("/factory.reset.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::restore_configuration_upload>("/setting.restore.handler", HTTP_POST);
 
     add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
@@ -413,6 +413,51 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
     ESP_LOGI(WEBSERVER_TAG, "Firmware updated");
     send_empty_200(request);
     operations::instance.reboot();
+}
+
+void web_server::restore_configuration_upload(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "restoreConfig");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    const auto hash_arg = request->get_header("sha256");
+
+    if (!hash_arg)
+    {
+        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Hash not supplied for file");
+        return;
+    }
+
+    ESP_LOGD(WEBSERVER_TAG, "Expected file hash: %s", hash_arg.value().c_str());
+
+    std::vector<uint8_t> json;
+    json.reserve(request->content_length());
+
+    const auto result = request->read_body([&json](const std::vector<uint8_t> &data) {
+        json.insert(json.end(), data.begin(), data.end());
+        return ESP_OK;
+    });
+
+    if (result != ESP_OK)
+    {
+        log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read file");
+        return;
+    }
+
+    if (config::instance.restore_all_config_as_json(json, hash_arg.value()))
+    {
+        ESP_LOGI(WEBSERVER_TAG, "Setting Restored");
+        send_empty_200(request);
+        operations::instance.reboot();
+    }
+    else
+    {
+        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Hash not valid supplied for file");
+    }
 }
 
 void web_server::notify_sensor_change(sensor_id_index id)

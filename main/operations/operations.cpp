@@ -25,13 +25,13 @@ void operations::factory_reset()
     ESP_LOGW(OPERATIONS_TAG, "Doing Factory Reset");
     nvs_flash_erase();
     config::erase();
-    reboot_timer_no_exception(0);
+    reboot_timer_no_exception(3);
 }
 
 void operations::reboot()
 {
     ESP_LOGI(OPERATIONS_TAG, "Restarting...");
-    reboot_timer_no_exception(2);
+    reboot_timer_no_exception(3);
 }
 
 void operations::mark_running_parition_as_valid()

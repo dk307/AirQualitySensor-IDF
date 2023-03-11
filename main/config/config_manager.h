@@ -96,7 +96,7 @@ class config : public esp32::noncopyable
     std::string get_all_config_as_json();
 
     // does not restore to memory, needs reboot
-    bool restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &md5);
+    bool restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &sha256);
 
     config_data data;
 
@@ -107,7 +107,7 @@ class config : public esp32::noncopyable
 
     template <class T, class JDoc> bool deserialize_to_json(const T &data, JDoc &jsonDocument);
 
-    static std::string md5_hash(const std::string &data);
+    static std::string sha256_hash(const std::string &data);
 
     void save_config();
 };

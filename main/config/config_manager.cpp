@@ -60,7 +60,7 @@ bool config::begin()
 
     ESP_LOGD(CONFIG_TAG, "Checksum File:[%s]", read_checksum.c_str());
 
-    const auto checksum = md5_hash(config_data);
+    const auto checksum = sha256_hash(config_data);
 
     if (!esp32::string::equals_case_insensitive(checksum, read_checksum))
     {
@@ -143,7 +143,7 @@ void config::save_config()
 
     if (write_to_file((ConfigFilePath), json.c_str(), json.length()) == json.length())
     {
-        const auto checksum_value = esp32::hash::md5(json);
+        const auto checksum_value = esp32::hash::sha256(json);
         const auto checksum = esp32::format_hex(checksum_value.data(), checksum_value.size());
 
         if (write_to_file((ConfigChecksumFilePath), checksum.c_str(), checksum.length()) != checksum.length())
@@ -194,18 +194,18 @@ std::string config::read_file(const char *file_name)
 
 std::string config::get_all_config_as_json()
 {
-    return read_file((ConfigFilePath));
+    return read_file(ConfigFilePath);
 }
 
 bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &hash)
 {
-    BasicJsonDocument<esp32::psram::json_allocator> json_doc(2048);
+    BasicJsonDocument<esp32::psram::json_allocator> json_doc(4096);
     if (!deserialize_to_json(json, json_doc))
     {
         return false;
     }
 
-    const auto checksum_value = esp32::hash::md5(json.data(), json.size());
+    const auto checksum_value = esp32::hash::sha256(json.data(), json.size());
     const auto expected_hash = esp32::format_hex(checksum_value.data(), checksum_value.size());
 
     if (!esp32::string::equals_case_insensitive(expected_hash, hash))
@@ -239,8 +239,8 @@ template <class T, class JDoc> bool config::deserialize_to_json(const T &data, J
     return true;
 }
 
-std::string config::md5_hash(const std::string &data)
+std::string config::sha256_hash(const std::string &data)
 {
-    const auto checksum_value = esp32::hash::md5(data);
+    const auto checksum_value = esp32::hash::sha256(data);
     return esp32::format_hex(checksum_value.data(), checksum_value.size());
 }

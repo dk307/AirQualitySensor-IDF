@@ -70,10 +70,11 @@ template <mbedtls_md_type_t hashType> class hash : esp32::noncopyable
     mbedtls_md_context_t ctx_;
 };
 
-template <class... Args> auto md5(Args... data)
+template <class... Args> auto sha256(Args... data)
 {
-    esp32::hash::hash<MBEDTLS_MD_MD5> md5_hasher;
-    md5_hasher.update(std::forward<Args>(data)...);
-    return md5_hasher.finish();
+    esp32::hash::hash<MBEDTLS_MD_SHA256> hasher;
+    hasher.update(std::forward<Args>(data)...);
+    return hasher.finish();
 }
+
 } // namespace esp32::hash
