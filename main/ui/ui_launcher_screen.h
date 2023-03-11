@@ -34,7 +34,7 @@ class ui_launcher_screen : public ui_screen
                       event_callback<ui_launcher_screen, &ui_launcher_screen::show_information>);
         create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25, "S:display/image/hardware.png", "Hardware",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::hardware_info>);
-        create_button(LV_ALIGN_BOTTOM_RIGHT, -pad, -pad - 25, "S:display/image/hardware.png", "Wifi",
+        create_button(LV_ALIGN_BOTTOM_RIGHT, -pad, -pad - 25, "S:display/image/wifi.png", "Wifi\nEnroll",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::wifi_setup>);
 
         init_confirm_win();

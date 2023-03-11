@@ -92,8 +92,8 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_clip_corner(panel, false, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_grad_dir(panel, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        lv_obj_set_style_shadow_spread(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_shadow_width(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_shadow_spread(panel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_shadow_width(panel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_set_style_radius(panel, radius, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);
