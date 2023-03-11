@@ -27,6 +27,7 @@ idf_component_register(SRCS "main.cpp"
                             "web_server/web_server.cpp"
                             "operations/operations.cpp"
                             "logging/logging.cpp"
+                            "logging/commands.cpp"
 
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi 

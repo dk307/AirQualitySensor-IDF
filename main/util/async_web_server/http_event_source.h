@@ -6,7 +6,6 @@
 #include "util/semaphore_lockable.h"
 #include <set>
 
-
 namespace esp32
 {
 class event_source;

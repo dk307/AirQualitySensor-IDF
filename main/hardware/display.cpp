@@ -109,7 +109,7 @@ void display::start()
 
     create_timer();
 
-    const auto err = lvgl_task_.spawn_pinned("lv gui", 1024 * 8, esp32::task::default_priority, esp32::display_core);
+    const auto err = lvgl_task_.spawn_pinned("lv_gui", 1024 * 6, esp32::task::default_priority, esp32::display_core);
 
     if (err != ESP_OK)
     {

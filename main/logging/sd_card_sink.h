@@ -11,7 +11,7 @@
 #include "util/semaphore_lockable.h"
 #include "util/static_queue.h"
 #include "util/task_wrapper.h"
-
+#include "util/psram_allocator.h"
 #include <esp_log.h>
 #include <filesystem>
 #include <mutex>
@@ -110,7 +110,7 @@ class sd_card_sink final : public logger_hook_sink
     bool should_rotate()
     {
         esp32::filesystem::file_info file_info{sd_card_path_};
-        return (file_info.exists() && (file_info.size() > (8 * 1024)));
+        return (file_info.exists() && (file_info.size() > (16 * 1024)));
     }
 
   private:
@@ -119,6 +119,6 @@ class sd_card_sink final : public logger_hook_sink
     const uint8_t sd_card_max_files_ = 5;
     esp32::semaphore flush_to_disk_mutex_;
     esp32::semaphore fs_buffer_mutex_;
-    std::vector<char> fs_buffer_;
+    std::vector<char, esp32::psram::allocator<char>> fs_buffer_;
     esp32::task background_log_task_;
 };

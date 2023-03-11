@@ -13,7 +13,7 @@ class web_callback_sink final : public logger_hook_sink
     web_callback_sink(const std::function<void(std::unique_ptr<std::string>)> &callback)
         : background_log_task_([this] { flush_callback(); }), callback_(callback)
     {
-        background_log_task_.spawn_same("web_callback_sink", 8 * 1024, tskIDLE_PRIORITY);
+        background_log_task_.spawn_same("web_log_sink", 2 * 1024, tskIDLE_PRIORITY);
     }
 
     ~web_callback_sink()
@@ -45,7 +45,7 @@ class web_callback_sink final : public logger_hook_sink
     }
 
   private:
-    esp32::static_queue<std::string *, 1024> queue_;
+    esp32::static_queue<std::string *, 512> queue_;
     esp32::task background_log_task_;
     const std::function<void(std::unique_ptr<std::string>)> callback_;
 };

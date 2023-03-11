@@ -1,8 +1,8 @@
 #include "web_server.h"
-
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
+#include "logging/commands.h"
 #include "logging/logging.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
@@ -21,7 +21,6 @@
 #include "web/include/fs.html.gz.h"
 #include "web/include/index.html.gz.h"
 #include "web/include/login.html.gz.h"
-
 #include <ArduinoJson.h>
 #include <dirent.h>
 #include <esp_log.h>
@@ -29,6 +28,7 @@
 #include <mbedtls/md.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
 
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
@@ -148,6 +148,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_start>("/api/log/sdstart", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_stop>("/api/log/sdstop", HTTP_POST);
     add_handler_ftn<web_server, &web_server::on_set_logging_level>("/api/log/loglevel", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::on_run_command>("/api/log/run", HTTP_GET);
 
     instance_sensor_change_event_.subscribe();
 }
@@ -416,9 +417,16 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
 
 void web_server::notify_sensor_change(sensor_id_index id)
 {
-    if (events.connection_count())
+    try
     {
-        queue_work<web_server, sensor_id_index, &web_server::send_sensor_data>(id);
+        if (events.connection_count())
+        {
+            queue_work<web_server, sensor_id_index, &web_server::send_sensor_data>(id);
+        }
+    }
+    catch (const std::exception &ex)
+    {
+        ESP_LOGW(WEBSERVER_TAG, "Failed to queue http event for %s with %s", get_sensor_name(id).data(), ex.what());
     }
 }
 
@@ -911,9 +919,16 @@ void web_server::send_empty_200(const esp32::http_request *request)
 
 void web_server::received_log_data(std::unique_ptr<std::string> log)
 {
-    if (logging.connection_count())
+    try
     {
-        queue_work<web_server, std::unique_ptr<std::string>, &web_server::send_log_data>(std::move(log));
+        if (logging.connection_count())
+        {
+            queue_work<web_server, std::unique_ptr<std::string>, &web_server::send_log_data>(std::move(log));
+        }
+    }
+    catch (...)
+    {
+        // ignore any error
     }
 }
 
@@ -950,5 +965,28 @@ void web_server::on_set_logging_level(esp32::http_request *request)
     }
 
     logger::instance.set_logging_level(tag_arg.value().c_str(), static_cast<esp_log_level_t>(log_level.value()));
+    send_empty_200(request);
+}
+
+void web_server::on_run_command(esp32::http_request *request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/log/run");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    const auto arguments = request->get_url_arguments({"command"});
+    auto &&command_arg = arguments[0];
+
+    if (!command_arg)
+    {
+        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Command not supplied");
+        return;
+    }
+
+    run_command(command_arg.value());
+
     send_empty_200(request);
 }

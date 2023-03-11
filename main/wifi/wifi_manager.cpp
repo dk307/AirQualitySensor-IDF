@@ -22,7 +22,7 @@ void wifi_manager::begin()
     esp_netif_create_default_wifi_sta();
 
     instance_config_change_event_.subscribe();
-    wifi_task_.spawn_pinned("wifi task", 8 * 1024, esp32::task::default_priority, esp32::wifi_core);
+    wifi_task_.spawn_pinned("wifi_task", 4 * 1024, esp32::task::default_priority, esp32::wifi_core);
 }
 
 bool wifi_manager::connect_saved_wifi()

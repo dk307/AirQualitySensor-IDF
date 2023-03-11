@@ -52,7 +52,12 @@ class http_server : esp32::noncopyable
     template <class T, class Y, void (T::*ftn)(Y)> inline void queue_work(Y arg)
     {
         const auto pair = new std::pair<T *, Y>(reinterpret_cast<T *>(this), std::forward<Y>(arg));
-        CHECK_THROW_ESP(httpd_queue_work(server_, http_work_ftn<T, Y, ftn>, pair));
+        const auto error = httpd_queue_work(server_, http_work_ftn<T, Y, ftn>, pair);
+        if (error != ESP_OK)
+        {
+            delete pair;
+            CHECK_THROW_ESP(error);
+        }
     }
 
   private:
