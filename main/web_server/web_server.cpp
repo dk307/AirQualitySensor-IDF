@@ -148,7 +148,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_start>("/api/log/sdstart", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_sd_card_logging_stop>("/api/log/sdstop", HTTP_POST);
     add_handler_ftn<web_server, &web_server::on_set_logging_level>("/api/log/loglevel", HTTP_POST);
-    add_handler_ftn<web_server, &web_server::on_run_command>("/api/log/run", HTTP_GET);
+    add_handler_ftn<web_server, &web_server::on_run_command>("/api/log/run", HTTP_POST);
 
     instance_sensor_change_event_.subscribe();
 }
@@ -977,7 +977,7 @@ void web_server::on_run_command(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_url_arguments({"command"});
+    const auto arguments = request->get_form_url_encoded_arguments({"command"});
     auto &&command_arg = arguments[0];
 
     if (!command_arg)

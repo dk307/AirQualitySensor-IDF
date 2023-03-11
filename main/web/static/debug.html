@@ -21,7 +21,7 @@
 
 <body>
   <nav class="navbar navbar bg-light fixed-top">
-    <div class="container">
+    <div class="container-fluid">
       <div class="row justify-content-start">
         <div class="col">
           <div class="btn-group mx-3">
@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <div class="col-6">
+        <div class="col-4">
           <div class="input-group">
             <span class="input-group-text">Tag</span>
             <input type="text" class="form-control" placeholder="Tag to change logging level" id="loggingTag">
@@ -45,6 +45,20 @@
             <button class="btn btn-outline-secondary" type="button" id="infoTag">Info</button>
             <button class="btn btn-outline-secondary" type="button" id="warnTag">Warn</button>
             <button class="btn btn-outline-secondary" type="button" id="errorTag">Error</button>
+          </div>
+        </div>
+
+        <div class="col-2">
+          <div class="input-group">
+            <select class="form-select" id="commandId">
+              <option selected>Choose command...</option>
+              <option value="up-time">up-time</option>
+              <option value="cpu-dump">cpu-dump</option>
+              <option value="mem-dump">mem-dump</option>
+              <option value="task-dump">task-dump</option>
+              <option value="sock-dump">sock-dump</option>
+            </select>
+            <button class="btn btn-outline-secondary" type="button" id="commandButtonId">Run</button>
           </div>
         </div>
       </div>
@@ -68,7 +82,7 @@
       var data = e.data;
       if (data != null) {
         var logsBlock = $('#logsBlock');
-        data =  ansi_up.ansi_to_html(data);
+        data = ansi_up.ansi_to_html(data);
         logsBlock.html(logsBlock.html() + data + "\r\n");
       }
     }
@@ -134,6 +148,12 @@
 
     document.getElementById('errorTag').addEventListener('click', function () {
       setTagLoggingLevel(1);
+    });
+
+    document.getElementById('commandButtonId').addEventListener('click', function () {
+      var command = $('#commandId').val();
+      var data = { 'command': command };
+      ajaxPost("/api/log/run", $.param(data), command + " execution");
     });
 
   </script>
