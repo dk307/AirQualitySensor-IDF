@@ -129,13 +129,13 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
             if (dir == LV_DIR_LEFT)
             {
                 const auto index = static_cast<int8_t>(get_sensor_id_index()) + 1;
-                inter_screen_interface.show_sensor_detail_screen(
+                inter_screen_interface_.show_sensor_detail_screen(
                     index > static_cast<int8_t>(sensor_id_index::last) ? sensor_id_index::first : static_cast<sensor_id_index>(index));
             }
             else if (dir == LV_DIR_RIGHT)
             {
                 const auto index = static_cast<int8_t>(get_sensor_id_index()) - 1;
-                inter_screen_interface.show_sensor_detail_screen(
+                inter_screen_interface_.show_sensor_detail_screen(
                     index < static_cast<int8_t>(sensor_id_index::first) ? sensor_id_index::last : static_cast<sensor_id_index>(index));
             }
         }

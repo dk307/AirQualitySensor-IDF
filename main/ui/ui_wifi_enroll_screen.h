@@ -74,7 +74,7 @@ class ui_wifi_enroll_screen : public ui_screen
         if (code == LV_EVENT_PRESSED)
         {
             ui_interface_instance_.stop_wifi_enrollment();
-            inter_screen_interface.show_home_screen();
+            inter_screen_interface_.show_home_screen();
         }
     }
 };

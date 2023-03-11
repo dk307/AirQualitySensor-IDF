@@ -123,19 +123,19 @@ class ui_launcher_screen : public ui_screen
     void show_information(lv_event_t *e)
     {
         ESP_LOGI(UI_TAG, "Showing information clicked");
-        inter_screen_interface.show_setting_screen();
+        inter_screen_interface_.show_setting_screen();
     }
 
     void hardware_info(lv_event_t *e)
     {
         ESP_LOGI(UI_TAG, "Showing Hardware clicked");
-        inter_screen_interface.show_hardware_info_screen();
+        inter_screen_interface_.show_hardware_info_screen();
     }
 
     void wifi_setup(lv_event_t *e)
     {
         ESP_LOGI(UI_TAG, "Starting wifi enrollment");
-        inter_screen_interface.show_wifi_enroll_screen();
+        inter_screen_interface_.show_wifi_enroll_screen();
     }
 
     void restart(lv_event_t *)

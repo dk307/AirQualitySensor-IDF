@@ -197,7 +197,12 @@ void ui::wifi_changed()
             lv_anim_timeline_start(no_wifi_image_animation_timeline_);
         }
 
-        show_top_level_message(wifi_status.status, 5000);
+        show_top_level_message(wifi_status.status, 4000);
+
+        if (wifi_enroll_screen_.is_active() && wifi_status.connected)
+        {
+            show_home_screen();
+        }
     }
 }
 

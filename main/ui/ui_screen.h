@@ -22,8 +22,8 @@ struct ui_common_fonts
 class ui_screen : esp32::noncopyable
 {
   public:
-    ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface_, const ui_common_fonts *fonts_)
-        : ui_interface_instance_(ui_interface_instance_), inter_screen_interface(ui_inter_screen_interface_), fonts_(fonts_)
+    ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface, const ui_common_fonts *fonts_)
+        : ui_interface_instance_(ui_interface_instance_), inter_screen_interface_(ui_inter_screen_interface), fonts_(fonts_)
     {
     }
 
@@ -44,7 +44,7 @@ class ui_screen : esp32::noncopyable
     const lv_color_t text_color = lv_color_hex(0xFFFAFA);
 
     ui_interface &ui_interface_instance_;
-    ui_inter_screen_interface &inter_screen_interface;
+    ui_inter_screen_interface &inter_screen_interface_;
     const ui_common_fonts *fonts_;
     lv_obj_t *screen_{nullptr};
 
@@ -103,7 +103,7 @@ class ui_screen : esp32::noncopyable
     {
         if (lv_event_get_code(e) == LV_EVENT_SHORT_CLICKED)
         {
-            inter_screen_interface.show_home_screen();
+            inter_screen_interface_.show_home_screen();
         }
     }
 };

@@ -171,7 +171,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         if (event_code == LV_EVENT_LONG_PRESSED)
         {
             ESP_LOGI(UI_TAG, "Long press detected");
-            inter_screen_interface.show_launcher_screen();
+            inter_screen_interface_.show_launcher_screen();
         }
         else if (event_code == LV_EVENT_SCREEN_LOAD_START)
         {
@@ -186,11 +186,11 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
             if (dir == LV_DIR_LEFT)
             {
-                inter_screen_interface.show_sensor_detail_screen(sensor_id_index::first);
+                inter_screen_interface_.show_sensor_detail_screen(sensor_id_index::first);
             }
             else if (dir == LV_DIR_RIGHT)
             {
-                inter_screen_interface.show_sensor_detail_screen(sensor_id_index::last);
+                inter_screen_interface_.show_sensor_detail_screen(sensor_id_index::last);
             }
         }
     }
@@ -200,7 +200,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         const auto code = lv_event_get_code(e);
         if (code == LV_EVENT_SHORT_CLICKED)
         {
-            inter_screen_interface.show_sensor_detail_screen(index);
+            inter_screen_interface_.show_sensor_detail_screen(index);
         }
     }
 };
