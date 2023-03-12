@@ -58,7 +58,7 @@
     }
 
     if (getURLParameter("msg")) {
-      $("#message").html(decodeURI(getURLParameter("msg")));
+      $("#message").text(decodeURI(getURLParameter("msg")));
       $("#message").show();
     } else {
       $("#message").hide();
