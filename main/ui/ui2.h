@@ -1,7 +1,7 @@
 #pragma once
 
-#include "sensor\sensor.h"
-#include "sensor\sensor_id.h"
+#include "sensor/sensor.h"
+#include "sensor/sensor_id.h"
 #include "ui_boot_screen.h"
 #include "ui_hardware_info_screen.h"
 #include "ui_information_screen.h"

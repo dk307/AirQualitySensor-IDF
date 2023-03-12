@@ -1,0 +1,41 @@
+name: 'Build'
+
+on:  
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+    - run: npm ci
+    - run: gulp default
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: v5.0
+        target: esp32s3
+        path: ''
+
+    - name: Upload Firmware
+      uses: actions/upload-artifact@v3
+      with:
+        name: Firmware
+        path: |
+          build/bootloader/bootloader.bin
+          build/partition_table/partition-table.bin
+          build/air_quality_sensor.bin
+          build/air_quality_sensor.elf
+
