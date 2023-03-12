@@ -30,12 +30,15 @@ jobs:
         target: esp32s3
         path: ''
 
+    -run: ls .\build\
+
     - name: Upload Binaries
       uses: actions/upload-artifact@v3
       with:
-        name: Binaries
+        name: Firmware
         path: |
-          .\build\air_quality_sensor.bin
-          .\build\air_quality_sensor.elf
-          .\build\air_quality_sensor.map
+          build/bootloader/bootloader.bin
+          build/partition_table/partition-table.bin
+          build/air_quality_sensor.bin
+          build/air_quality_sensor.elf
 
