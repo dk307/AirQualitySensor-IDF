@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -18,11 +17,11 @@ jobs:
         submodules: 'recursive'
 
     -name: Setup static web files
-      - uses: actions/setup-node@v3
+      uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: npm ci
-      - run: gulp default
+      run: npm ci
+      run: gulp default
 
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
