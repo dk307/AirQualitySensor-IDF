@@ -16,7 +16,7 @@ jobs:
       with:
         submodules: 'recursive'
 
-    -name: Setup static web files
+    - name: Setup static web files
       uses: actions/setup-node@v3
         with:
           node-version: 18
