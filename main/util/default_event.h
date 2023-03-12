@@ -13,7 +13,7 @@ namespace esp32
 template <typename T> class default_event_subscriber_typed : noncopyable
 {
   public:
-    using callback_t = std::function<void(esp_event_base_t, int32_t, T t)>;
+    using callback_t = std::function<void(esp_event_base_t, int32_t, T &&t)>;
 
     default_event_subscriber_typed(esp_event_base_t event_base, int32_t event_id, const callback_t &callback)
         : event_base_(event_base), event_id_(event_id), callback_(callback)
@@ -63,7 +63,8 @@ template <typename T> class default_event_subscriber_typed : noncopyable
 
 using default_event_subscriber = default_event_subscriber_typed<void *>;
 
-template <class T> requires(std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !std::is_reference_v<T>)
+template <class T>
+    requires(std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !std::is_reference_v<T>)
 inline esp_err_t event_post(esp_event_base_t event_base, int32_t event_id, T t, TickType_t ticks_to_wait = portMAX_DELAY)
 {
     using final_T = std::remove_reference<T>::type;

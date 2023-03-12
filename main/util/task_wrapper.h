@@ -19,6 +19,7 @@ class task : esp32::noncopyable
 
     task(const std::function<void(void)> &call) : call_(call)
     {
+        configASSERT(call);
     }
     ~task()
     {

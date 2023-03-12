@@ -2,11 +2,10 @@
 
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
-
 #include "sd_card_sink.h"
 #include "web_callback_sink.h"
-
 #include <esp_log.h>
+#include <vector>
 
 class Esp32Hook;
 
@@ -41,6 +40,7 @@ class logger : esp32::noncopyable
     std::unique_ptr<sd_card_sink> sd_card_sink_instance_;
     std::unique_ptr<web_callback_sink> web_callback_sink_instance_;
     std::unique_ptr<Esp32Hook> hook_instance_{nullptr};
+    std::vector<std::string> logging_tags;
 
     void hook_logger();
 

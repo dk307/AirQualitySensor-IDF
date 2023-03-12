@@ -50,7 +50,7 @@ class Esp32Hook
   private:
     static int esp32hook(const char *str, va_list arg)
     {
-        auto&& h = logger::instance.hook_instance_;
+        auto &&h = logger::instance.hook_instance_;
         if (h)
         {
             auto return_value = h->call_sinks(str, arg);
@@ -192,6 +192,9 @@ void logger::hook_logger()
 
 void logger::set_logging_level(const char *tag, esp_log_level_t level)
 {
+    // there is no good time to remove this so it stays for ever
+    logging_tags.push_back(tag);
+
     ESP_LOGI(LOGGING_TAG, "Setting log level for %s to %d", tag, level);
-    esp_log_level_set(tag, level);
+    esp_log_level_set(logging_tags[logging_tags.size() - 1].data(), level);
 }

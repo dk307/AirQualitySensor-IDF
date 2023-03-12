@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <type_traits>
 
 namespace Helper
 {
@@ -21,7 +22,9 @@ template <> struct Index<true, true>
 };
 } // namespace Helper
 
-template <typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8_MAX), (S <= UINT16_MAX)>::Type> class circular_buffer
+template <typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8_MAX), (S <= UINT16_MAX)>::Type>
+    requires std::is_trivially_copyable_v<T>
+class circular_buffer
 {
   public:
     /**
@@ -112,7 +115,7 @@ template <typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8
      * Returns `true` if no elements can be added to the buffer without
      * overwriting existing elements.
      */
-    bool inline isFull() const;
+    bool inline is_full() const;
 
     /**
      * Resets the buffer to a clean status, making all buffer positions available.
@@ -120,10 +123,10 @@ template <typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8
     void inline clear();
 
   private:
-    T buffer_[S];
-    T *head_;
-    T *tail_;
-    IT count_;
+    T buffer_[S]{};
+    T *head_{};
+    T *tail_{};
+    IT count_{};
 };
 
 template <typename T, size_t S, typename IT> constexpr circular_buffer<T, S, IT>::circular_buffer() : head_(buffer_), tail_(buffer_), count_(0)
@@ -238,7 +241,7 @@ template <typename T, size_t S, typename IT> bool inline circular_buffer<T, S, I
     return count_ == 0;
 }
 
-template <typename T, size_t S, typename IT> bool inline circular_buffer<T, S, IT>::isFull() const
+template <typename T, size_t S, typename IT> bool inline circular_buffer<T, S, IT>::is_full() const
 {
     return count_ == capacity;
 }

@@ -828,7 +828,6 @@ void web_server::handle_logging(esp32::http_request *request)
     }
 
     logging.add_request(request);
-
     ESP_LOGI(WEBSERVER_TAG, "Logging first time");
 }
 

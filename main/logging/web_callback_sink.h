@@ -13,6 +13,7 @@ class web_callback_sink final : public logger_hook_sink
     web_callback_sink(const std::function<void(std::unique_ptr<std::string>)> &callback)
         : background_log_task_([this] { flush_callback(); }), callback_(callback)
     {
+        configASSERT(callback_);
         background_log_task_.spawn_same("web_log_sink", 2 * 1024, tskIDLE_PRIORITY);
     }
 

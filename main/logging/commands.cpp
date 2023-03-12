@@ -60,6 +60,11 @@ static void mem_dump_cli_handler()
     ESP_LOGI(COMMAND_TAG, "Min. Ever Free Size   %8s   %6s",
              esp32::string::stringify_size(heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL), 1).c_str(),
              esp32::string::stringify_size(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM), 1).c_str());
+
+    if (heap_caps_check_integrity_all(true))
+    {
+        ESP_LOGI(COMMAND_TAG, "No memory integrity issues found");
+    }
 }
 
 static void sock_dump_cli_handler()
@@ -98,7 +103,7 @@ static void sock_dump_cli_handler()
             inet_ntop(AF_INET, &local_sock.sin_addr, local_ip_addr, sizeof(local_ip_addr));
             local_port = ntohs(local_sock.sin_port);
             getsockopt(i, SOL_SOCKET, SO_TYPE, &sock_type, &sock_type_len);
-            log = esp32::string::sprintf("%7d   %-8s   %-15s   %10d",  sock_type,
+            log = esp32::string::sprintf("%7d   %-8s   %-15s   %10d", sock_type,
                                          sock_type == SOCK_STREAM  ? "tcp"
                                          : sock_type == SOCK_DGRAM ? "udp"
                                                                    : "raw",
@@ -120,6 +125,7 @@ static void sock_dump_cli_handler()
 
 void run_command(const std::string_view &command)
 {
+    esp_log_level_set(COMMAND_TAG, ESP_LOG_INFO);
     if (command == "up-time")
     {
         up_time_cli_handler();
