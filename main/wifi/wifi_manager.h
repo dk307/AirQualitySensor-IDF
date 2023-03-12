@@ -1,12 +1,12 @@
 #pragma once
 
 #include "app_events.h"
-#include "util\default_event.h"
-#include "util\noncopyable.h"
-#include "util\task_wrapper.h"
-#include "wifi\smart_config_wifi_enroll.h"
-#include "wifi\wifi_events_notify.h"
-#include "wifi\wifi_sta.h"
+#include "util/default_event.h"
+#include "util/noncopyable.h"
+#include "util/task_wrapper.h"
+#include "wifi/smart_config_wifi_enroll.h"
+#include "wifi/wifi_events_notify.h"
+#include "wifi/wifi_sta.h"
 #include <atomic>
 #include <memory>
 #include <string>

@@ -10,7 +10,6 @@
 #include <esp_log.h>
 #include <filesystem>
 
-
 static const char ConfigFilePath[] = "/sd/config.json";
 static const char ConfigChecksumFilePath[] = "/sd/config_checksum.json";
 static const char HostNameId[] = "hostname";
