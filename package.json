@@ -3,7 +3,7 @@
   "description": "Gulp based build system for ESP8266 file system files",
   "main": "gulpfile.js",
   "devDependencies": {
-    "browser-sync": "^2.27.9",
+    "browser-sync": "^2.28.3",
     "eslint": "^7.30.0",
     "fancy-log": "^2.0.0",
     "gulp": "^4.0.2",
