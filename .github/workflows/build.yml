@@ -29,3 +29,13 @@ jobs:
         esp_idf_version: v5.0
         target: esp32s3
         path: ''
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: Binaries
+        path: |
+          .\build\air_quality_sensor.bin
+          .\build\air_quality_sensor.elf
+          .\build\air_quality_sensor.map
+
