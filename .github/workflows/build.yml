@@ -16,6 +16,14 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: 'recursive'
+
+    -name: Setup static web files
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: gulp default
+
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
       with:
