@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repo
       uses: actions/checkout@v2
@@ -30,9 +29,9 @@ jobs:
         target: esp32s3
         path: ''
 
-    -run: ls .\build\
+    - run: ls .\build\
 
-    - name: Upload Binaries
+    - name: Upload Firmware
       uses: actions/upload-artifact@v3
       with:
         name: Firmware
