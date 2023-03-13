@@ -16,7 +16,7 @@ class event_source_connection : esp32::noncopyable
     event_source_connection(event_source *source, esp32::http_request *request);
 
     static void destroy(void *ptr);
-    void try_send(const char *message, const char *event, uint32_t id, uint32_t reconnect);
+    void try_send(const std::string_view& message, const std::string_view& event, uint32_t id, uint32_t reconnect);
 
   protected:
     httpd_handle_t hd_{};

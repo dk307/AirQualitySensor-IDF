@@ -35,7 +35,7 @@ void event_source_connection::destroy(void *ptr)
     delete connection;
 }
 
-void event_source_connection::try_send(const char *message, const char *event, uint32_t id, uint32_t reconnect)
+void event_source_connection::try_send(const std::string_view &message, const std::string_view &event, uint32_t id, uint32_t reconnect)
 {
     if (fd_ == 0)
     {
@@ -59,14 +59,14 @@ void event_source_connection::try_send(const char *message, const char *event, u
         event_str.append(CRLF_STR, CRLF_LEN);
     }
 
-    if (event && *event)
+    if (event.length())
     {
         event_str.append("event: ", sizeof("event: ") - 1);
         event_str.append(event);
         event_str.append(CRLF_STR, CRLF_LEN);
     }
 
-    if (message && *message)
+    if (message.length())
     {
         event_str.append("data: ", sizeof("data: ") - 1);
         event_str.append(message);

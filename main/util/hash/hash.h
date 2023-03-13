@@ -41,6 +41,11 @@ template <mbedtls_md_type_t hashType> class hash : esp32::noncopyable
         update(input_data.data(), input_data.size());
     }
 
+    void update(const std::span<uint8_t> &input_data)
+    {
+        update(input_data.data(), input_data.size());
+    }
+
     void update(const uint8_t *input_data, size_t input_size)
     {
         int ret = mbedtls_md_update(&ctx_, input_data, input_size);

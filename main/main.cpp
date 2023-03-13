@@ -28,7 +28,7 @@ extern "C" void app_main(void)
 
     try
     {
-        auto err = nvs_flash_init();
+        const auto err = nvs_flash_init();
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
         {
             CHECK_THROW_ESP(nvs_flash_erase());

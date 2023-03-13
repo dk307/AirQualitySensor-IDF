@@ -2,11 +2,9 @@
 
 #include "util/exceptions.h"
 #include "util/noncopyable.h"
-
+#include <array>
 #include <esp_ota_ops.h>
 #include <esp_partition.h>
-
-#include <array>
 
 namespace esp32
 {

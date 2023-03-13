@@ -33,7 +33,7 @@ class http_server : esp32::noncopyable
         add_handler(url, method, exception_wrapper<ftn>, user_ctx);
     }
 
-    template <class T, void (T::*ftn)(esp32::http_request *)> inline void add_handler_ftn(const auto url, httpd_method_t method)
+    template <class T, void (T::*ftn)(esp32::http_request &)> inline void add_handler_ftn(const auto url, httpd_method_t method)
     {
         add_handler_with_exceptions<server_url_ftn<T, ftn>>(url, method, this);
     }
@@ -77,18 +77,18 @@ class http_server : esp32::noncopyable
     }
 
     // general url handler
-    template <class T, void (T::*ftn)(esp32::http_request *)> static void __attribute__((noinline)) server_url_ftn(httpd_req_t *request_p)
+    template <class T, void (T::*ftn)(esp32::http_request &)> static void __attribute__((noinline)) server_url_ftn(httpd_req_t *request_p)
     {
         auto p_this = reinterpret_cast<T *>(request_p->user_ctx);
         esp32::http_request request(request_p);
-        (p_this->*ftn)(&request);
+        (p_this->*ftn)(request);
     }
 
     // fs handler
     template <const auto file_pathT, const auto content_typeT> static void __attribute__((noinline)) serve_fs_file(httpd_req_t *request_p)
     {
         esp32::http_request request(request_p);
-        esp32::fs_card_file_response response(&request, file_pathT, content_typeT, false);
+        esp32::fs_card_file_response response(request, file_pathT, content_typeT, false);
         response.send_response();
     }
 
@@ -97,7 +97,7 @@ class http_server : esp32::noncopyable
     static void __attribute__((noinline)) serve_array(httpd_req_t *request_p)
     {
         esp32::http_request request(request_p);
-        esp32::array_response response(&request, {buf, len}, sha_256, is_gz, content_type);
+        esp32::array_response response(request, {buf, len}, sha_256, is_gz, content_type);
         response.send_response();
     }
 
