@@ -54,6 +54,6 @@ void http_server::add_handler(const char *url, httpd_method_t method, url_handle
     handler.user_ctx = const_cast<void *>(user_ctx);
 
     handlers_.emplace_back(handler);
-    httpd_register_uri_handler(server_, &(*handlers_.rbegin()));
+    CHECK_THROW_ESP(httpd_register_uri_handler(server_, &(*handlers_.rbegin())));
 }
 } // namespace esp32

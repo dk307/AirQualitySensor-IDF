@@ -17,6 +17,7 @@ class http_request : esp32::noncopyable
   public:
     http_request(httpd_req_t *req) : req_(req)
     {
+      configASSERT(req_);
     }
 
     bool has_header(const char *header);

@@ -9,7 +9,6 @@
 #include "util/async_web_server/http_server.h"
 #include "util/default_event.h"
 
-
 class web_server final : esp32::http_server
 {
   public:
@@ -21,47 +20,47 @@ class web_server final : esp32::http_server
     {
     }
 
-    template <const uint8_t data[], const auto len, const char *sha256> void handle_array_page_with_auth(esp32::http_request *request);
+    template <const uint8_t data[], const auto len, const char *sha256> void handle_array_page_with_auth(esp32::http_request &request);
 
     // handlers
-    void handle_login(esp32::http_request *request);
-    void handle_logout(esp32::http_request *request);
-    void handle_web_login_update(esp32::http_request *request);
-    void handle_other_settings_update(esp32::http_request *request);
-    void handle_factory_reset(esp32::http_request *request);
-    void handle_restart_device(esp32::http_request *request);
+    void handle_login(esp32::http_request &request);
+    void handle_logout(esp32::http_request &request);
+    void handle_web_login_update(esp32::http_request &request);
+    void handle_other_settings_update(esp32::http_request &request);
+    void handle_factory_reset(esp32::http_request &request);
+    void handle_restart_device(esp32::http_request &request);
 
-    void handle_firmware_upload(esp32::http_request *request);
-    void restore_configuration_upload(esp32::http_request *request);
+    void handle_firmware_upload(esp32::http_request &request);
+    void restore_configuration_upload(esp32::http_request &request);
 
     // // ajax
-    void handle_information_get(esp32::http_request *request);
-    void handle_config_get(esp32::http_request *request);
+    void handle_information_get(esp32::http_request &request);
+    void handle_config_get(esp32::http_request &request);
 
     // // helpers
-    bool is_authenticated(esp32::http_request *request);
+    bool is_authenticated(esp32::http_request &request);
 
-    bool check_authenticated(esp32::http_request *request);
-    void redirect_to_root(esp32::http_request *request);
+    bool check_authenticated(esp32::http_request &request);
+    void redirect_to_root(esp32::http_request &request);
 
     // fs ajax
-    void handle_dir_list(esp32::http_request *request);
-    void handle_dir_create(esp32::http_request *request);
-    void handle_fs_download(esp32::http_request *request);
-    void handle_fs_delete(esp32::http_request *request);
-    void handle_fs_rename(esp32::http_request *request);
-    void handle_file_upload(esp32::http_request *request);
+    void handle_dir_list(esp32::http_request &request);
+    void handle_dir_create(esp32::http_request &request);
+    void handle_fs_download(esp32::http_request &request);
+    void handle_fs_delete(esp32::http_request &request);
+    void handle_fs_rename(esp32::http_request &request);
+    void handle_file_upload(esp32::http_request &request);
 
     // events
-    void handle_events(esp32::http_request *request);
-    void handle_logging(esp32::http_request *request);
+    void handle_events(esp32::http_request &request);
+    void handle_logging(esp32::http_request &request);
 
     static const char *get_content_type(const std::string &extension);
 
     template <class Array, class K, class T> static void add_key_value_object(Array &array, const K &key, const T &value);
 
-    static void log_and_send_error(const esp32::http_request *request, httpd_err_code_t code, const std::string &error);
-    static void send_empty_200(const esp32::http_request *request);
+    static void log_and_send_error(const esp32::http_request &request, httpd_err_code_t code, const std::string &error);
+    static void send_empty_200(const esp32::http_request &request);
     static std::string get_file_sha256(const char *filename);
 
     void notify_sensor_change(sensor_id_index id);
@@ -70,12 +69,12 @@ class web_server final : esp32::http_server
     void received_log_data(std::unique_ptr<std::string> log);
     void send_log_data(std::unique_ptr<std::string> log);
 
-    void handle_web_logging_start(esp32::http_request *request);
-    void handle_web_logging_stop(esp32::http_request *request);
-    void handle_sd_card_logging_start(esp32::http_request *request);
-    void handle_sd_card_logging_stop(esp32::http_request *request);
-    void on_set_logging_level(esp32::http_request *request);
-    void on_run_command(esp32::http_request *request);
+    void handle_web_logging_start(esp32::http_request &request);
+    void handle_web_logging_stop(esp32::http_request &request);
+    void handle_sd_card_logging_start(esp32::http_request &request);
+    void handle_sd_card_logging_stop(esp32::http_request &request);
+    void on_set_logging_level(esp32::http_request &request);
+    void on_run_command(esp32::http_request &request);
 
     esp32::event_source events;
     esp32::event_source logging;

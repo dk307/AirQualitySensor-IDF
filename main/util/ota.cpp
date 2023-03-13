@@ -1,7 +1,6 @@
 #include "util/ota.h"
 
 #include "logging/logging_tags.h"
-
 #include <cstring>
 #include <esp_err.h>
 #include <esp_log.h>

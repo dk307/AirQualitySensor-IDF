@@ -11,7 +11,6 @@
 #include <filesystem>
 #include <memory>
 
-
 namespace esp32
 {
 void http_response::add_common_headers()
@@ -21,62 +20,62 @@ void http_response::add_common_headers()
 
 void http_response::add_header(const char *field, const char *value)
 {
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, field, value));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, field, value));
 }
 
 void http_response::redirect(const std::string &url)
 {
-    CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, "302 Found"));
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Location", url.c_str()));
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Cache-Control", "no-cache"));
-    CHECK_THROW_ESP(httpd_resp_send(req_->req_, nullptr, 0));
+    CHECK_THROW_ESP(httpd_resp_set_status(request_.req_, "302 Found"));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Location", url.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Cache-Control", "no-cache"));
+    CHECK_THROW_ESP(httpd_resp_send(request_.req_, nullptr, 0));
 }
 
 void http_response::send_empty_200()
 {
     add_common_headers();
-    CHECK_THROW_ESP(httpd_resp_send(req_->req_, "", HTTPD_RESP_USE_STRLEN));
+    CHECK_THROW_ESP(httpd_resp_send(request_.req_, "", HTTPD_RESP_USE_STRLEN));
 }
 
 void http_response::send_error(httpd_err_code_t code, const char *message)
 {
     add_common_headers();
-    CHECK_THROW_ESP(httpd_resp_send_err(req_->req_, code, message));
+    CHECK_THROW_ESP(httpd_resp_send_err(request_.req_, code, message));
 }
 
 void array_response::send_response()
 {
-    ESP_LOGD(WEBSERVER_TAG, "Handling %s", req_->url().c_str());
+    ESP_LOGD(WEBSERVER_TAG, "Handling %s", request_.url().c_str());
     add_common_headers();
 
     // content type
-    CHECK_THROW_ESP(httpd_resp_set_type(req_->req_, content_type_.data()));
+    CHECK_THROW_ESP(httpd_resp_set_type(request_.req_, content_type_.data()));
     if (is_gz_)
     {
-        CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
+        CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Content-Encoding", "gzip"));
     }
 
     if (sha256_.has_value())
     {
-        const auto match_sha256 = req_->get_header("If-None-Match");
+        const auto match_sha256 = request_.get_header("If-None-Match");
         if (match_sha256.has_value() && (match_sha256.value() == sha256_.value()))
         {
-            CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, "304 Not Modified"));
-            CHECK_THROW_ESP(httpd_resp_send(req_->req_, "", 0));
+            CHECK_THROW_ESP(httpd_resp_set_status(request_.req_, "304 Not Modified"));
+            CHECK_THROW_ESP(httpd_resp_send(request_.req_, "", 0));
             return;
         }
     }
 
-    CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, HTTPD_200));
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Connection", "keep-alive"));
+    CHECK_THROW_ESP(httpd_resp_set_status(request_.req_, HTTPD_200));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Connection", "keep-alive"));
     if (sha256_.has_value())
     {
-        CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "ETag", sha256_.value().data()));
+        CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "ETag", sha256_.value().data()));
     }
-    CHECK_THROW_ESP(httpd_resp_send(req_->req_, reinterpret_cast<const char *>(buf_.data()), buf_.size()));
+    CHECK_THROW_ESP(httpd_resp_send(request_.req_, reinterpret_cast<const char *>(buf_.data()), buf_.size()));
 }
 
-void array_response::send_response(esp32::http_request *request, const std::string_view &data_str, const std::string_view &content_type)
+void array_response::send_response(esp32::http_request &request, const std::string_view &data_str, const std::string_view &content_type)
 {
     esp32::array_response response(request, {reinterpret_cast<const uint8_t *>(data_str.data()), data_str.size()}, std::nullopt, false, content_type);
     response.send_response();
@@ -84,7 +83,7 @@ void array_response::send_response(esp32::http_request *request, const std::stri
 
 void fs_card_file_response::send_response()
 {
-    ESP_LOGD(WEBSERVER_TAG, "Handling %s", req_->url().c_str());
+    ESP_LOGD(WEBSERVER_TAG, "Handling %s", request_.url().c_str());
     add_common_headers();
 
     const auto gz_path = std::string(file_path_) + ".gz";
@@ -94,7 +93,7 @@ void fs_card_file_response::send_response()
     if (!download_ && !esp32::filesystem::exists(path) && esp32::filesystem::exists(gz_path))
     {
         path = gz_path;
-        CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Encoding", "gzip"));
+        CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Content-Encoding", "gzip"));
     }
     else
     {
@@ -107,41 +106,41 @@ void fs_card_file_response::send_response()
     if (!file_info.exists())
     {
         ESP_LOGE(WEBSERVER_TAG, "Failed to find file : %s", path.c_str());
-        httpd_resp_send_err(req_->req_, HTTPD_404_NOT_FOUND, "File does not exist");
+        httpd_resp_send_err(request_.req_, HTTPD_404_NOT_FOUND, "File does not exist");
         return;
     }
 
     if (!file_info.is_regular_file())
     {
         ESP_LOGE(WEBSERVER_TAG, "Path is not a file : %s", path.c_str());
-        httpd_resp_send_err(req_->req_, HTTPD_404_NOT_FOUND, "Parh is not a file");
+        httpd_resp_send_err(request_.req_, HTTPD_404_NOT_FOUND, "Parh is not a file");
         return;
     }
 
     const auto etag = esp32::string::sprintf("%lld-%u", file_info.last_modified(), file_info.size());
 
-    const auto existing_etag = req_->get_header("If-None-Match");
+    const auto existing_etag = request_.get_header("If-None-Match");
     if (existing_etag.has_value() && (existing_etag.value() == etag))
     {
-        CHECK_THROW_ESP(httpd_resp_set_status(req_->req_, "304 Not Modified"));
-        CHECK_THROW_ESP(httpd_resp_send(req_->req_, "", 0));
+        CHECK_THROW_ESP(httpd_resp_set_status(request_.req_, "304 Not Modified"));
+        CHECK_THROW_ESP(httpd_resp_send(request_.req_, "", 0));
         return;
     }
 
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "ETag", etag.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "ETag", etag.c_str()));
 
     // Content dispostion
     const auto filename = path.filename();
     const auto content_disposition_header = download_ ? esp32::string::sprintf("attachment; filename=\"%s\"", filename.c_str())
                                                       : esp32::string::sprintf("inline; filename=\"%s\"", filename.c_str());
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Disposition", content_disposition_header.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Content-Disposition", content_disposition_header.c_str()));
 
     // content type
-    CHECK_THROW_ESP(httpd_resp_set_type(req_->req_, content_type_));
+    CHECK_THROW_ESP(httpd_resp_set_type(request_.req_, content_type_.data()));
 
     // Content-Length
     const auto size = esp32::string::to_string(file_info.size());
-    CHECK_THROW_ESP(httpd_resp_set_hdr(req_->req_, "Content-Length", size.c_str()));
+    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Content-Length", size.c_str()));
 
     ESP_LOGD(WEBSERVER_TAG, "Sending file %s", path.c_str());
 
@@ -149,7 +148,7 @@ void fs_card_file_response::send_response()
     if (!file_handle)
     {
         ESP_LOGE(WEBSERVER_TAG, "Failed to read existing file : %s", path.c_str());
-        httpd_resp_send_err(req_->req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read existing file");
+        httpd_resp_send_err(request_.req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read existing file");
         return;
     }
 
@@ -172,14 +171,14 @@ void fs_card_file_response::send_response()
         if (chuck_size > 0)
         {
             /* Send the buffer contents as HTTP response chunk */
-            const auto send_error = httpd_resp_send_chunk(req_->req_, chunk.get(), chuck_size);
+            const auto send_error = httpd_resp_send_chunk(request_.req_, chunk.get(), chuck_size);
             if (send_error != ESP_OK)
             {
                 ESP_LOGE(WEBSERVER_TAG, "File sending failed for %s with %s", path.c_str(), esp_err_to_name(send_error));
 
                 /* Abort sending file */
-                CHECK_THROW_ESP(httpd_resp_sendstr_chunk(req_->req_, NULL));
-                CHECK_THROW_ESP(httpd_resp_send_err(req_->req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file"));
+                CHECK_THROW_ESP(httpd_resp_sendstr_chunk(request_.req_, NULL));
+                CHECK_THROW_ESP(httpd_resp_send_err(request_.req_, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file"));
             }
         }
     } while (chuck_size != 0);
@@ -187,6 +186,6 @@ void fs_card_file_response::send_response()
     /* Close file after sending complete */
     ESP_LOGD(WEBSERVER_TAG, "File sending complete for %s", path.c_str());
 
-    httpd_resp_send_chunk(req_->req_, NULL, 0);
+    httpd_resp_send_chunk(request_.req_, NULL, 0);
 }
 } // namespace esp32

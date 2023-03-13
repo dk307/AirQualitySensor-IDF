@@ -1,11 +1,10 @@
 #pragma once
 
 #include "util/noncopyable.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include <bits/functexcept.h>
 #include <errno.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 namespace esp32
 {

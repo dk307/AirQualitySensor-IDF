@@ -18,6 +18,7 @@ template <typename T> class default_event_subscriber_typed : noncopyable
     default_event_subscriber_typed(esp_event_base_t event_base, int32_t event_id, const callback_t &callback)
         : event_base_(event_base), event_id_(event_id), callback_(callback)
     {
+        configASSERT(callback_);
     }
 
     ~default_event_subscriber_typed()
@@ -27,7 +28,7 @@ template <typename T> class default_event_subscriber_typed : noncopyable
 
     void subscribe()
     {
-        assert(!instance_event_);
+        configASSERT(!instance_event_);
         CHECK_THROW_ESP(esp_event_handler_instance_register(event_base_, event_id_, event_handler, this, &instance_event_));
     }
 
@@ -56,6 +57,7 @@ template <typename T> class default_event_subscriber_typed : noncopyable
     static void event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
         requires(std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !std::is_reference_v<T>)
     {
+        configASSERT(event_data);
         auto p_this = reinterpret_cast<default_event_subscriber_typed<T> *>(event_handler_arg);
         p_this->callback_(event_base, event_id, std::forward<T>(*reinterpret_cast<T *>(event_data)));
     }

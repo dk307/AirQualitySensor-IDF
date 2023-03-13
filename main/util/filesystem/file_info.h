@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include "util/noncopyable.h"
-
 #include <filesystem>
 #include <sys/stat.h>
 

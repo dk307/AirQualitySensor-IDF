@@ -74,7 +74,8 @@ std::string create_hash(const credentials &cred, const std::string &host)
     return esp32::format_hex(result);
 }
 
-template <const uint8_t data[], const auto len, const char *sha256> void web_server::handle_array_page_with_auth(esp32::http_request *request)
+template <const uint8_t data[], const auto len, const char *sha256> 
+void web_server::handle_array_page_with_auth(esp32::http_request &request)
 {
     if (!is_authenticated(request))
     {
@@ -153,7 +154,7 @@ void web_server::begin()
     instance_sensor_change_event_.subscribe();
 }
 
-bool web_server::check_authenticated(esp32::http_request *request)
+bool web_server::check_authenticated(esp32::http_request &request)
 {
     if (!is_authenticated(request))
     {
@@ -170,7 +171,7 @@ template <class Array, class K, class T> void web_server::add_key_value_object(A
     j1[("value")] = value;
 }
 
-void web_server::handle_information_get(esp32::http_request *request)
+void web_server::handle_information_get(esp32::http_request &request)
 {
     ESP_LOGD(WEBSERVER_TAG, "/api/information/get");
     if (!check_authenticated(request))
@@ -195,7 +196,7 @@ void web_server::handle_information_get(esp32::http_request *request)
     esp32::array_response::send_response(request, data_str, js_media_type);
 }
 
-void web_server::handle_config_get(esp32::http_request *request)
+void web_server::handle_config_get(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/config/get");
     if (!check_authenticated(request))
@@ -207,15 +208,15 @@ void web_server::handle_config_get(esp32::http_request *request)
 }
 
 // Check if header is present and correct
-bool web_server::is_authenticated(esp32::http_request *request)
+bool web_server::is_authenticated(esp32::http_request &request)
 {
     ESP_LOGV(WEBSERVER_TAG, "Checking if authenticated");
-    auto const cookie = request->get_header(CookieHeader);
+    auto const cookie = request.get_header(CookieHeader);
     if (cookie.has_value())
     {
         ESP_LOGV(WEBSERVER_TAG, "Found cookie:%s", cookie->c_str());
 
-        const std::string token = create_hash(config::instance.data.get_web_user_credentials(), request->client_ip_address());
+        const std::string token = create_hash(config::instance.data.get_web_user_credentials(), request.client_ip_address());
 
         if (cookie == (std::string(AuthCookieName) + token))
         {
@@ -227,11 +228,11 @@ bool web_server::is_authenticated(esp32::http_request *request)
     return false;
 }
 
-void web_server::handle_login(esp32::http_request *request)
+void web_server::handle_login(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "Handle login");
 
-    const auto arguments = request->get_form_url_encoded_arguments({"username", "password"});
+    const auto arguments = request.get_form_url_encoded_arguments({"username", "password"});
     auto &&user_name = arguments[0];
     auto &&password = arguments[1];
 
@@ -247,7 +248,7 @@ void web_server::handle_login(esp32::http_request *request)
         {
             ESP_LOGI(WEBSERVER_TAG, "User/Password correct");
 
-            const std::string token = create_hash(current_credentials, request->client_ip_address());
+            const std::string token = create_hash(current_credentials, request.client_ip_address());
             ESP_LOGD(WEBSERVER_TAG, "Token:%s", token.c_str());
 
             const auto cookie_header = std::string(AuthCookieName) + token;
@@ -268,7 +269,7 @@ void web_server::handle_login(esp32::http_request *request)
     }
 }
 
-void web_server::handle_logout(esp32::http_request *request)
+void web_server::handle_logout(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "Disconnection");
     esp32::http_response response(request);
@@ -276,7 +277,7 @@ void web_server::handle_logout(esp32::http_request *request)
     response.redirect("/login.html?msg=User disconnected");
 }
 
-void web_server::handle_web_login_update(esp32::http_request *request)
+void web_server::handle_web_login_update(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "web login Update");
 
@@ -285,7 +286,7 @@ void web_server::handle_web_login_update(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments({"webUserName", "webPassword"});
+    const auto arguments = request.get_form_url_encoded_arguments({"webUserName", "webPassword"});
     auto &&user_name = arguments[0];
     auto &&password = arguments[1];
 
@@ -302,7 +303,7 @@ void web_server::handle_web_login_update(esp32::http_request *request)
     }
 }
 
-void web_server::handle_other_settings_update(esp32::http_request *request)
+void web_server::handle_other_settings_update(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "config Update");
 
@@ -311,7 +312,7 @@ void web_server::handle_other_settings_update(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments(
+    const auto arguments = request.get_form_url_encoded_arguments(
         {"hostName", "ntpServer", "ntpServerRefreshInterval", "timezone", "autoScreenBrightness", "screenBrightness"});
     auto &&host_name = arguments[0];
     auto &&auto_screen_brightness = arguments[4];
@@ -337,7 +338,7 @@ void web_server::handle_other_settings_update(esp32::http_request *request)
     redirect_to_root(request);
 }
 
-void web_server::handle_restart_device(esp32::http_request *request)
+void web_server::handle_restart_device(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "restart");
 
@@ -350,7 +351,7 @@ void web_server::handle_restart_device(esp32::http_request *request)
     operations::instance.reboot();
 }
 
-void web_server::handle_factory_reset(esp32::http_request *request)
+void web_server::handle_factory_reset(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "factoryReset");
 
@@ -362,13 +363,13 @@ void web_server::handle_factory_reset(esp32::http_request *request)
     operations::instance.factory_reset();
 }
 
-void web_server::redirect_to_root(esp32::http_request *request)
+void web_server::redirect_to_root(esp32::http_request &request)
 {
     esp32::http_response response(request);
     response.redirect("/");
 }
 
-void web_server::handle_firmware_upload(esp32::http_request *request)
+void web_server::handle_firmware_upload(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "firmwareUpdateUpload");
 
@@ -377,7 +378,7 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
         return;
     }
 
-    const auto hash_arg = request->get_header("sha256");
+    const auto hash_arg = request.get_header("sha256");
 
     if (!hash_arg)
     {
@@ -399,7 +400,7 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
 
     esp32::ota_updator ota(hash_binary);
 
-    const auto result = request->read_body([&ota](const std::vector<uint8_t> &data) { return ota.write2(data.data(), data.size()); });
+    const auto result = request.read_body([&ota](const std::vector<uint8_t> &data) { return ota.write2(data.data(), data.size()); });
 
     if (result != ESP_OK)
     {
@@ -415,7 +416,7 @@ void web_server::handle_firmware_upload(esp32::http_request *request)
     operations::instance.reboot();
 }
 
-void web_server::restore_configuration_upload(esp32::http_request *request)
+void web_server::restore_configuration_upload(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "restoreConfig");
 
@@ -424,7 +425,7 @@ void web_server::restore_configuration_upload(esp32::http_request *request)
         return;
     }
 
-    const auto hash_arg = request->get_header("sha256");
+    const auto hash_arg = request.get_header("sha256");
 
     if (!hash_arg)
     {
@@ -435,9 +436,9 @@ void web_server::restore_configuration_upload(esp32::http_request *request)
     ESP_LOGD(WEBSERVER_TAG, "Expected file hash: %s", hash_arg.value().c_str());
 
     std::vector<uint8_t> json;
-    json.reserve(request->content_length());
+    json.reserve(request.content_length());
 
-    const auto result = request->read_body([&json](const std::vector<uint8_t> &data) {
+    const auto result = request.read_body([&json](const std::vector<uint8_t> &data) {
         json.insert(json.end(), data.begin(), data.end());
         return ESP_OK;
     });
@@ -492,10 +493,10 @@ void web_server::send_sensor_data(sensor_id_index id)
 
     std::string json;
     serializeJson(json_document, json);
-    events.try_send(json.c_str(), "sensor", esp32::millis(), true);
+    events.try_send(json.c_str(), "sensor", esp32::millis(), 0);
 }
 
-void web_server::handle_dir_list(esp32::http_request *request)
+void web_server::handle_dir_list(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/list");
     if (!check_authenticated(request))
@@ -503,7 +504,7 @@ void web_server::handle_dir_list(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_url_arguments({"dir"});
+    const auto arguments = request.get_url_arguments({"dir"});
     auto &&dir_arg = arguments[0];
 
     if (!dir_arg)
@@ -564,7 +565,7 @@ void web_server::handle_dir_list(esp32::http_request *request)
     esp32::array_response::send_response(request, data_str, js_media_type);
 }
 
-void web_server::handle_fs_download(esp32::http_request *request)
+void web_server::handle_fs_download(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/download");
     if (!check_authenticated(request))
@@ -572,7 +573,7 @@ void web_server::handle_fs_download(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_url_arguments({"path"});
+    const auto arguments = request.get_url_arguments({"path"});
     auto &&path_arg = arguments[0];
 
     if (!path_arg)
@@ -591,7 +592,7 @@ void web_server::handle_fs_download(esp32::http_request *request)
     response.send_response(); // this does all the checks
 }
 
-void web_server::handle_fs_delete(esp32::http_request *request)
+void web_server::handle_fs_delete(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/delete");
     if (!check_authenticated(request))
@@ -599,7 +600,7 @@ void web_server::handle_fs_delete(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments({"deleteFilePath"});
+    const auto arguments = request.get_form_url_encoded_arguments({"deleteFilePath"});
     auto &&delete_path_arg = arguments[0];
 
     if (!delete_path_arg)
@@ -639,7 +640,7 @@ void web_server::handle_fs_delete(esp32::http_request *request)
     }
 }
 
-void web_server::handle_dir_create(esp32::http_request *request)
+void web_server::handle_dir_create(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/mkdir");
     if (!check_authenticated(request))
@@ -647,7 +648,7 @@ void web_server::handle_dir_create(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments({"dir"});
+    const auto arguments = request.get_form_url_encoded_arguments({"dir"});
     auto &&path_arg = arguments[0];
 
     if (!path_arg)
@@ -674,7 +675,7 @@ void web_server::handle_dir_create(esp32::http_request *request)
     }
 }
 
-void web_server::handle_fs_rename(esp32::http_request *request)
+void web_server::handle_fs_rename(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/rename");
     if (!check_authenticated(request))
@@ -682,7 +683,7 @@ void web_server::handle_fs_rename(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments({"oldPath", "newPath"});
+    const auto arguments = request.get_form_url_encoded_arguments({"oldPath", "newPath"});
     auto &&old_path_arg = arguments[0];
     auto &&new_path_arg = arguments[1];
 
@@ -709,7 +710,7 @@ void web_server::handle_fs_rename(esp32::http_request *request)
     }
 }
 
-void web_server::handle_file_upload(esp32::http_request *request)
+void web_server::handle_file_upload(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/upload");
 
@@ -718,10 +719,10 @@ void web_server::handle_file_upload(esp32::http_request *request)
         return;
     }
 
-    const auto upload_dir_arg = request->get_header("uploadDir");
-    const auto hash_arg = request->get_header("sha256");
-    const auto file_name_arg = request->get_header("X-File-Name");
-    const auto last_modified_arg = request->get_header("X-Last-Modified");
+    const auto upload_dir_arg = request.get_header("uploadDir");
+    const auto hash_arg = request.get_header("sha256");
+    const auto file_name_arg = request.get_header("X-File-Name");
+    const auto last_modified_arg = request.get_header("X-Last-Modified");
 
     if (!upload_dir_arg || !hash_arg || !file_name_arg)
     {
@@ -741,7 +742,7 @@ void web_server::handle_file_upload(esp32::http_request *request)
     {
         auto file = esp32::filesystem::file(temp_full_path.c_str(), "w+");
 
-        const auto result = request->read_body([&file, &temp_full_path](const std::vector<uint8_t> &data) {
+        const auto result = request.read_body([&file, &temp_full_path](const std::vector<uint8_t> &data) {
             const auto bytesWritten = file.write(data.data(), 1, data.size());
             if (bytesWritten != data.size())
             {
@@ -798,7 +799,7 @@ void web_server::handle_file_upload(esp32::http_request *request)
     send_empty_200(request);
 }
 
-void web_server::handle_events(esp32::http_request *request)
+void web_server::handle_events(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/events");
 
@@ -807,7 +808,7 @@ void web_server::handle_events(esp32::http_request *request)
         return;
     }
 
-    events.add_request(request);
+    events.add_request(&request);
 
     ESP_LOGI(WEBSERVER_TAG, "Events client first time");
 
@@ -818,7 +819,7 @@ void web_server::handle_events(esp32::http_request *request)
     }
 }
 
-void web_server::handle_logging(esp32::http_request *request)
+void web_server::handle_logging(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/logging");
 
@@ -827,11 +828,11 @@ void web_server::handle_logging(esp32::http_request *request)
         return;
     }
 
-    logging.add_request(request);
+    logging.add_request(&request);
     ESP_LOGI(WEBSERVER_TAG, "Logging first time");
 }
 
-void web_server::handle_web_logging_start(esp32::http_request *request)
+void web_server::handle_web_logging_start(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/log/webstart");
 
@@ -850,7 +851,7 @@ void web_server::handle_web_logging_start(esp32::http_request *request)
     }
 }
 
-void web_server::handle_web_logging_stop(esp32::http_request *request)
+void web_server::handle_web_logging_stop(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/log/webstop");
 
@@ -863,7 +864,7 @@ void web_server::handle_web_logging_stop(esp32::http_request *request)
     send_empty_200(request);
 }
 
-void web_server::handle_sd_card_logging_start(esp32::http_request *request)
+void web_server::handle_sd_card_logging_start(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/log/sdstart");
 
@@ -882,7 +883,7 @@ void web_server::handle_sd_card_logging_start(esp32::http_request *request)
     }
 }
 
-void web_server::handle_sd_card_logging_stop(esp32::http_request *request)
+void web_server::handle_sd_card_logging_stop(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/log/sdstop");
 
@@ -948,14 +949,14 @@ const char *web_server::get_content_type(const std::string &extension)
     return "text/plain";
 }
 
-void web_server::log_and_send_error(const esp32::http_request *request, httpd_err_code_t code, const std::string &error)
+void web_server::log_and_send_error(const esp32::http_request &request, httpd_err_code_t code, const std::string &error)
 {
     ESP_LOGW(WEBSERVER_TAG, "%s", error.c_str());
     esp32::http_response response(request);
     response.send_error(code, error.c_str());
 }
 
-void web_server::send_empty_200(const esp32::http_request *request)
+void web_server::send_empty_200(const esp32::http_request &request)
 {
     esp32::http_response response(request);
     response.send_empty_200();
@@ -978,10 +979,10 @@ void web_server::received_log_data(std::unique_ptr<std::string> log)
 
 void web_server::send_log_data(std::unique_ptr<std::string> log)
 {
-    logging.try_send((*log).c_str(), "logs", esp32::millis(), true);
+    logging.try_send((*log).c_str(), "logs", esp32::millis(), 0);
 }
 
-void web_server::on_set_logging_level(esp32::http_request *request)
+void web_server::on_set_logging_level(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/log/loglevel");
 
@@ -990,7 +991,7 @@ void web_server::on_set_logging_level(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments({"tag", "level"});
+    const auto arguments = request.get_form_url_encoded_arguments({"tag", "level"});
     auto &&tag_arg = arguments[0];
     auto &&level_arg = arguments[1];
 
@@ -1012,7 +1013,7 @@ void web_server::on_set_logging_level(esp32::http_request *request)
     send_empty_200(request);
 }
 
-void web_server::on_run_command(esp32::http_request *request)
+void web_server::on_run_command(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/api/log/run");
 
@@ -1021,7 +1022,7 @@ void web_server::on_run_command(esp32::http_request *request)
         return;
     }
 
-    const auto arguments = request->get_form_url_encoded_arguments({"command"});
+    const auto arguments = request.get_form_url_encoded_arguments({"command"});
     auto &&command_arg = arguments[0];
 
     if (!command_arg)
