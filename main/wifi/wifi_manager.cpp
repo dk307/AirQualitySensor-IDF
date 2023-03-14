@@ -234,9 +234,9 @@ wifi_status wifi_manager::get_wifi_status()
                 {
                     auto ssid = get_ssid();
                     return {true, esp32::string::sprintf("Connected to %.*s", ssid.size(), ssid.data())};
+                }
             }
         }
-    }
     }
     return {false, "Not connected to Wifi"};
 }
