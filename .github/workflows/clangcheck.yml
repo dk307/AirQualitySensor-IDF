@@ -17,4 +17,4 @@ jobs:
       with:
         clang-format-version: '13'
         check-path: 'main'
-         exclude-regex: '(main/lv_conf.h|main/hardware/sps30/*)'
+        exclude-regex: '(main/lv_conf.h|main/hardware/sps30/*)'
