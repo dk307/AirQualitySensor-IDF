@@ -16,7 +16,6 @@
 #include <filesystem>
 #include <mutex>
 
-
 class sd_card_sink final : public logger_hook_sink
 {
   public:
