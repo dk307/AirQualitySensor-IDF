@@ -11,3 +11,4 @@ jobs:
       with:
         clang-format-version: '13'
         check-path: 'main'
+        exclude: '(lvconf.h|hardware/sps30/*.)'
