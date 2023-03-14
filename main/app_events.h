@@ -24,6 +24,3 @@ typedef enum
      * accurate as the events are received asynchronously.*/
     APP_EVENT_REBOOT,
 } esp_app_common_event_t;
-
-
-

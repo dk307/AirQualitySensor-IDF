@@ -2,8 +2,8 @@
 #include "http_request.h"
 #include "logging/logging_tags.h"
 #include "util/cores.h"
-#include <esp_log.h>
 #include "util/task_wrapper.h"
+#include <esp_log.h>
 
 namespace esp32
 {

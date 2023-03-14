@@ -68,7 +68,7 @@ void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 void ui::load_boot_screen()
 {
     check_sd_card_ready();
-    
+
     // lv_log_register_print_cb(&lv_logger);
     lv_disp_t *dispp = lv_disp_get_default();
 

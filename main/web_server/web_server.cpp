@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
 static const char html_media_type[] = "text/html";
