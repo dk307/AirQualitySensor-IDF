@@ -72,12 +72,12 @@ const sensor_definition &get_sensor_definition(sensor_id_index id)
     return sensor_definitions[static_cast<size_t>(id)];
 }
 
-const std::string_view&  get_sensor_name(sensor_id_index id)
+const std::string_view &get_sensor_name(sensor_id_index id)
 {
     return sensor_definitions[static_cast<size_t>(id)].get_name();
 }
 
-const std::string_view& get_sensor_unit(sensor_id_index id)
+const std::string_view &get_sensor_unit(sensor_id_index id)
 {
     return sensor_definitions[static_cast<size_t>(id)].get_unit();
 }

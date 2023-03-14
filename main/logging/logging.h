@@ -7,7 +7,6 @@
 #include <esp_log.h>
 #include <vector>
 
-
 class Esp32Hook;
 
 class logger : esp32::noncopyable
