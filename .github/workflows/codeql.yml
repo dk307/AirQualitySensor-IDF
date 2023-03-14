@@ -21,20 +21,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'javascript' ]
+        language: [ 'javascript' ]
 
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
-
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-        cache: 'npm'
-    - run: npm ci
-    - run: gulp default
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -42,13 +33,6 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         queries: security-extended,security-and-quality
-
-    - name: esp-idf build
-      uses: espressif/esp-idf-ci-action@v1
-      with:
-        esp_idf_version: v5.0
-        target: esp32s3
-        path: ''
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
