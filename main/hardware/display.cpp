@@ -161,6 +161,7 @@ void display::gui_task()
     try
     {
         ui_instance_.load_boot_screen();
+        ui_instance_.load_boot_screen();
         lv_task_handler();
         ui_instance_.init();
 

@@ -15,9 +15,8 @@ class ui_boot_screen final : public ui_screen
         lv_obj_set_scrollbar_mode(screen_, LV_SCROLLBAR_MODE_OFF);
         lv_obj_set_style_bg_color(screen_, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        LV_IMG_DECLARE(ui_img_logo);
         boot_logo_ = lv_img_create(screen_);
-        lv_img_set_src(boot_logo_, &ui_img_logo);
+        lv_img_set_src(boot_logo_, "S:display/image/logo.png");
         lv_obj_set_size(boot_logo_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
         lv_obj_align(boot_logo_, LV_ALIGN_CENTER, 0, -20);
 

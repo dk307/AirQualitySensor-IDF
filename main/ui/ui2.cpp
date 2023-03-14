@@ -32,7 +32,7 @@ lv_font_t *ui::lv_font_from_sd_card(const char *path)
     return font;
 }
 
-void ui::load_from_sd_card()
+void ui::check_sd_card_ready()
 {
     if (lv_fs_is_ready('S'))
     {
@@ -41,13 +41,17 @@ void ui::load_from_sd_card()
     else
     {
         ESP_LOGE(UI_TAG, "lv fs not ready");
+        CHECK_THROW_ESP2(ESP_FAIL, "SD Card is not ready");
     }
+}
 
-    common_fonts_.font_montserrat_regular_numbers_40 = lv_font_from_sd_card("S:/display/font/montserrat/ui_font_m40regularnumbers.bin");
+void ui::load_from_sd_card()
+{
+    common_fonts_.font_montserrat_regular_numbers_40 = lv_font_from_sd_card("S:/display/font/ui_font_m40regularnumbers.bin");
     common_fonts_.font_big_panel = lv_font_from_sd_card("S:display/font/big_panel_top.bin");
-    common_fonts_.font_montserrat_medium_48 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m48medium.bin");
-    common_fonts_.font_montserrat_medium_14 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m14medium.bin");
-    common_fonts_.font_montserrat_medium_units_18 = lv_font_from_sd_card("S:display/font/montserrat/ui_font_m18unitsmedium.bin");
+    common_fonts_.font_montserrat_medium_48 = lv_font_from_sd_card("S:display/font/ui_font_m48medium.bin");
+    common_fonts_.font_montserrat_medium_14 = lv_font_from_sd_card("S:display/font/ui_font_m14medium.bin");
+    common_fonts_.font_montserrat_medium_units_18 = lv_font_from_sd_card("S:display/font/ui_font_m18unitsmedium.bin");
     common_fonts_.font_temp_hum = lv_font_from_sd_card("S:display/font/temp_hum.bin");
 
     ESP_LOGI(UI_TAG, "Loaded From SD Card");
@@ -63,6 +67,8 @@ void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 
 void ui::load_boot_screen()
 {
+    check_sd_card_ready();
+    
     // lv_log_register_print_cb(&lv_logger);
     lv_disp_t *dispp = lv_disp_get_default();
 
