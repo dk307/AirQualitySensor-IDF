@@ -7,11 +7,9 @@ managed_components/
 .vscode/launch.json
 .vscode/ipch
 node_modules
-src/sdcard/web
+sdcard/
+main/generated/
+
 
 # temp files for debug
-main/web/static/js/s.js
-main/sdcard/web/s-min.js.gz
-main/sdcard/web/s.js.gz
-main/sdcard/web/s-min.js.gz
 /debug.log

@@ -60,6 +60,7 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     ui_hardware_info_screen hardware_info_screen_{ui_interface_instance_, *this, &common_fonts_};
     ui_wifi_enroll_screen wifi_enroll_screen_{ui_interface_instance_, *this, &common_fonts_};
 
+    void check_sd_card_ready();
     void load_from_sd_card();
     void init_no_wifi_image();
     void init_top_message();

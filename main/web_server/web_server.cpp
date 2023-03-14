@@ -1,5 +1,9 @@
 #include "web_server.h"
 #include "config/config_manager.h"
+#include "generated/web/include/debug.html.gz.h"
+#include "generated/web/include/fs.html.gz.h"
+#include "generated/web/include/index.html.gz.h"
+#include "generated/web/include/login.html.gz.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
 #include "logging/commands.h"
@@ -17,10 +21,6 @@
 #include "util/misc.h"
 #include "util/ota.h"
 #include "util/psram_allocator.h"
-#include "web/include/debug.html.gz.h"
-#include "web/include/fs.html.gz.h"
-#include "web/include/index.html.gz.h"
-#include "web/include/login.html.gz.h"
 #include <ArduinoJson.h>
 #include <dirent.h>
 #include <esp_log.h>
@@ -28,6 +28,7 @@
 #include <mbedtls/md.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
 
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
@@ -74,8 +75,7 @@ std::string create_hash(const credentials &cred, const std::string &host)
     return esp32::format_hex(result);
 }
 
-template <const uint8_t data[], const auto len, const char *sha256> 
-void web_server::handle_array_page_with_auth(esp32::http_request &request)
+template <const uint8_t data[], const auto len, const char *sha256> void web_server::handle_array_page_with_auth(esp32::http_request &request)
 {
     if (!is_authenticated(request))
     {
