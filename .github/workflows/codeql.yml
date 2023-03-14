@@ -24,8 +24,24 @@ jobs:
         language: [ 'cpp', 'javascript' ]
 
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+    - run: npm ci
+    - run: gulp default
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: v5.0
+        target: esp32s3
+        path: ''
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
