@@ -4,25 +4,7 @@
 #include <stdint.h>
 #include <type_traits>
 
-namespace Helper
-{
-template <bool FITS8, bool FITS16> struct Index
-{
-    using Type = uint32_t;
-};
-
-template <> struct Index<false, true>
-{
-    using Type = uint16_t;
-};
-
-template <> struct Index<true, true>
-{
-    using Type = uint8_t;
-};
-} // namespace Helper
-
-template <typename T, size_t S, typename IT = typename Helper::Index<(S <= UINT8_MAX), (S <= UINT16_MAX)>::Type>
+template <typename T, size_t S, typename IT = size_t>
     requires std::is_trivially_copyable_v<T>
 class circular_buffer
 {

@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <stdint.h>
 
-
 enum class sensor_id_index : uint8_t
 {
     pm_2_5 = 0,
