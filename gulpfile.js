@@ -16,9 +16,7 @@ var log = require('fancy-log');
 
 const baseFolder = 'static/';
 const tempWebFolder = baseFolder + 'web/temp/data/';
-const displayWebFolder = baseFolder + 'display/temp/data/';
 const staticWebInclude = 'main/generated/web/include';
-const staticDisplayInclude = 'main/generated/display/include';
 const sdcardFolder = 'sdcard/';
 
 var toHeader = function(name, debug) {
