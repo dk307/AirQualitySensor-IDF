@@ -15,6 +15,6 @@ jobs:
     - name: Run clang-format style check
       uses: jidicula/clang-format-action@v4.10.2
       with:
-        clang-format-version: '13'
+        clang-format-version: '15'
         check-path: 'main'
         exclude-regex: '(main/lv_conf.h|main/hardware/sps30/*)'
