@@ -29,7 +29,7 @@ class logger : esp32::noncopyable
         set_logging_level("*", level);
     }
 
-    static logger instance;
+    static logger &get_instance();
 
   private:
     logger();

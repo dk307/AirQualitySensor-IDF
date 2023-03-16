@@ -5,13 +5,12 @@
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
 #include "http_ota/http.h"
-#include "logging/logging.h"
+#include "logging/logger.h"
 #include "logging/logging_tags.h"
 #include "sdkconfig.h"
 #include "util/exceptions.h"
 #include "web_server/web_server.h"
 #include "wifi/wifi_manager.h"
-#include <esp_chip_info.h>
 #include <esp_flash.h>
 #include <esp_log.h>
 #include <nvs_flash.h>
@@ -59,7 +58,7 @@ extern "C" void app_main(void)
 
         CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, APP_INIT_DONE));
 
-        ESP_LOGI(OPERATIONS_TAG, "Main task is done!");
+        ESP_LOGI(OPERATIONS_TAG, "Main task is done");
     }
     catch (const std::exception &ex)
     {

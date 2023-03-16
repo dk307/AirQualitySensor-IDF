@@ -73,14 +73,14 @@ std::string hardware::get_chip_details()
         flash_size_str = esp32::string::stringify_size(flash_size);
     }
 
-    return esp32::string::sprintf("%s Rev. %d Cores: %d Flash size: %s", model.data(), chip_info.revision, static_cast<int>(chip_info.cores),
+    return esp32::string::sprintf("%.*s Rev. %d Cores: %d Flash size: %s", model.length(), model.data(), chip_info.revision, static_cast<int>(chip_info.cores),
                                   flash_size_str.c_str());
 }
 
 std::string hardware::get_reset_reason_string()
 {
     const auto reset_reason = esp_reset_reason();
-    std::string reset_reason_string;
+    std::string_view reset_reason_string;
     switch (reset_reason)
     {
     case ESP_RST_POWERON:
@@ -114,7 +114,7 @@ std::string hardware::get_reset_reason_string()
         reset_reason_string = "Unknown reset reason";
         break;
     }
-    return reset_reason_string;
+    return std::string(reset_reason_string);
 }
 
 std::string hardware::get_version()

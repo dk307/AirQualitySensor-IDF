@@ -7,7 +7,7 @@
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
 #include "logging/commands.h"
-#include "logging/logging.h"
+#include "logging/logger.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
 #include "util/async_web_server/http_request.h"
@@ -840,7 +840,7 @@ void web_server::handle_web_logging_start(esp32::http_request &request)
         return;
     }
 
-    if (logger::instance.enable_web_logging([this](std::unique_ptr<std::string> log) { received_log_data(std::move(log)); }))
+    if (logger::get_instance().enable_web_logging([this](std::unique_ptr<std::string> log) { received_log_data(std::move(log)); }))
     {
         send_empty_200(request);
     }
@@ -859,7 +859,7 @@ void web_server::handle_web_logging_stop(esp32::http_request &request)
         return;
     }
 
-    logger::instance.disable_web_logging();
+    logger::get_instance().disable_web_logging();
     send_empty_200(request);
 }
 
@@ -872,7 +872,7 @@ void web_server::handle_sd_card_logging_start(esp32::http_request &request)
         return;
     }
 
-    if (logger::instance.enable_sd_logging())
+    if (logger::get_instance().enable_sd_logging())
     {
         send_empty_200(request);
     }
@@ -891,7 +891,7 @@ void web_server::handle_sd_card_logging_stop(esp32::http_request &request)
         return;
     }
 
-    logger::instance.disable_sd_logging();
+    logger::get_instance().disable_sd_logging();
     send_empty_200(request);
 }
 
@@ -1008,7 +1008,7 @@ void web_server::on_set_logging_level(esp32::http_request &request)
         return;
     }
 
-    logger::instance.set_logging_level(tag_arg.value().c_str(), static_cast<esp_log_level_t>(log_level.value()));
+    logger::get_instance().set_logging_level(tag_arg.value().c_str(), static_cast<esp_log_level_t>(log_level.value()));
     send_empty_200(request);
 }
 

@@ -32,8 +32,6 @@ void http_server::begin()
 
     CHECK_THROW_ESP(httpd_start(&server_, &config));
     ESP_LOGI(WEBSERVER_TAG, "Started web server on port:%d", port_);
-
-    handlers_.reserve(config.max_uri_handlers);
 }
 
 void http_server::end()
@@ -52,8 +50,6 @@ void http_server::add_handler(const char *url, httpd_method_t method, url_handle
     handler.method = method;
     handler.handler = request_handler;
     handler.user_ctx = const_cast<void *>(user_ctx);
-
-    handlers_.emplace_back(handler);
-    CHECK_THROW_ESP(httpd_register_uri_handler(server_, &(*handlers_.rbegin())));
+    CHECK_THROW_ESP(httpd_register_uri_handler(server_, &handler));
 }
 } // namespace esp32

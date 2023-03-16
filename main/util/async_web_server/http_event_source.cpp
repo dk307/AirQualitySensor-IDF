@@ -7,9 +7,11 @@
 
 namespace esp32
 {
-
-#define CRLF_STR "\r\n"
-#define CRLF_LEN (sizeof(CRLF_STR) - 1)
+constexpr const std::string_view crlf_sv{"\r\n"};
+constexpr const std::string_view event_sv{"event: "};
+constexpr const std::string_view id_sv{"id: "};
+constexpr const std::string_view retry_sv{"retry: "};
+constexpr const std::string_view data_sv{"data: "};
 
 event_source_connection::event_source_connection(event_source *source, http_request *request) : source_(source)
 {
@@ -22,7 +24,7 @@ event_source_connection::event_source_connection(event_source *source, http_requ
     CHECK_THROW_ESP(httpd_resp_set_hdr(req, "Cache-Control", "no-cache"));
     CHECK_THROW_ESP(httpd_resp_set_hdr(req, "Connection", "keep-alive"));
 
-    CHECK_THROW_ESP(httpd_resp_send_chunk(req, CRLF_STR, CRLF_LEN));
+    CHECK_THROW_ESP(httpd_resp_send_chunk(req, crlf_sv.data(), crlf_sv.length()));
     req->sess_ctx = this;
     req->free_ctx = event_source_connection::destroy;
 }
@@ -47,30 +49,30 @@ void event_source_connection::try_send(const std::string_view &message, const st
 
     if (reconnect)
     {
-        event_str.append("retry: ", sizeof("retry: ") - 1);
+        event_str.append(retry_sv);
         event_str.append(esp32::string::to_string(reconnect));
-        event_str.append(CRLF_STR, CRLF_LEN);
+        event_str.append(crlf_sv);
     }
 
     if (id)
     {
-        event_str.append("id: ", sizeof("id: ") - 1);
+        event_str.append(id_sv);
         event_str.append(esp32::string::to_string(id));
-        event_str.append(CRLF_STR, CRLF_LEN);
+        event_str.append(crlf_sv);
     }
 
     if (event.length())
     {
-        event_str.append("event: ", sizeof("event: ") - 1);
+        event_str.append(event_sv);
         event_str.append(event);
-        event_str.append(CRLF_STR, CRLF_LEN);
+        event_str.append(crlf_sv);
     }
 
     if (message.length())
     {
-        event_str.append("data: ", sizeof("data: ") - 1);
+        event_str.append(data_sv);
         event_str.append(message);
-        event_str.append(CRLF_STR, CRLF_LEN);
+        event_str.append(crlf_sv);
     }
 
     if (event_str.empty())
@@ -78,17 +80,17 @@ void event_source_connection::try_send(const std::string_view &message, const st
         return;
     }
 
-    event_str.append(CRLF_STR, CRLF_LEN);
+    event_str.append(crlf_sv);
 
     // Sending chunked content prelude
-    const auto pre_event_str = esp32::string::snprintf("%x" CRLF_STR, 4 * sizeof(event_str.size()) + CRLF_LEN, event_str.size());
+    const auto pre_event_str = esp32::string::snprintf("%x%s", 4 * sizeof(event_str.size()) + crlf_sv.length(), event_str.size(), crlf_sv.data());
     httpd_socket_send(hd_, fd_, pre_event_str.c_str(), pre_event_str.size(), 0);
 
-    // Sendiing content chunk
+    // Sending content chunk
     httpd_socket_send(hd_, fd_, event_str.c_str(), event_str.size(), 0);
 
     // Indicate end of chunk
-    httpd_socket_send(hd_, fd_, CRLF_STR, CRLF_LEN, 0);
+    httpd_socket_send(hd_, fd_, crlf_sv.data(), crlf_sv.length(), 0);
 }
 
 event_source::~event_source()

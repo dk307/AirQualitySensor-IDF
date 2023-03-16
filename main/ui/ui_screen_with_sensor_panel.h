@@ -81,7 +81,7 @@ class ui_screen_with_sensor_panel : public ui_screen
 
         lv_obj_set_style_bg_color(panel, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_grad_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_shadow_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
+        // lv_obj_set_style_shadow_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
     static void __attribute__((noinline))

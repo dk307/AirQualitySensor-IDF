@@ -1,5 +1,5 @@
 #include "commands.h"
-#include "logging/logging.h"
+#include "logging/logger.h"
 #include "logging/logging_tags.h"
 #include "util/helper.h"
 #include <esp_log.h>
