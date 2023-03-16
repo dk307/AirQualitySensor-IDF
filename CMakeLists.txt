@@ -8,11 +8,11 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 idf_build_set_property(COMPILE_OPTIONS "-DLV_CONF_INCLUDE_SIMPLE=1" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-I../main" APPEND)
 
-
-# Disable annoying warnings (for now)
-#idf_build_set_property(COMPILE_OPTIONS "-Wno-format" APPEND)
-#idf_build_set_property(COMPILE_OPTIONS "-Wno-incompatible-pointer-types" APPEND)
-
+set(ESP_IDF_LIB_PATH ${CMAKE_CURRENT_LIST_DIR}/components/extra/esp-idf-lib/components)
+set(EXTRA_COMPONENT_DIRS ${ESP_IDF_LIB_PATH}/esp_idf_lib_helpers 
+                         ${ESP_IDF_LIB_PATH}/i2cdev 
+                         ${ESP_IDF_LIB_PATH}/bh1750 
+                         ${ESP_IDF_LIB_PATH}/sht3x)
 
 project(air_quality_sensor)
 

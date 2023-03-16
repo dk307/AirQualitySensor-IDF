@@ -4,3 +4,6 @@
 [submodule "components/lvgl"]
 	path = components/lvgl
 	url = git@github.com:lvgl/lvgl.git
+[submodule "components/extra/esp-idf-lib"]
+	path = components/extra/esp-idf-lib
+	url = git@github.com:UncleRus/esp-idf-lib.git
