@@ -121,6 +121,7 @@ class http_server : esp32::noncopyable
 
   private:
     const uint16_t port_{};
+
   protected:
     httpd_handle_t server_{};
 };
