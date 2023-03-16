@@ -1,0 +1,20 @@
+name: clang-format Check
+
+on:  
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run clang-format style check
+      uses: jidicula/clang-format-action@v4.10.2
+      with:
+        clang-format-version: '15'
+        check-path: 'main'
+        exclude-regex: '(main/lv_conf.h|main/hardware/sps30/*)'

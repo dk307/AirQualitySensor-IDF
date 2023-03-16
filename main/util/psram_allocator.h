@@ -18,20 +18,13 @@ template <typename T> class allocator
     typedef const T &const_reference;
     typedef T value_type;
 
-    allocator()
-    {
-    }
-    ~allocator()
-    {
-    }
+    allocator() = default;
+    ~allocator() = default;
 
     template <class U> struct rebind
     {
         typedef allocator<U> other;
     };
-    template <class U> allocator(const allocator<U> &)
-    {
-    }
 
     pointer address(reference x) const
     {

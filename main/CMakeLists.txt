@@ -25,7 +25,7 @@ idf_component_register(SRCS "main.cpp"
                             "http_ota/http.c"
                             "web_server/web_server.cpp"
                             "operations/operations.cpp"
-                            "logging/logging.cpp"
+                            "logging/logger.cpp"
                             "logging/commands.cpp"
 
                     INCLUDE_DIRS "."

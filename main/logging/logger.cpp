@@ -1,12 +1,10 @@
-#include "logging.h"
+#include "logger.h"
 #include "logging_tags.h"
 #include "util/helper.h"
 
 #include <esp_log.h>
 #include <string>
 #include <vector>
-
-logger logger::instance;
 
 class Esp32Hook;
 Esp32Hook *esp32_hook_ = nullptr;
@@ -50,7 +48,7 @@ class Esp32Hook
   private:
     static int esp32hook(const char *str, va_list arg)
     {
-        auto &&h = logger::instance.hook_instance_;
+        auto &&h = logger::get_instance().hook_instance_;
         if (h)
         {
             auto return_value = h->call_sinks(str, arg);
@@ -76,7 +74,7 @@ class Esp32Hook
         const size_t length = vsnprintf(nullptr, 0, fmt, args);
 
         log_str.resize(length);
-        vsnprintf(&log_str[0], length + 1, fmt, args);
+        vsnprintf(log_str.data(), length + 1, fmt, args);
 
         std::lock_guard<esp32::semaphore> lock(sinks_mutex_);
         for (auto &&sink : sinks_)
@@ -104,12 +102,12 @@ logger::logger()
 
 void logger::logging_shutdown_handler()
 {
-    std::lock_guard<esp32::semaphore> lock(logger::instance.hook_mutex_);
+    std::lock_guard<esp32::semaphore> lock(logger::get_instance().hook_mutex_);
     ESP_LOGI(LOGGING_TAG, "Flushing custom loggers");
 
-    if (logger::instance.sd_card_sink_instance_)
+    if (logger::get_instance().sd_card_sink_instance_)
     {
-        logger::instance.sd_card_sink_instance_->flush();
+        logger::get_instance().sd_card_sink_instance_->flush();
     }
 }
 
@@ -197,4 +195,10 @@ void logger::set_logging_level(const char *tag, esp_log_level_t level)
 
     ESP_LOGI(LOGGING_TAG, "Setting log level for %s to %d", tag, level);
     esp_log_level_set(logging_tags[logging_tags.size() - 1].data(), level);
+}
+
+logger &logger::get_instance()
+{
+    static logger instance;
+    return instance;
 }

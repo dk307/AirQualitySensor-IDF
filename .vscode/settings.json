@@ -85,7 +85,8 @@
         "source_location": "cpp",
         "span": "cpp",
         "esp_heap_caps.h": "c",
-        "esp_httpd_priv.h": "c"
+        "esp_httpd_priv.h": "c",
+        "esp_system.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

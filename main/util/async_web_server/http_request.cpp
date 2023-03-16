@@ -143,9 +143,7 @@ std::string http_request::client_ip_address() const
 {
     auto socket = httpd_req_to_sockfd(req_); // This is the socket for the request
 
-    struct sockaddr_in saddr
-    {
-    };
+    sockaddr_in saddr{};
     socklen_t saddr_len = sizeof(saddr);
 
     if (getpeername(socket, (struct sockaddr *)&saddr, &saddr_len) == 0)

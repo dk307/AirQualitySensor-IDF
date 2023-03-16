@@ -81,10 +81,11 @@ class ui_screen_with_sensor_panel : public ui_screen
 
         lv_obj_set_style_bg_color(panel, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_grad_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_shadow_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
+        // lv_obj_set_style_shadow_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-    static void __attribute__((noinline)) set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+    static void __attribute__((noinline))
+    set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<sensor_value::value_type> &value)
     {
         if (value.has_value())
         {
@@ -100,7 +101,8 @@ class ui_screen_with_sensor_panel : public ui_screen
             {
                 if (!pair.panel)
                 {
-                    lv_label_set_text_fmt(pair.label, "%d%.*s", final_value, sensor_definition.get_unit().size(), sensor_definition.get_unit().data());
+                    lv_label_set_text_fmt(pair.label, "%d%.*s", final_value, sensor_definition.get_unit().size(),
+                                          sensor_definition.get_unit().data());
                 }
                 else
                 {

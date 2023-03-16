@@ -9,7 +9,6 @@
 #include <esp_log.h>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 namespace esp32
 {
@@ -122,7 +121,6 @@ class http_server : esp32::noncopyable
 
   private:
     const uint16_t port_{};
-    std::vector<httpd_uri_t> handlers_;
 
   protected:
     httpd_handle_t server_{};

@@ -10,7 +10,7 @@ class ui_boot_screen final : public ui_screen
     void init() override
     {
         ui_screen::init();
-        
+
         lv_obj_clear_flag(screen_, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_scrollbar_mode(screen_, LV_SCROLLBAR_MODE_OFF);
         lv_obj_set_style_bg_color(screen_, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);

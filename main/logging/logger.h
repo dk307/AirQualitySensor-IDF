@@ -1,8 +1,8 @@
 #pragma once
 
+#include "sd_card_sink.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
-#include "sd_card_sink.h"
 #include "web_callback_sink.h"
 #include <esp_log.h>
 #include <vector>
@@ -29,7 +29,7 @@ class logger : esp32::noncopyable
         set_logging_level("*", level);
     }
 
-    static logger instance;
+    static logger &get_instance();
 
   private:
     logger();

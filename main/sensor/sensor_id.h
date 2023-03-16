@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <cstddef>
+#include <stdint.h>
 
 enum class sensor_id_index : uint8_t
 {

@@ -9,7 +9,6 @@
 
 namespace esp32
 {
-
 template <typename T> class default_event_subscriber_typed : noncopyable
 {
   public:
@@ -67,7 +66,7 @@ using default_event_subscriber = default_event_subscriber_typed<void *>;
 
 template <class T>
     requires(std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !std::is_reference_v<T>)
-inline esp_err_t event_post(esp_event_base_t event_base, int32_t event_id, T t, TickType_t ticks_to_wait = portMAX_DELAY)
+inline esp_err_t event_post(esp_event_base_t event_base, int32_t event_id, const T &t, TickType_t ticks_to_wait = portMAX_DELAY)
 {
     using final_T = std::remove_reference<T>::type;
     return esp_event_post(event_base, event_id, &t, sizeof(final_T), ticks_to_wait);

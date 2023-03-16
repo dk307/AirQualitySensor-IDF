@@ -11,7 +11,6 @@
 #include <memory>
 #include <string>
 
-
 struct wifi_status
 {
     bool connected;

@@ -13,29 +13,32 @@
 class sensor_definition_display
 {
   public:
-    sensor_definition_display(double range_min, double range_max, sensor_level level) : range_min(range_min), range_max(range_max), level(level)
+    constexpr sensor_definition_display(double range_min, double range_max, sensor_level level) noexcept
+        : range_min{range_min}, range_max{range_max}, level{level}
     {
     }
 
-    double get_range_min() const
+    constexpr double get_range_min() const noexcept
     {
         return range_min;
     }
-    double get_range_max() const
+
+    constexpr double get_range_max() const noexcept
     {
         return range_max;
     }
-    sensor_level get_level() const
+
+    constexpr sensor_level get_level() const noexcept
     {
         return level;
     }
 
-    bool is_in_range(double value) const
+    constexpr bool is_in_range(double value) const noexcept
     {
         return range_min <= value && value < range_max;
     }
 
-  private:
+  public:
     const double range_min;
     const double range_max;
     const sensor_level level;
@@ -44,9 +47,9 @@ class sensor_definition_display
 class sensor_definition
 {
   public:
-    sensor_definition(const std::string_view &name, const std::string_view &unit, const sensor_definition_display *display_definitions,
-                      size_t display_definitions_count)
-        : name_(name), unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count)
+    constexpr sensor_definition(const std::string_view &name, const std::string_view &unit, const sensor_definition_display *display_definitions,
+                                size_t display_definitions_count) noexcept
+        : name_{name}, unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count)
     {
     }
 
@@ -62,11 +65,11 @@ class sensor_definition
         return display_definitions_[0].get_level();
     }
 
-    const std::string_view &get_unit() const
+    constexpr const std::string_view &get_unit() const noexcept
     {
         return unit_;
     }
-    const std::string_view &get_name() const
+    constexpr const std::string_view &get_name() const noexcept
     {
         return name_;
     }

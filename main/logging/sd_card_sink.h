@@ -8,10 +8,10 @@
 #include "util/filesystem/file_info.h"
 #include "util/filesystem/filesystem.h"
 #include "util/helper.h"
+#include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
 #include "util/static_queue.h"
 #include "util/task_wrapper.h"
-#include "util/psram_allocator.h"
 #include <esp_log.h>
 #include <filesystem>
 #include <mutex>
@@ -21,7 +21,7 @@ class sd_card_sink final : public logger_hook_sink
   public:
     sd_card_sink() : background_log_task_([this] { flush_to_disk_task(); })
     {
-        background_log_task_.spawn_pinned("sd_card_sink", 3 * 1024, tskIDLE_PRIORITY, esp32::main_task_core);
+        background_log_task_.spawn_pinned("sd_card_sink", 4 * 1024, tskIDLE_PRIORITY, esp32::main_task_core);
     }
 
     ~sd_card_sink()
@@ -80,13 +80,13 @@ class sd_card_sink final : public logger_hook_sink
                 auto a = sd_card_path_;
                 if (i)
                 {
-                    a.replace_filename(sd_card_path_.filename().native() + esp32::string::to_string(i));
+                    a.replace_filename(sd_card_path_.stem().native() + esp32::string::to_string(i) + sd_card_path_.extension().native());
                 }
 
                 if (esp32::filesystem::exists(a))
                 {
                     auto b = sd_card_path_;
-                    b.replace_filename(sd_card_path_.filename().native() + esp32::string::to_string(i));
+                    b.replace_filename(sd_card_path_.stem().native() + esp32::string::to_string(i) + sd_card_path_.extension().native());
                     esp32::filesystem::remove(b);
                     esp32::filesystem::rename(a, b);
                 }
