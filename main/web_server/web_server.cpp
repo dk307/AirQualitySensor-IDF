@@ -312,10 +312,11 @@ void web_server::handle_other_settings_update(esp32::http_request &request)
     }
 
     const auto arguments = request.get_form_url_encoded_arguments(
-        {"hostName", "ntpServer", "ntpServerRefreshInterval", "timezone", "autoScreenBrightness", "screenBrightness"});
+        {"hostName", "ntpServer", "ntpServerRefreshInterval", "timezone", "autoScreenBrightness", "screenBrightness", "useFahrenheit"});
     auto &&host_name = arguments[0];
     auto &&auto_screen_brightness = arguments[4];
     auto &&screen_brightness = arguments[5];
+    auto &&use_fahrenheit = arguments[6];
 
     if (host_name.has_value())
     {
@@ -331,6 +332,8 @@ void web_server::handle_other_settings_update(esp32::http_request &request)
     {
         config::instance.data.set_manual_screen_brightness(std::nullopt);
     }
+
+    config::instance.data.set_use_fahrenheit(use_fahrenheit.has_value());
 
     config::instance.save();
 

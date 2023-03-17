@@ -50,11 +50,11 @@ inline std::string to_string(unsigned long long value)
 }
 inline std::string to_string(float value)
 {
-    return snprintf("%f", 32, value);
+    return snprintf("%g", 32, value);
 }
 inline std::string to_string(double value)
 {
-    return snprintf("%f", 32, value);
+    return snprintf("%g", 32, value);
 }
 inline std::string to_string(long double value)
 {

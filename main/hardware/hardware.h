@@ -30,7 +30,7 @@ class hardware final : ui_interface, esp32::noncopyable
     // ui_interface
     information_table_type get_information_table(information_type type) override;
     void set_screen_brightness(uint8_t value) override;
-    std::optional<sensor_value::value_type> get_sensor_value(sensor_id_index index) const override;
+    std::optional<int16_t> get_sensor_value(sensor_id_index index) const override;
     sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index) override;
     wifi_status get_wifi_status() override;
     bool clean_sps_30() override;
@@ -55,7 +55,7 @@ class hardware final : ui_interface, esp32::noncopyable
 
     esp32::task sensor_refresh_task;
 
-    using light_sensor_values_t = sensor_history_t<sensor_value::value_type, 6>;
+    using light_sensor_values_t = sensor_history_t<int16_t, 6>;
     light_sensor_values_t light_sensor_values;
 
     constexpr static gpio_num_t SDAWire = GPIO_NUM_11;
@@ -73,16 +73,15 @@ class hardware final : ui_interface, esp32::noncopyable
     i2c_dev_t bh1750_sensor{};
     uint64_t bh1750_sensor_last_read = 0;
 
-    void set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value);
+    void set_sensor_value(sensor_id_index index, float value, float precision);
 
     void read_bh1750_sensor();
     void read_sht3x_sensor();
     esp_err_t sps30_i2c_init();
     void read_sps30_sensor();
-    uint8_t lux_to_intensity(sensor_value::value_type lux);
+    uint8_t lux_to_intensity(uint16_t lux);
     void set_auto_display_brightness();
 
-    static std::optional<sensor_value::value_type> round_value(float val, int places = 0);
     void sensor_task_ftn();
 
     // info

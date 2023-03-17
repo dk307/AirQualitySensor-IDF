@@ -22,7 +22,7 @@ class ui_interface
     virtual information_table_type get_information_table(information_type type) = 0;
 
     virtual void set_screen_brightness(uint8_t value) = 0;
-    virtual std::optional<sensor_value::value_type> get_sensor_value(sensor_id_index index) const = 0;
+    virtual std::optional<int16_t> get_sensor_value(sensor_id_index index) const = 0;
     virtual sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index) = 0;
     virtual wifi_status get_wifi_status() = 0;
 

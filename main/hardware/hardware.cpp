@@ -33,10 +33,10 @@ void hardware::set_screen_brightness(uint8_t value)
     }
 }
 
-std::optional<sensor_value::value_type> hardware::get_sensor_value(sensor_id_index index) const
+std::optional<int16_t> hardware::get_sensor_value(sensor_id_index index) const
 {
     auto &&sensor = get_sensor(index);
-    return sensor.get_value();
+    return sensor.get_value_as<int16_t>();
 }
 
 sensor_history::sensor_history_snapshot hardware::get_sensor_detail_info(sensor_id_index index)
@@ -83,14 +83,17 @@ void hardware::begin()
     sensor_refresh_task.spawn_pinned("sensor_task", 4 * 1024, esp32::task::default_priority, esp32::hardware_core);
 }
 
-void hardware::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+void hardware::set_sensor_value(sensor_id_index index, float value, float precision)
 {
     bool changed;
     const auto i = static_cast<size_t>(index);
-    if (value.has_value())
+    if (!std::isnan(value))
     {
-        (*sensors_history)[i].add_value(value.value());
-        changed = sensors[i].set_value(value.value());
+        const auto history_value = static_cast<int16_t>(std::lround(value));
+        (*sensors_history)[i].add_value(history_value);
+        changed = sensors[i].set_value(value, precision);
+        ESP_LOGI(HARDWARE_TAG, "Updated for sensor:%.*s Value:%g History:%d", get_sensor_name(index).size(), get_sensor_name(index).data(),
+                 sensors[i].get_value().value_or(NAN), history_value);
     }
     else
     {
@@ -187,16 +190,16 @@ void hardware::read_bh1750_sensor()
     {
         if (lux.has_value())
         {
-            const auto value = round_value(lux.value());
-            ESP_LOGI(SENSOR_BH1750_TAG, "Setting new value:%d lux", value.value_or(std::numeric_limits<sensor_value::value_type>::max()));
-            set_sensor_value(sensor_id_index::light_intensity, value);
+            const auto value = lux.value();
+            ESP_LOGI(SENSOR_BH1750_TAG, "Read BH1750 value:%d lux", value);
             bh1750_sensor_last_read = now;
         }
         else
         {
             ESP_LOGW(SENSOR_BH1750_TAG, "Failed to read from BH1750");
-            set_sensor_value(sensor_id_index::light_intensity, std::nullopt);
         }
+
+        set_sensor_value(sensor_id_index::light_intensity, lux.has_value() ? lux.value() : NAN, 1);
     }
 }
 
@@ -205,25 +208,24 @@ void hardware::read_sht3x_sensor()
     const auto now = esp32::millis();
     if (now - sht3x_sensor_last_read >= sensor_history::sensor_interval)
     {
-        float temperature = NAN;
+        float temperatureC = NAN;
         float humidity = NAN;
-        auto err = sht3x_measure(&sht3x_sensor, &temperature, &humidity);
+        auto err = sht3x_measure(&sht3x_sensor, &temperatureC, &humidity);
+        float temperatureF = NAN;
         if (err == ESP_OK)
         {
-            const auto temp = round_value((temperature * 1.8) + 32);
-            const auto hum = round_value(humidity);
-            ESP_LOGI(SENSOR_SHT31_TAG, "Setting SHT31 sensor values:%d F, %d %%", temp.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-                     hum.value_or(std::numeric_limits<sensor_value::value_type>::max()));
-            set_sensor_value(sensor_id_index::temperatureF, temp);
-            set_sensor_value(sensor_id_index::humidity, hum);
+            temperatureF = (temperatureC * 1.8) + 32;
+            ESP_LOGI(SENSOR_SHT31_TAG, "Read SHT31 sensor values:%g F, %g C  %g %%", temperatureF, temperatureC, humidity);
             sht3x_sensor_last_read = now;
         }
         else
         {
             ESP_LOGE(SENSOR_SHT31_TAG, "Failed to read from SHT3x sensor with error:%s", esp_err_to_name(err));
-            set_sensor_value(sensor_id_index::temperatureF, std::nullopt);
-            set_sensor_value(sensor_id_index::humidity, std::nullopt);
         }
+
+        set_sensor_value(sensor_id_index::temperatureC, temperatureC, 0.01);
+        set_sensor_value(sensor_id_index::temperatureF, temperatureF, 0.1);
+        set_sensor_value(sensor_id_index::humidity, humidity, 1);
     }
 }
 
@@ -232,11 +234,15 @@ void hardware::read_sps30_sensor()
     const auto now = esp32::millis();
     if (now - sps30_sensor_last_read >= sensor_history::sensor_interval)
     {
-
-        bool read = false;
         uint16_t ready = 0;
 
         auto error = sps30_read_data_ready(&ready);
+
+        auto val_10 = NAN;
+        auto val_1 = NAN;
+        auto val_2_5 = NAN;
+        auto val_4 = NAN;
+        auto val_p = NAN;
 
         if ((error == NO_ERROR) && ready)
         {
@@ -245,26 +251,15 @@ void hardware::read_sps30_sensor()
             if (error == NO_ERROR)
             {
                 sps30_sensor_last_read = now;
-                read = true;
 
-                const auto val_10 = round_value(m.mc_10p0);
-                const auto val_1 = round_value(m.mc_1p0);
-                const auto val_2_5 = round_value(m.mc_2p5);
-                const auto val_4 = round_value(m.mc_4p0);
-                const auto val_p = round_value(m.typical_particle_size);
+                val_10 = (m.mc_10p0);
+                val_1 = (m.mc_1p0);
+                val_2_5 = (m.mc_2p5);
+                val_4 = (m.mc_4p0);
+                val_p = (m.typical_particle_size);
 
-                ESP_LOGI(SENSOR_SPS30_TAG, "Setting SPS30 sensor values PM2.5:%d, PM1:%d, PM4:%d, PM10:%d, Particle Size:%d",
-                         val_2_5.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-                         val_1.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-                         val_4.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-                         val_10.value_or(std::numeric_limits<sensor_value::value_type>::max()),
-                         val_p.value_or(std::numeric_limits<sensor_value::value_type>::max()));
-
-                set_sensor_value(sensor_id_index::pm_10, val_10);
-                set_sensor_value(sensor_id_index::pm_1, val_1);
-                set_sensor_value(sensor_id_index::pm_2_5, val_2_5);
-                set_sensor_value(sensor_id_index::pm_4, val_4);
-                set_sensor_value(sensor_id_index::typical_particle_size, val_p);
+                ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", val_2_5, val_1, val_4,
+                         val_10, val_p);
             }
             else
             {
@@ -276,30 +271,15 @@ void hardware::read_sps30_sensor()
             ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with data not ready error:0x%x", error);
         }
 
-        if (!read)
-        {
-            set_sensor_value(sensor_id_index::pm_10, std::nullopt);
-            set_sensor_value(sensor_id_index::pm_1, std::nullopt);
-            set_sensor_value(sensor_id_index::pm_2_5, std::nullopt);
-            set_sensor_value(sensor_id_index::pm_4, std::nullopt);
-            set_sensor_value(sensor_id_index::typical_particle_size, std::nullopt);
-        }
+        set_sensor_value(sensor_id_index::pm_10, val_10, 1);
+        set_sensor_value(sensor_id_index::pm_1, val_1, 1);
+        set_sensor_value(sensor_id_index::pm_2_5, val_2_5, 1);
+        set_sensor_value(sensor_id_index::pm_4, val_4, 1);
+        set_sensor_value(sensor_id_index::typical_particle_size, val_p, 0.1);
     }
 }
 
-std::optional<sensor_value::value_type> hardware::round_value(float val, int places)
-{
-    if (!isnan(val))
-    {
-        const auto expVal = places == 0 ? 1 : pow(10, places);
-        const auto result = float(uint64_t(expVal * val + 0.5)) / expVal;
-        return static_cast<sensor_value::value_type>(result);
-    }
-
-    return std::nullopt;
-}
-
-uint8_t hardware::lux_to_intensity(sensor_value::value_type lux)
+uint8_t hardware::lux_to_intensity(uint16_t lux)
 {
     if (lux != 0)
     {

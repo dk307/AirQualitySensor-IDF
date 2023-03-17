@@ -26,6 +26,7 @@ class config_data : esp32::noncopyable
         web_user_credentials_ = credentials(defaultUserIDPassword, defaultUserIDPassword);
         wifi_credentials_ = credentials();
         manual_screen_brightness_.reset();
+        useFahrenheit = true;
     }
 
     std::string get_host_name() const
@@ -75,12 +76,24 @@ class config_data : esp32::noncopyable
         return wifi_credentials_;
     }
 
+    bool is_use_fahrenheit() const
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        return useFahrenheit;
+    }
+    void set_use_fahrenheit(bool use_fahrenheit)
+    {
+        std::lock_guard<esp32::semaphore> lock(data_mutex_);
+        useFahrenheit = use_fahrenheit;
+    }
+
   private:
     std::string host_name_;
     credentials web_user_credentials_;
     credentials wifi_credentials_;
     std::optional<uint8_t> manual_screen_brightness_;
     mutable esp32::semaphore data_mutex_;
+    bool useFahrenheit;
 };
 
 class config : public esp32::noncopyable

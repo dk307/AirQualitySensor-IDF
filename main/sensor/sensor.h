@@ -5,9 +5,10 @@
 #include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
 #include <atomic>
-#include <math.h>
+#include <cmath>
 #include <mutex>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 class sensor_definition_display
@@ -81,43 +82,61 @@ class sensor_definition
     const uint8_t display_definitions_count_;
 };
 
-template <class T> class sensor_value_t
+class sensor_value
 {
   public:
-    typedef T value_type;
-
-    std::optional<value_type> get_value() const
+    std::optional<float> get_value() const
     {
-        return value.load();
+        const auto value = value_.load();
+        if (std::isnan(value))
+        {
+            return std::nullopt;
+        }
+        return value;
     }
 
-    bool set_value(T value_)
+    static float round(float value, float precision)
     {
-        return set_value_(value_);
+        return (!std::isnan(value)) ? std::round(value / precision) * precision : value;
+    }
+
+    template <class T>
+    std::optional<T> get_value_as() const
+        requires std::is_integral_v<T>
+    {
+        const auto value = value_.load();
+        if (std::isnan(value))
+        {
+            return std::nullopt;
+        }
+        return static_cast<T>(std::lround(value));
+    }
+
+    bool set_value(float value, double precision)
+    {
+        return set_value_(round(value, precision));
     }
 
     bool set_invalid_value()
     {
-        return set_value_(std::nullopt);
+        return set_value_(NAN);
     }
 
   private:
-    std::atomic<std::optional<T>> value;
+    std::atomic<float> value_{NAN};
 
     /**
      * Returns true if changed
      */
-    bool set_value_(std::optional<value_type> value_)
+    bool set_value_(float value)
     {
-        if (value.exchange(value_) != value_)
+        if (value_.exchange(value) != value)
         {
             return true;
         }
         return false;
     }
 };
-
-using sensor_value = sensor_value_t<int16_t>;
 
 template <class T, uint16_t countT> class sensor_history_t
 {
@@ -224,7 +243,7 @@ class sensor_history_minute_t : public sensor_history_t<T, reads_per_minuteT * m
     static constexpr auto sensor_interval = (60 * 1000 / reads_per_minute);
 };
 
-using sensor_history = sensor_history_minute_t<sensor_value::value_type, 12, 240>;
+using sensor_history = sensor_history_minute_t<int16_t, 12, 240>;
 
 const sensor_definition &get_sensor_definition(sensor_id_index id);
 const std::string_view &get_sensor_name(sensor_id_index id);

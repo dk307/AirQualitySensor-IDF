@@ -86,6 +86,9 @@ void ui::init()
 {
     load_from_sd_card(); // might take some time
 
+    // dont't cache boot screen
+    lv_img_cache_invalidate_src(NULL);
+
     init_top_message();
     init_no_wifi_image();
 
@@ -153,7 +156,7 @@ void ui::init_top_message()
     lv_timer_pause(top_message_timer_);
 }
 
-void ui::set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+void ui::set_sensor_value(sensor_id_index index, const std::optional<int16_t> &value)
 {
     if (main_screen_.is_active())
     {

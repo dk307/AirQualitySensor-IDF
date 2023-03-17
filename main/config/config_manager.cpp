@@ -18,6 +18,7 @@ static const char WebPasswordId[] = "webpassword";
 static const char SsidId[] = "ssid";
 static const char SsidPasswordId[] = "ssidpassword";
 static const char ScreenBrightnessId[] = "screenbrightness";
+static const char UsefahrenheitId[] = "usefahrenheit";
 
 config config::instance;
 
@@ -87,6 +88,8 @@ bool config::begin()
     const auto screen_brightness = json_document[ScreenBrightnessId];
     data.set_manual_screen_brightness(!screen_brightness.isNull() ? std::optional<uint8_t>(screen_brightness.as<uint8_t>()) : std::nullopt);
 
+    data.set_use_fahrenheit(json_document[UsefahrenheitId].as<bool>());
+
     ESP_LOGI(CONFIG_TAG, "Loaded Config from file");
 
     ESP_LOGI(CONFIG_TAG, "Hostname:%s", data.get_host_name().c_str());
@@ -95,6 +98,7 @@ bool config::begin()
     ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", data.get_wifi_credentials().get_user_name().c_str());
     ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", data.get_wifi_credentials().get_password().c_str());
     ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", data.get_manual_screen_brightness().value_or(0));
+    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%d", data.is_use_fahrenheit());
 
     return true;
 }
@@ -136,6 +140,8 @@ void config::save_config()
     {
         json_document[ScreenBrightnessId] = nullptr;
     }
+
+    json_document[(UsefahrenheitId)] = data.is_use_fahrenheit();
 
     std::string json;
     serializeJson(json_document, json);

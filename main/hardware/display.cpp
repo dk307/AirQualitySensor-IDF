@@ -192,11 +192,11 @@ void display::gui_task()
 
                 for (auto i = 1; i <= total_sensors; i++)
                 {
-                    if (notification_value & BIT(i))
+                    if ((notification_value & BIT(i)) || (notification_value & config_changed_bit))
                     {
                         const auto id = static_cast<sensor_id_index>(i - 1);
                         const auto &sensor = hardware::instance.get_sensor(id);
-                        const auto value = sensor.get_value();
+                        const auto value = sensor.get_value_as<int16_t>();
                         ui_instance_.set_sensor_value(id, value);
                     }
                 }
@@ -229,6 +229,9 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
         break;
     case APP_EVENT_REBOOT:
         xTaskNotify(lvgl_task_.handle(), task_notify_restarting_bit, eSetBits);
+        break;
+    case CONFIG_CHANGE:
+        xTaskNotify(lvgl_task_.handle(), config_changed_bit, eSetBits);
         break;
     }
 }
