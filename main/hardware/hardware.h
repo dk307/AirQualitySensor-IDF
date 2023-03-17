@@ -55,7 +55,7 @@ class hardware final : ui_interface, esp32::noncopyable
 
     esp32::task sensor_refresh_task;
 
-    using light_sensor_values_t = sensor_history_t<int16_t, 6>;
+    using light_sensor_values_t = sensor_history_t<6, 1>;
     light_sensor_values_t light_sensor_values;
 
     constexpr static gpio_num_t SDAWire = GPIO_NUM_11;

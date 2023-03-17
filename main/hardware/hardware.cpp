@@ -89,11 +89,10 @@ void hardware::set_sensor_value(sensor_id_index index, float value, float precis
     const auto i = static_cast<size_t>(index);
     if (!std::isnan(value))
     {
-        const auto history_value = static_cast<int16_t>(std::lround(value));
-        (*sensors_history)[i].add_value(history_value);
+        (*sensors_history)[i].add_value(value);
         changed = sensors[i].set_value(value, precision);
-        ESP_LOGI(HARDWARE_TAG, "Updated for sensor:%.*s Value:%g History:%d", get_sensor_name(index).size(), get_sensor_name(index).data(),
-                 sensors[i].get_value().value_or(NAN), history_value);
+        ESP_LOGI(HARDWARE_TAG, "Updated for sensor:%.*s Value:%g", get_sensor_name(index).size(), get_sensor_name(index).data(),
+                 sensors[i].get_value().value_or(NAN));
     }
     else
     {
