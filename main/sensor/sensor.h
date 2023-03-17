@@ -5,9 +5,10 @@
 #include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
 #include <atomic>
-#include <math.h>
+#include <cmath>
 #include <mutex>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 class sensor_definition_display
@@ -81,35 +82,55 @@ class sensor_definition
     const uint8_t display_definitions_count_;
 };
 
-template <class T> class sensor_value_t
+class sensor_value
 {
   public:
-    typedef T value_type;
-
-    std::optional<value_type> get_value() const
+    std::optional<float> get_value() const
     {
-        return value.load();
+        const auto value = value_.load();
+        if (std::isnan(value))
+        {
+            return std::nullopt;
+        }
+        return value;
     }
 
-    bool set_value(T value_)
+    static float round(float value, float precision)
     {
-        return set_value_(value_);
+        return (!std::isnan(value)) ? std::round(value / precision) * precision : value;
+    }
+
+    template <class T>
+    std::optional<T> get_value_as() const
+        requires std::is_integral_v<T>
+    {
+        const auto value = value_.load();
+        if (std::isnan(value))
+        {
+            return std::nullopt;
+        }
+        return std::lround<T>(value);
+    }
+
+    bool set_value(float value, double precision)
+    {
+        return set_value_(round(value, precision));
     }
 
     bool set_invalid_value()
     {
-        return set_value_(std::nullopt);
+        return set_value_(NAN);
     }
 
   private:
-    std::atomic<std::optional<T>> value;
+    std::atomic<float> value_{NAN};
 
     /**
      * Returns true if changed
      */
-    bool set_value_(std::optional<value_type> value_)
+    bool set_value_(float value)
     {
-        if (value.exchange(value_) != value_)
+        if (value_.exchange(value) != value)
         {
             return true;
         }
@@ -117,19 +138,17 @@ template <class T> class sensor_value_t
     }
 };
 
-using sensor_value = sensor_value_t<int16_t>;
-
-template <class T, uint16_t countT> class sensor_history_t
+template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
 {
   public:
     typedef struct
     {
-        T mean;
-        T min;
-        T max;
+        int16_t mean;
+        int16_t min;
+        int16_t max;
     } stats;
 
-    using vector_history_t = std::vector<T, esp32::psram::allocator<T>>;
+    using vector_history_t = std::vector<int16_t, esp32::psram::allocator<int16_t>>;
 
     typedef struct
     {
@@ -137,10 +156,10 @@ template <class T, uint16_t countT> class sensor_history_t
         vector_history_t history;
     } sensor_history_snapshot;
 
-    void add_value(T value)
+    void add_value(float value)
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        last_x_values_.push(value);
+        last_x_values_.push(std::lround<int32_t>(value * multiplierT));
     }
 
     void clear()
@@ -158,7 +177,7 @@ template <class T, uint16_t countT> class sensor_history_t
         if (size)
         {
             return_values.reserve(1 + (size / group_by_count));
-            stats stats_value{0, std::numeric_limits<T>::max(), std::numeric_limits<T>::min()};
+            stats stats_value{0, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min()};
             double sum = 0;
             double group_sum = 0;
             for (auto i = 0; i < size; i++)
@@ -166,12 +185,12 @@ template <class T, uint16_t countT> class sensor_history_t
                 const auto value = last_x_values_[i];
                 sum += value;
                 group_sum += value;
-                stats_value.max = std::max(value, stats_value.max);
-                stats_value.min = std::min(value, stats_value.min);
+                stats_value.max = std::max<int16_t>(std::lround<int16_t>(value / multiplierT), stats_value.max);
+                stats_value.min = std::min<int16_t>(std::lround<int16_t>(value / multiplierT), stats_value.min);
 
                 if (((i + 1) % group_by_count) == 0)
                 {
-                    return_values.push_back(group_sum / group_by_count);
+                    return_values.push_back(std::lround<int16_t>(group_sum / (multiplierT * group_by_count)));
                     group_sum = 0;
                 }
             }
@@ -179,10 +198,10 @@ template <class T, uint16_t countT> class sensor_history_t
             // add partial group average
             if (size % group_by_count)
             {
-                return_values.push_back(group_sum / (size % group_by_count));
+                return_values.push_back(std::lround<int16_t>(group_sum / (multiplierT * (size % group_by_count))));
             }
 
-            stats_value.mean = static_cast<T>(sum / size);
+            stats_value.mean = std::lround<int16_t>(sum / (size * multiplierT));
             return {stats_value, return_values};
         }
         else
@@ -191,7 +210,7 @@ template <class T, uint16_t countT> class sensor_history_t
         };
     }
 
-    std::optional<T> get_average() const
+    std::optional<int16_t> get_average() const
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
         const auto size = last_x_values_.size();
@@ -202,7 +221,7 @@ template <class T, uint16_t countT> class sensor_history_t
             {
                 sum += last_x_values_[i];
             }
-            return static_cast<T>(sum / size);
+            return static_cast<int16_t>(sum / (size * multiplierT));
         }
         else
         {
@@ -212,11 +231,10 @@ template <class T, uint16_t countT> class sensor_history_t
 
   private:
     mutable esp32::semaphore data_mutex_;
-    circular_buffer<T, countT> last_x_values_;
+    circular_buffer<int32_t, countT> last_x_values_;
 };
 
-template <class T, uint8_t reads_per_minuteT, uint16_t minutesT>
-class sensor_history_minute_t : public sensor_history_t<T, reads_per_minuteT * minutesT>
+template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_minute_t : public sensor_history_t<reads_per_minuteT * minutesT, 10>
 {
   public:
     static constexpr auto total_minutes = minutesT;
@@ -224,7 +242,7 @@ class sensor_history_minute_t : public sensor_history_t<T, reads_per_minuteT * m
     static constexpr auto sensor_interval = (60 * 1000 / reads_per_minute);
 };
 
-using sensor_history = sensor_history_minute_t<sensor_value::value_type, 12, 240>;
+using sensor_history = sensor_history_minute_t<12, 240>;
 
 const sensor_definition &get_sensor_definition(sensor_id_index id);
 const std::string_view &get_sensor_name(sensor_id_index id);

@@ -117,14 +117,14 @@ class wifi_events_notify final : esp32::noncopyable
                                    time);
     }
 
-    constexpr static auto CONNECTED_BIT = BIT0;
-    constexpr static auto DISCONNECTED_BIT = BIT1;
-    constexpr static auto GOTIP_BIT = BIT2;
-    constexpr static auto LOSTIP_BIT = BIT3;
-    constexpr static auto CONFIG_CHANGED = BIT4;
-    constexpr static auto WIFI_ENROLL_START = BIT5;
-    constexpr static auto WIFI_ENROLL_DONE = BIT6;
-    constexpr static auto WIFI_ENROLL_CANCEL = BIT7;
+    constexpr static uint32_t CONNECTED_BIT = BIT0;
+    constexpr static uint32_t DISCONNECTED_BIT = BIT1;
+    constexpr static uint32_t GOTIP_BIT = BIT2;
+    constexpr static uint32_t LOSTIP_BIT = BIT3;
+    constexpr static uint32_t CONFIG_CHANGED = BIT4;
+    constexpr static uint32_t WIFI_ENROLL_START = BIT5;
+    constexpr static uint32_t WIFI_ENROLL_DONE = BIT6;
+    constexpr static uint32_t WIFI_ENROLL_CANCEL = BIT7;
 
   private:
     EventGroupHandle_t wifi_event_group_;

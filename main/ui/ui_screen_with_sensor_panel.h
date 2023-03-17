@@ -84,8 +84,7 @@ class ui_screen_with_sensor_panel : public ui_screen
         // lv_obj_set_style_shadow_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-    static void __attribute__((noinline))
-    set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+    static void __attribute__((noinline)) set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<int16_t> &value)
     {
         if (value.has_value())
         {

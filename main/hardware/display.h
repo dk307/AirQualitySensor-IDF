@@ -45,7 +45,8 @@ class display final : esp32::noncopyable
     void set_main_screen();
     void app_event_handler(esp_event_base_t, int32_t, void *);
 
-    const int task_notify_wifi_changed_bit = BIT(total_sensors + 1);
-    const int set_main_screen_changed_bit = BIT(total_sensors + 2);
-    const int task_notify_restarting_bit = BIT(total_sensors + 3);
+    constexpr static uint32_t task_notify_wifi_changed_bit = BIT(total_sensors + 1);
+    constexpr static uint32_t set_main_screen_changed_bit = BIT(total_sensors + 2);
+    constexpr static uint32_t task_notify_restarting_bit = BIT(total_sensors + 3);
+    constexpr static uint32_t config_changed_bit = BIT(total_sensors + 4);
 };

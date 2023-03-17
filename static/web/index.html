@@ -288,6 +288,15 @@
                                 <input type="text" id="hostName" name="hostName" class="form-control" />
                             </div>
 
+                            <div class="input-group mb-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" name="useFahrenheit"
+                                        id="useFahrenheit" />
+                                    <label class="form-check-label" for="useFahrenheit">Use Fahrenheit for
+                                        Display</label>
+                                </div>
+                            </div>
+
                             <div class="mb-2 d-flex border rounded">
                                 <div class="row align-items-center">
                                     <div class="col-3">
@@ -576,6 +585,7 @@
                     dataType: "json",
                     success: function (data) {
                         $('#hostName').val(data["hostname"]);
+                        $('#useFahrenheit').prop('checked', data["usefahrenheit"]);
 
                         var brightness = data["screenbrightness"];
                         if (brightness == null) {

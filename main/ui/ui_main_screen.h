@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ui_screen_with_sensor_panel.h"
-
+#include "config/config_manager.h"
 #include "sensor/sensor.h"
+#include "ui_screen_with_sensor_panel.h"
 
 class ui_main_screen final : public ui_screen_with_sensor_panel
 {
@@ -19,24 +19,36 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         constexpr int big_panel_w = (screen_width * 3) / 4;
         constexpr int big_panel_h = ((screen_height * 2) / 3) - 15;
 
-        panel_and_labels_[static_cast<size_t>(sensor_id_index::pm_2_5)] =
-            create_big_panel((screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h);
-
-        panel_and_labels_[static_cast<size_t>(sensor_id_index::temperatureF)] = create_temperature_panel(10, -10);
-        panel_and_labels_[static_cast<size_t>(sensor_id_index::humidity)] = create_humidity_panel(-10, -10);
+        pm_2_5_panel_and_labels_ = create_big_panel((screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h);
+        temperature_panel_and_labels_ = create_temperature_panel(10, -10);
+        humidity_panel_and_labels_ = create_humidity_panel(-10, -10);
 
         lv_obj_add_event_cb(screen_, event_callback<ui_main_screen, &ui_main_screen::screen_callback>, LV_EVENT_ALL, this);
         ESP_LOGD(UI_TAG, "Main screen init done");
     }
 
-    void set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+    void set_sensor_value(sensor_id_index index, const std::optional<int16_t> &value)
     {
-        const auto &pair = panel_and_labels_.at(static_cast<size_t>(index));
-        if (pair.is_valid())
+        std::optional<panel_and_label> pair;
+
+        if (index == sensor_id_index::pm_2_5)
+        {
+            pair = pm_2_5_panel_and_labels_;
+        }
+        else if (index == sensor_id_index::humidity)
+        {
+            pair = humidity_panel_and_labels_;
+        }
+        else if (index == get_temperature_sensor_id_index())
+        {
+            pair = temperature_panel_and_labels_;
+        }
+
+        if (pair.has_value())
         {
             ESP_LOGI(UI_TAG, "Updating sensor %.*s to %d in main screen", get_sensor_name(index).size(), get_sensor_name(index).data(),
                      value.value_or(-1));
-            set_value_in_panel(pair, index, value);
+            set_value_in_panel(*pair, index, value);
         }
     }
 
@@ -47,7 +59,9 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
     }
 
   private:
-    std::array<panel_and_label, total_sensors> panel_and_labels_;
+    panel_and_label pm_2_5_panel_and_labels_;
+    panel_and_label temperature_panel_and_labels_;
+    panel_and_label humidity_panel_and_labels_;
 
     panel_and_label create_big_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
     {
@@ -104,7 +118,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
     panel_and_label create_temperature_panel(lv_coord_t x_ofs, lv_coord_t y_ofs)
     {
-        constexpr auto index = sensor_id_index::temperatureF;
+        const auto index = get_temperature_sensor_id_index();
 
         auto panel = lv_obj_create(screen_);
         lv_obj_set_size(panel, screen_width / 2, 72);
@@ -129,7 +143,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 
-        lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<index>>, LV_EVENT_SHORT_CLICKED, this);
+        lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_temperature_callback_event>, LV_EVENT_SHORT_CLICKED, this);
         return {nullptr, value_label};
     }
 
@@ -175,10 +189,10 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         }
         else if (event_code == LV_EVENT_SCREEN_LOAD_START)
         {
-            for (auto i = 0; i < total_sensors; i++)
-            {
-                set_sensor_value(static_cast<sensor_id_index>(i), ui_interface_instance_.get_sensor_value(static_cast<sensor_id_index>(i)));
-            }
+            set_sensor_value(sensor_id_index::pm_2_5, ui_interface_instance_.get_sensor_value(sensor_id_index::pm_2_5));
+            const auto temperature_index = get_temperature_sensor_id_index();
+            set_sensor_value(temperature_index, ui_interface_instance_.get_sensor_value(temperature_index));
+            set_sensor_value(sensor_id_index::humidity, ui_interface_instance_.get_sensor_value(sensor_id_index::humidity));
         }
         else if (event_code == LV_EVENT_GESTURE)
         {
@@ -202,5 +216,19 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         {
             inter_screen_interface_.show_sensor_detail_screen(index);
         }
+    }
+
+    void panel_temperature_callback_event(lv_event_t *e)
+    {
+        const auto code = lv_event_get_code(e);
+        if (code == LV_EVENT_SHORT_CLICKED)
+        {
+            inter_screen_interface_.show_sensor_detail_screen(get_temperature_sensor_id_index());
+        }
+    }
+
+    sensor_id_index get_temperature_sensor_id_index()
+    {
+        return config::instance.data.is_use_fahrenheit() ? sensor_id_index::temperatureF : sensor_id_index::temperatureC;
     }
 };

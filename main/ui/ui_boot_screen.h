@@ -15,10 +15,10 @@ class ui_boot_screen final : public ui_screen
         lv_obj_set_scrollbar_mode(screen_, LV_SCROLLBAR_MODE_OFF);
         lv_obj_set_style_bg_color(screen_, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        boot_logo_ = lv_img_create(screen_);
-        lv_img_set_src(boot_logo_, "S:display/image/logo.png");
-        lv_obj_set_size(boot_logo_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-        lv_obj_align(boot_logo_, LV_ALIGN_CENTER, 0, -20);
+        auto boot_logo = lv_img_create(screen_);
+        lv_img_set_src(boot_logo, "S:display/image/logo.png");
+        lv_obj_set_size(boot_logo, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        lv_obj_align(boot_logo, LV_ALIGN_CENTER, 0, -20);
 
         boot_message_ = lv_label_create(screen_);
         lv_obj_set_size(boot_message_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -45,5 +45,4 @@ class ui_boot_screen final : public ui_screen
 
   private:
     lv_obj_t *boot_message_;
-    lv_obj_t *boot_logo_;
 };

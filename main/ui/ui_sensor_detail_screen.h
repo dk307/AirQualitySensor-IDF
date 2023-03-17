@@ -70,7 +70,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         ESP_LOGD(UI_TAG, "Sensor detail init done");
     }
 
-    void set_sensor_value(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+    void set_sensor_value(sensor_id_index index, const std::optional<int16_t> &value)
     {
         if (is_active())
         {
@@ -289,9 +289,8 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         }
     }
 
-    void set_current_values(sensor_id_index index, const std::optional<sensor_value::value_type> &value)
+    void set_current_values(sensor_id_index index, const std::optional<int16_t> &value)
     {
-
         sensor_detail_screen_chart_series_time = esp32::millis() / 1000;
 
         auto &&sensor_info = ui_interface_instance_.get_sensor_detail_info(index);
@@ -312,7 +311,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
             set_value_in_panel(panel_and_labels[label_and_unit_label_current_index], index, values[values.size() - 1]);
 
             lv_chart_set_point_count(sensor_detail_screen_chart, values.size());
-            const auto range = std::max<sensor_value::value_type>((stats.max - stats.min) * 0.1, 2);
+            const auto range = std::max<int16_t>((stats.max - stats.min) * 0.1, 2);
             lv_chart_set_range(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_Y, stats.min - range / 2, stats.max + range / 2);
 
             sensor_detail_screen_chart_series_data = std::move(values);
