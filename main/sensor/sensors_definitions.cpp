@@ -50,15 +50,15 @@ constexpr const std::array<sensor_definition_display, 4> humidity_definition_dis
 };
 
 constexpr const std::array<sensor_definition, total_sensors> sensor_definitions{
-    sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size()},
-    sensor_definition{"Temperature(F)", "°F", no_level.data(), no_level.size()},
-    sensor_definition{"Temperature(C)", "°C", no_level.data(), no_level.size()},
-    sensor_definition{"Humidity", "⁒", humidity_definition_display.data(), humidity_definition_display.size()},
-    sensor_definition{"PM 1", "µg/m³", pm_1_definition_display.data(), pm_1_definition_display.size()},
-    sensor_definition{"PM 4", "µg/m³", pm_4_definition_display.data(), pm_4_definition_display.size()},
-    sensor_definition{"PM 10", "µg/m³", pm_10_definition_display.data(), pm_10_definition_display.size()},
-    sensor_definition{"Typical Particle Size", "µg", no_level.data(), no_level.size()},
-    sensor_definition{"Light Intensity", "lux", no_level.data(), no_level.size()},
+    sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"Temperature(F)", "°F", no_level.data(), no_level.size(), -40, 140, 1},
+    sensor_definition{"Temperature(C)", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
+    sensor_definition{"Humidity", "⁒", humidity_definition_display.data(), humidity_definition_display.size(), 0, 100, 1},
+    sensor_definition{"PM 1", "µg/m³", pm_1_definition_display.data(), pm_1_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"PM 4", "µg/m³", pm_4_definition_display.data(), pm_4_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"PM 10", "µg/m³", pm_10_definition_display.data(), pm_10_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"Typical Particle Size", "µg", no_level.data(), no_level.size(), 0, 10, 0.1},
+    sensor_definition{"Light Intensity", "lux", no_level.data(), no_level.size(), 0, 65535, 1},
 };
 
 const sensor_definition &get_sensor_definition(sensor_id_index id)

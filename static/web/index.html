@@ -125,6 +125,12 @@
 
                             <div class="d-grid gap-2">
                                 <button type="button" class="btn btn-info" data-bs-toggle="modal"
+                                    data-bs-dismiss="modal" data-bs-target="#homekitModal">Homekit
+                                </button>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-info" data-bs-toggle="modal"
                                     data-bs-dismiss="modal" data-bs-target="#informationModal">Information</button>
                             </div>
                             <div class="d-grid gap-2">
@@ -330,6 +336,38 @@
         </form>
         <!-- Other Settings Modal End -->
 
+
+        <!-- HomeKit Modal Start-->
+        <div class="modal fade" id="homekitModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Homekit</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <table class="table table-sm table-borderless" id="homekitTable">
+                            <tbody>
+                                <tr>
+                                    <td>Failed to get HomeKit information
+                                    <td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="reenableHomeKitPairingButtonId">Re-enable
+                            Pairing</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                            id="forgetHomeKitPairingButtonId">Forget HomeKit Pairing</button>
+                        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Homekit Modal End -->
+
         <!-- Information Modal Start-->
         <div class="modal fade" id="informationModal" tabindex="-1">
             <div class="modal-dialog">
@@ -402,6 +440,7 @@
     <script>
         var eventsSource = new EventSource('/events');
         var informationUpdateRefreshInterval;
+        var homekitUpdateRefreshInterval;
         var sensorsData = new Map();
         var uploadAjax = null;
 
@@ -552,6 +591,24 @@
                 });
         }
 
+        function updateHomeKit() {
+            $.ajax({
+                type: "GET",
+                url: "/api/homekit/get",
+                dataType: "json",
+                success: function (data) {
+                    $("#homekitTable tr").remove();
+                    var table = $('#homekitTable');
+
+                    for (var i = 0; i < data.length; i++) {
+                        table.append("<tr><td>" + data[i].key + "</td><td>" + data[i].value + "</td></tr>");
+                    }
+
+                    $('#homekitModal').modal('handleUpdate');
+                }
+            });
+        }
+
         $(document).ready(function () {
             // Login Password toggle
             $('#webPasswordToggle').change(function () {
@@ -645,6 +702,25 @@
                     'Select settings file for upload and restore');
             });
 
+            document.getElementById('homekitModal').addEventListener('show.bs.modal', (e) => {
+                updateHomeKit();
+                homekitUpdateRefreshInterval = setInterval(updateHomeKit, 5000);
+            });
+
+            document.getElementById('homekitModal').addEventListener('hide.bs.modal', (e) => {
+                clearInterval(homekitUpdateRefreshInterval);
+            });
+
+            document.getElementById('forgetHomeKitPairingButtonId').addEventListener('click', function () {
+                showConfirmModal('forget homekit pairing', '/homekit.reset.handler');
+            });
+
+            document.getElementById('reenableHomeKitPairingButtonId').addEventListener('click', function () {
+                $.ajax({
+                    type: "POST",
+                    url: "/api/homekit/enablepairing"
+                });
+            });
 
             $("#confirmActionForm").on('submit', function (e) {
                 e.preventDefault();

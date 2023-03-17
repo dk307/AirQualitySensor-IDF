@@ -4,7 +4,7 @@
 #include "freertos/task.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
-#include "http_ota/http.h"
+#include "homekit/homekit_integration.h"
 #include "logging/logger.h"
 #include "logging/logging_tags.h"
 #include "sdkconfig.h"
@@ -18,12 +18,12 @@
 
 ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 
-// #define MIN_FOR_UPLOAD
 
 extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
     esp_log_level_set("*", ESP_LOG_NONE);
+    esp_log_level_set(HOMEKIT_TAG, ESP_LOG_DEBUG);
 
     try
     {
@@ -38,23 +38,12 @@ extern "C" void app_main(void)
 
         // order is important
         sd_card::instance.begin();
-
         config::instance.begin();
-#ifndef MIN_FOR_UPLOAD
         hardware::instance.begin();
-#endif
         wifi_manager::instance.begin();
-
-#ifndef MIN_FOR_UPLOAD
         web_server::instance.begin();
-#endif
+        homekit_integration::instance.begin();
         operations::mark_running_parition_as_valid();
-
-#ifdef MIN_FOR_UPLOAD
-        http_init();
-        httpd_handle_t http_server;
-        http_start_webserver(&http_server);
-#endif
 
         CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, APP_INIT_DONE));
 

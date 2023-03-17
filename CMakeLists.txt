@@ -1,5 +1,3 @@
-# The following lines of boilerplate have to be in your project's
-# CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
@@ -9,10 +7,18 @@ idf_build_set_property(COMPILE_OPTIONS "-DLV_CONF_INCLUDE_SIMPLE=1" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-I../main" APPEND)
 
 set(ESP_IDF_LIB_PATH ${CMAKE_CURRENT_LIST_DIR}/components/extra/esp-idf-lib/components)
+set(HOMEKIT_LIB_PATH ${CMAKE_CURRENT_LIST_DIR}/components/extra/esp-homekit-sdk/components/homekit)
 set(EXTRA_COMPONENT_DIRS ${ESP_IDF_LIB_PATH}/esp_idf_lib_helpers 
                          ${ESP_IDF_LIB_PATH}/i2cdev 
                          ${ESP_IDF_LIB_PATH}/bh1750 
-                         ${ESP_IDF_LIB_PATH}/sht3x)
+                         ${ESP_IDF_LIB_PATH}/sht3x 
+                         ${HOMEKIT_LIB_PATH}/esp_hap_apple_profiles
+                         ${HOMEKIT_LIB_PATH}/esp_hap_platform
+                         ${HOMEKIT_LIB_PATH}/json_parser
+                         ${HOMEKIT_LIB_PATH}/json_generator
+                         ${HOMEKIT_LIB_PATH}/mu_srp
+                         ${HOMEKIT_LIB_PATH}/hkdf-sha
+                         ${HOMEKIT_LIB_PATH}/esp_hap_core)
 
 project(air_quality_sensor)
 

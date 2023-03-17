@@ -13,3 +13,4 @@ constexpr static char LOGGING_TAG[] = "logging";
 constexpr static char OPERATIONS_TAG[] = "operations";
 constexpr static char WEBSERVER_TAG[] = "webserver";
 constexpr static char COMMAND_TAG[] = "command";
+constexpr static char HOMEKIT_TAG[] = "homekit";
