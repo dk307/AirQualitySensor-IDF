@@ -4,7 +4,6 @@
 #include "sensor/sensor.h"
 #include "ui_screen_with_sensor_panel.h"
 
-
 class ui_main_screen final : public ui_screen_with_sensor_panel
 {
   public:
