@@ -22,7 +22,7 @@ class config_data : esp32::noncopyable
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
 
         const auto defaultUserIDPassword = "admin";
-        host_name_.clear();
+        host_name_ = "Air Quality Sensor";
         web_user_credentials_ = credentials(defaultUserIDPassword, defaultUserIDPassword);
         wifi_credentials_ = credentials();
         manual_screen_brightness_.reset();

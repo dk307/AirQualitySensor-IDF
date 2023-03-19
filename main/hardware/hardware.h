@@ -40,6 +40,13 @@ class hardware final : ui_interface, esp32::noncopyable
     esp_err_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count);
     esp_err_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);
 
+    static std::string get_default_mac_address();
+    static std::string get_version();
+    static std::string get_reset_reason_string();
+    static std::string get_chip_details();
+    static std::string get_heap_info_str(uint32_t caps);
+    static std::string get_up_time();
+
   private:
     hardware() : sensor_refresh_task([this] { sensor_task_ftn(); })
     {
@@ -85,12 +92,6 @@ class hardware final : ui_interface, esp32::noncopyable
     void sensor_task_ftn();
 
     // info
-    static std::string get_default_mac_address();
-    static std::string get_version();
-    static std::string get_reset_reason_string();
-    static std::string get_chip_details();
-    static std::string get_heap_info_str(uint32_t caps);
-    static std::string get_up_time();
     static void get_nw_info(ui_interface::information_table_type &table);
 
     std::string get_sps30_error_register_status();

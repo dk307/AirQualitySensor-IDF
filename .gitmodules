@@ -7,3 +7,6 @@
 [submodule "components/extra/esp-idf-lib"]
 	path = components/extra/esp-idf-lib
 	url = git@github.com:UncleRus/esp-idf-lib.git
+[submodule "components/extra/esp-homekit-sdk"]
+	path = components/extra/esp-homekit-sdk
+	url = git@github.com:espressif/esp-homekit-sdk.git

@@ -27,6 +27,8 @@ class operations final : esp32::noncopyable
     void reboot_timer_no_exception(uint8_t seconds);
     void reboot_timer(uint8_t seconds);
     static void operations_shutdown_handler();
+    static void erase_all_nvs_partitions();
+
     std::atomic_bool reset_pending{false};
     std::unique_ptr<esp32::timer::timer> reboot_timer_;
 };

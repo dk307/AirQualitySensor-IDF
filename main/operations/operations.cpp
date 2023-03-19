@@ -6,6 +6,7 @@
 #include "util/exceptions.h"
 #include <esp_log.h>
 #include <esp_ota_ops.h>
+#include <nvs.h>
 #include <nvs_flash.h>
 
 operations operations::instance;
@@ -20,10 +21,26 @@ void operations::operations_shutdown_handler()
     operations::instance.reset_pending.store(true);
 }
 
+#include "nvs_flash.h"
+
+// Function to erase all NVS partitions
+void operations::erase_all_nvs_partitions()
+{
+    auto it = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_NVS, NULL);
+
+    for (; it != NULL; it = esp_partition_next(it))
+    {
+        const esp_partition_t *part = esp_partition_get(it);
+        ESP_LOGW(OPERATIONS_TAG, "Erasing partition:%s", part->label);
+        nvs_flash_erase_partition(part->label);
+    }
+    esp_partition_iterator_release(it);
+}
+
 void operations::factory_reset()
 {
     ESP_LOGW(OPERATIONS_TAG, "Doing Factory Reset");
-    nvs_flash_erase();
+    erase_all_nvs_partitions();
     config::erase();
     reboot_timer_no_exception(3);
 }

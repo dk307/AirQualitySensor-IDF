@@ -15,7 +15,7 @@ namespace esp32
 class task : esp32::noncopyable
 {
   public:
-    constexpr static uint32_t default_priority = 1;
+    constexpr static uint32_t default_priority = 5;
 
     task(const std::function<void(void)> &call) : call_(call)
     {

@@ -25,6 +25,7 @@
 #include <dirent.h>
 #include <esp_log.h>
 #include <filesystem>
+#include <homekit/homekit_integration.h>
 #include <mbedtls/md.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -124,11 +125,15 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_web_login_update>("/weblogin.update.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_restart_device>("/restart.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_factory_reset>("/factory.reset.handler", HTTP_POST);
+    add_handler_ftn<web_server, &web_server::handle_homekit_setting_reset>("/homekit.reset.handler", HTTP_POST);
+
     add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::restore_configuration_upload>("/setting.restore.handler", HTTP_POST);
 
     add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
+    add_handler_ftn<web_server, &web_server::handle_homekit_info_get>("/api/homekit/get", HTTP_GET);
+    add_handler_ftn<web_server, &web_server::handle_homekit_enable_pairing>("/api/homekit/enablepairing", HTTP_POST);
 
     // fs ajax
     add_handler_ftn<web_server, &web_server::handle_dir_list>("/fs/list", HTTP_GET);
@@ -363,6 +368,33 @@ void web_server::handle_factory_reset(esp32::http_request &request)
     }
     send_empty_200(request);
     operations::instance.factory_reset();
+}
+
+void web_server::handle_homekit_setting_reset(esp32::http_request &request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "reset homekit");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    homekit_integration::instance.forget_pairings();
+    send_empty_200(request);
+    operations::instance.reboot();
+}
+
+void web_server::handle_homekit_enable_pairing(esp32::http_request &request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "enable homekit repairing");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    homekit_integration::instance.reenable_pairing();
+    send_empty_200(request);
 }
 
 void web_server::redirect_to_root(esp32::http_request &request)
@@ -1036,4 +1068,36 @@ void web_server::on_run_command(esp32::http_request &request)
     run_command(command_arg.value());
 
     send_empty_200(request);
+}
+
+void web_server::handle_homekit_info_get(esp32::http_request &request)
+{
+    ESP_LOGI(WEBSERVER_TAG, "/api/homekit/get");
+
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+    JsonArray arr = json_document.to<JsonArray>();
+
+    const bool paired = homekit_integration::instance.is_paired();
+
+    add_key_value_object(arr, "Paired", paired ? "Yes" : "No");
+    if (!paired)
+    {
+        add_key_value_object(arr, "Setup Code", homekit_integration::instance.get_password());
+        add_key_value_object(arr, "Setup Id", homekit_integration::instance.get_setup_id());
+    }
+    else
+    {
+        add_key_value_object(arr, "Connected Clients Count", homekit_integration::instance.get_connection_count());
+    }
+
+    std::string data_str;
+    data_str.reserve(1024);
+    serializeJson(json_document, data_str);
+
+    esp32::array_response::send_response(request, data_str, js_media_type);
 }

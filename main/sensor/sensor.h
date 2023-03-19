@@ -49,8 +49,9 @@ class sensor_definition
 {
   public:
     constexpr sensor_definition(const std::string_view &name, const std::string_view &unit, const sensor_definition_display *display_definitions,
-                                size_t display_definitions_count) noexcept
-        : name_{name}, unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count)
+                                size_t display_definitions_count, float min_value, float max_value, float value_step) noexcept
+        : name_{name}, unit_(unit), display_definitions_(display_definitions), display_definitions_count_(display_definitions_count),
+          min_value_(min_value), max_value_(max_value), value_step_(value_step)
     {
     }
 
@@ -75,11 +76,29 @@ class sensor_definition
         return name_;
     }
 
+    constexpr float get_max_value() const noexcept
+    {
+        return max_value_;
+    }
+
+    constexpr float get_min_value() const noexcept
+    {
+        return min_value_;
+    }
+
+    constexpr float get_value_step() const noexcept
+    {
+        return value_step_;
+    }
+
   private:
     const std::string_view name_;
     const std::string_view unit_;
     const sensor_definition_display *display_definitions_;
     const uint8_t display_definitions_count_;
+    const float min_value_;
+    const float max_value_;
+    const float value_step_;
 };
 
 class sensor_value

@@ -153,11 +153,10 @@ void hardware::sensor_task_ftn()
         {
             read_bh1750_sensor();
             set_auto_display_brightness();
-
             read_sht3x_sensor();
             read_sps30_sensor();
 
-            vTaskDelay(500);
+            vTaskDelay(pdMS_TO_TICKS(500));
         } while (true);
     }
     catch (const std::exception &ex)
