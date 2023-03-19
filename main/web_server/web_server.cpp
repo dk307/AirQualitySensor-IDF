@@ -126,7 +126,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_restart_device>("/restart.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_factory_reset>("/factory.reset.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_homekit_setting_reset>("/homekit.reset.handler", HTTP_POST);
-    
+
     add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::restore_configuration_upload>("/setting.restore.handler", HTTP_POST);
 
@@ -383,7 +383,6 @@ void web_server::handle_homekit_setting_reset(esp32::http_request &request)
     send_empty_200(request);
     operations::instance.reboot();
 }
-
 
 void web_server::handle_homekit_enable_pairing(esp32::http_request &request)
 {

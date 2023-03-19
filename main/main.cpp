@@ -18,7 +18,6 @@
 
 ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 
-
 extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
