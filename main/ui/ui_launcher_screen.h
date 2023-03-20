@@ -48,10 +48,10 @@ class ui_launcher_screen : public ui_screen
     }
 
   private:
-    lv_style_t button_style_default_;
-    lv_style_t button_style_pressed_;
-    lv_obj_t *win_confirm_;
-    lv_obj_t *win_confirm_label_;
+    lv_style_t button_style_default_{};
+    lv_style_t button_style_pressed_{};
+    lv_obj_t *win_confirm_{};
+    lv_obj_t *win_confirm_label_{};
 
     void screen_callback(lv_event_t *e)
     {

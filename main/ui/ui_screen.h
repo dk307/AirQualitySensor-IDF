@@ -45,8 +45,8 @@ class ui_screen : esp32::noncopyable
 
     ui_interface &ui_interface_instance_;
     ui_inter_screen_interface &inter_screen_interface_;
-    const ui_common_fonts *fonts_;
-    lv_obj_t *screen_{nullptr};
+    const ui_common_fonts *fonts_{};
+    lv_obj_t *screen_{};
 
     static void __attribute__((noinline)) set_padding_zero(lv_obj_t *obj)
     {

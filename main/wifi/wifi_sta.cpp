@@ -28,11 +28,6 @@ wifi_sta::~wifi_sta()
     esp_wifi_stop();
 }
 
-void wifi_sta::set_host_name(const std::string &name)
-{
-    host_name_ = name;
-}
-
 void wifi_sta::connect_to_ap()
 {
     ESP_LOGI(WIFI_TAG, "Connecting to Wifi %s", credentials_.get_user_name().c_str());
@@ -79,10 +74,6 @@ void wifi_sta::wifi_event_callback(esp_event_base_t event_base, int32_t event_id
         {
             const auto *data = reinterpret_cast<wifi_event_sta_disconnected_t *>(event_data);
             ESP_LOGI(WIFI_EVENT_TAG, "WiFi STA disconnected with reason:%s", get_disconnect_reason_str(data->reason).c_str());
-            ip_info_.ip.addr = 0;
-            ip_info_.netmask = ip_info_.ip;
-            ip_info_.gw = ip_info_.ip;
-
             events_notify_.set_ap_disconnected();
         }
     }
@@ -90,15 +81,12 @@ void wifi_sta::wifi_event_callback(esp_event_base_t event_base, int32_t event_id
     {
         if (event_id == IP_EVENT_STA_GOT_IP || event_id == IP_EVENT_ETH_GOT_IP)
         {
-            ip_info_ = reinterpret_cast<ip_event_got_ip_t *>(event_data)->ip_info;
-            ESP_LOGI(WIFI_TAG, "New IP Address : %d.%d.%d.%d", IP2STR(&ip_info_.ip));
+            auto ip_info = reinterpret_cast<ip_event_got_ip_t *>(event_data)->ip_info;
+            ESP_LOGI(WIFI_TAG, "New IP Address : %d.%d.%d.%d", IP2STR(&ip_info.ip));
             events_notify_.set_ip_connected();
         }
         else if (event_id == IP_EVENT_STA_LOST_IP)
         {
-            ip_info_.ip.addr = 0;
-            ip_info_.netmask = ip_info_.ip;
-            ip_info_.gw = ip_info_.ip;
             events_notify_.set_ip_lost();
         }
     }

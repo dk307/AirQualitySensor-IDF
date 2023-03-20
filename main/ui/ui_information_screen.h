@@ -61,12 +61,12 @@ class ui_information_screen : public ui_screen
     }
 
   private:
-    lv_obj_t *tab_view_;
-    lv_obj_t *network_table_;
-    lv_obj_t *config_table_;
-    lv_obj_t *system_table_;
+    lv_obj_t *tab_view_{};
+    lv_obj_t *network_table_{};
+    lv_obj_t *config_table_{};
+    lv_obj_t *system_table_{};
 
-    lv_timer_t *refresh_timer_;
+    lv_timer_t *refresh_timer_{};
 
     constexpr static int tab_width = 64;
 

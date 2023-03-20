@@ -69,7 +69,9 @@ void ui::load_boot_screen()
 {
     check_sd_card_ready();
 
-    // lv_log_register_print_cb(&lv_logger);
+#if LV_USE_LOG
+    lv_log_register_print_cb(&lv_logger);
+#endif
     lv_disp_t *dispp = lv_disp_get_default();
 
     lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_LIME), true, LV_FONT_DEFAULT);
@@ -162,15 +164,10 @@ void ui::set_sensor_value(sensor_id_index index, const std::optional<int16_t> &v
     {
         main_screen_.set_sensor_value(index, value);
     }
-    if (sensor_detail_screen_.is_active())
+    else if (sensor_detail_screen_.is_active())
     {
         sensor_detail_screen_.set_sensor_value(index, value);
     }
-}
-
-void ui::update_boot_message(const std::string &message)
-{
-    boot_screen_.set_boot_message(message);
 }
 
 void ui::show_top_level_message(const std::string &message, uint32_t period)
