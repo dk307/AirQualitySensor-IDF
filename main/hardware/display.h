@@ -25,7 +25,6 @@ class display final : esp32::noncopyable
   private:
     LGFX display_device_;
     esp32::task lvgl_task_;
-    esp_timer_handle_t lv_periodic_timer_{nullptr};
 
     lv_disp_draw_buf_t draw_buf_{};
     lv_disp_drv_t disp_drv_{};
@@ -39,8 +38,6 @@ class display final : esp32::noncopyable
 
     static void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
     static void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
-    static void lv_tick_task(void *arg);
-    void create_timer();
     void gui_task();
     void app_event_handler(esp_event_base_t, int32_t, void *);
 

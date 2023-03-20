@@ -107,18 +107,7 @@ void display::start()
 
     ESP_LOGD(DISPLAY_TAG, "LVGL input device driver initialized");
 
-    create_timer();
-
-    const auto err = lvgl_task_.spawn_pinned("lv_gui", 1024 * 6, esp32::task::default_priority, esp32::display_core);
-
-    if (err != ESP_OK)
-    {
-        if (lv_periodic_timer_)
-        {
-            esp_timer_delete(lv_periodic_timer_);
-        }
-        CHECK_THROW_ESP2(err, "Create task for LVGL failed");
-    }
+    CHECK_THROW_ESP(lvgl_task_.spawn_pinned("lv_gui", 1024 * 6, esp32::task::default_priority, esp32::display_core));
 
     display_device_.setBrightness(128);
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
@@ -132,21 +121,6 @@ uint8_t display::get_brightness()
 void display::set_brightness(uint8_t value)
 {
     display_device_.setBrightness(value);
-}
-
-void display::create_timer()
-{
-    /* Create and start a periodic timer interrupt to call lv_tick_inc */
-    esp_timer_create_args_t lv_periodic_timer_args{};
-    lv_periodic_timer_args.callback = &lv_tick_task;
-    lv_periodic_timer_args.name = "periodic_gui";
-    ESP_ERROR_CHECK(esp_timer_create(&lv_periodic_timer_args, &lv_periodic_timer_));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(lv_periodic_timer_, LV_TICK_PERIOD_MS * 1000));
-}
-
-void display::lv_tick_task(void *)
-{
-    lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
 void display::gui_task()
@@ -180,7 +154,7 @@ void display::gui_task()
                 {
                     ui_instance_.set_main_screen();
                 }
-                
+
                 if (notification_value & task_notify_restarting_bit)
                 {
                     ui_instance_.show_top_level_message("Restarting", 600000);
