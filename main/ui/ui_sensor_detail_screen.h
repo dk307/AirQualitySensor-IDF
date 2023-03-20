@@ -104,10 +104,10 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
     }
 
   private:
-    lv_obj_t *sensor_detail_screen_top_label;
-    lv_obj_t *sensor_detail_screen_top_label_units;
-    lv_obj_t *sensor_detail_screen_chart;
-    lv_chart_series_t *sensor_detail_screen_chart_series;
+    lv_obj_t *sensor_detail_screen_top_label{};
+    lv_obj_t *sensor_detail_screen_top_label_units{};
+    lv_obj_t *sensor_detail_screen_chart{};
+    lv_chart_series_t *sensor_detail_screen_chart_series{};
     sensor_history::vector_history_t sensor_detail_screen_chart_series_data;
     uint64_t sensor_detail_screen_chart_series_time;
     constexpr static uint8_t chart_total_x_ticks = 4;
@@ -166,8 +166,8 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         return {panel, value_label};
     }
 
-    static lv_obj_t *create_sensor_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs,
-                                         lv_color_t color)
+    static lv_obj_t *__attribute__((noinline))
+    create_sensor_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_color_t color)
     {
         auto *label = lv_label_create(parent);
         lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);

@@ -41,12 +41,12 @@ template <typename T> class allocator
 
     pointer allocate(size_type n, const void *hint = 0)
     {
-        return static_cast<pointer>(heap_caps_malloc(n * sizeof(T), MALLOC_CAP_SPIRAM));
+        return static_cast<pointer>(heap_caps_malloc(n * sizeof(T), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
     }
 
     void deallocate(pointer p, size_type n)
     {
-        free(p);
+        heap_caps_free(p);
     }
 
     template <class U, class... Args> void construct(U *p, Args &&...args)
@@ -64,7 +64,7 @@ struct deleter
 {
     void operator()(void *p) const
     {
-        free(p);
+        heap_caps_free(p);
     }
 };
 
@@ -78,17 +78,17 @@ struct json_allocator
 {
     void *allocate(size_t size)
     {
-        return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        return heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     }
 
     void deallocate(void *pointer)
     {
-        free(pointer);
+        heap_caps_free(pointer);
     }
 
     void *reallocate(void *ptr, size_t new_size)
     {
-        return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
+        return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     }
 };
 

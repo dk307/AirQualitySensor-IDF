@@ -42,7 +42,6 @@ class display final : esp32::noncopyable
     static void lv_tick_task(void *arg);
     void create_timer();
     void gui_task();
-    void set_main_screen();
     void app_event_handler(esp_event_base_t, int32_t, void *);
 
     constexpr static uint32_t task_notify_wifi_changed_bit = BIT(total_sensors + 1);

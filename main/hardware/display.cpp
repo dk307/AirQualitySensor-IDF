@@ -124,11 +124,6 @@ void display::start()
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 }
 
-void display::set_main_screen()
-{
-    xTaskNotify(lvgl_task_.handle(), set_main_screen_changed_bit, eSetBits);
-}
-
 uint8_t display::get_brightness()
 {
     return display_device_.getBrightness();
@@ -185,6 +180,7 @@ void display::gui_task()
                 {
                     ui_instance_.set_main_screen();
                 }
+                
                 if (notification_value & task_notify_restarting_bit)
                 {
                     ui_instance_.show_top_level_message("Restarting", 600000);
@@ -217,7 +213,7 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
     switch (event)
     {
     case APP_INIT_DONE:
-        set_main_screen();
+        xTaskNotify(lvgl_task_.handle(), set_main_screen_changed_bit, eSetBits);
         break;
     case SENSOR_VALUE_CHANGE: {
         const auto id = (*reinterpret_cast<sensor_id_index *>(data));

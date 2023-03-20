@@ -20,9 +20,7 @@ class http_response : esp32::noncopyable
     virtual ~http_response() = default;
 
     void add_common_headers();
-
     void add_header(const char *field, const char *value);
-
     void redirect(const std::string &url);
     void send_empty_200();
     void send_error(httpd_err_code_t code, const char *message = nullptr);

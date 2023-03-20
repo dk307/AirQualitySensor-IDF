@@ -85,12 +85,13 @@ void wifi_manager::wifi_task_ftn()
                 }
                 else
                 {
+                    events_notify_.clear_connection_bits();
                     ESP_LOGW(WIFI_TAG, "Failed to connect to Wifi");
                 }
                 post_wifi_status_changed();
             }
 
-            const auto bits_set = events_notify_.wait_for_events(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(15000));
+            const auto bits_set = events_notify_.wait_for_events(connected_to_ap_ ? portMAX_DELAY : pdMS_TO_TICKS(8000));
 
             if (operations::instance.get_reset_pending())
             {

@@ -29,8 +29,8 @@ class ui_hardware_info_screen : public ui_screen
     }
 
   private:
-    lv_obj_t *win_status_;
-    lv_obj_t *win_status_label_;
+    lv_obj_t *win_status_{};
+    lv_obj_t *win_status_label_{};
 
     void screen_callback(lv_event_t *e)
     {

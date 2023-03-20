@@ -18,10 +18,6 @@ class wifi_sta final : esp32::noncopyable
     wifi_sta(wifi_events_notify &events_notify_, const std::string &host_name, const credentials &password);
     ~wifi_sta();
 
-    /// Sets the hostname
-    /// \param name The name
-    void set_host_name(const std::string &name);
-
     /// Initiates the connection to the AP.
     void connect_to_ap();
 
@@ -32,7 +28,7 @@ class wifi_sta final : esp32::noncopyable
 
   private:
     wifi_events_notify &events_notify_;
-    std::string host_name_;
+    const std::string host_name_;
     const credentials credentials_;
 
     const esp32::default_event_subscriber::callback_t event_callback = [this](esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -41,7 +37,6 @@ class wifi_sta final : esp32::noncopyable
 
     esp32::default_event_subscriber instance_wifi_event_{WIFI_EVENT, ESP_EVENT_ANY_ID, event_callback};
     esp32::default_event_subscriber instance_ip_event_{IP_EVENT, ESP_EVENT_ANY_ID, event_callback};
-    esp_netif_ip_info_t ip_info_{};
 
     void connect() const;
     void wifi_event_callback(esp_event_base_t event_base, int32_t event_id, void *event_data);

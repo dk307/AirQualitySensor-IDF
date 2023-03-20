@@ -4,7 +4,6 @@
 #include "sensor/sensor_id.h"
 #include "util/psram_allocator.h"
 #include "wifi/wifi_manager.h"
-
 #include <string>
 #include <vector>
 

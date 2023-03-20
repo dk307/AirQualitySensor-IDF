@@ -22,7 +22,6 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     }
     void load_boot_screen();
     void init();
-    void update_boot_message(const std::string &message);
     void show_top_level_message(const std::string &message, uint32_t period = top_message_timer_period);
     void set_sensor_value(sensor_id_index id, const std::optional<int16_t> &value);
     void set_main_screen();
@@ -42,13 +41,13 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     constexpr static uint32_t top_message_timer_period = 10000;
 
     // top sys layer
-    lv_obj_t *no_wifi_image_;
-    lv_style_t no_wifi_image_style;
-    lv_anim_timeline_t *no_wifi_image_animation_timeline_;
+    lv_obj_t *no_wifi_image_{};
+    lv_style_t no_wifi_image_style{};
+    lv_anim_timeline_t *no_wifi_image_animation_timeline_{};
 
-    lv_obj_t *top_message_panel_;
-    lv_obj_t *top_message_label_;
-    lv_timer_t *top_message_timer_;
+    lv_obj_t *top_message_panel_{};
+    lv_obj_t *top_message_label_{};
+    lv_timer_t *top_message_timer_{};
 
     ui_common_fonts common_fonts_{};
 
