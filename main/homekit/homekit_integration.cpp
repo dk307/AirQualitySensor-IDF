@@ -13,7 +13,6 @@
 #include <string_view>
 
 // these functions are internal functions for hap
-extern "C" int hap_trigger_network_switch(void);
 extern "C" bool is_accessory_paired();
 
 #define CHECK_HAP_RESULT(x)                                                                                                                          \
@@ -122,8 +121,7 @@ void homekit_integration::homekit_task_ftn()
             {
                 if (notification_value & task_notify_restarting_bit)
                 {
-                    // this does not reset network in non-Mfi, but ends up closing the connections
-                    hap_trigger_network_switch();
+                    hap_nw_stop();
                 }
 
                 for (auto i = 1; i <= total_sensors; i++)
