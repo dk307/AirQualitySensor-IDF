@@ -23,4 +23,7 @@ typedef enum
      * (type: uint8_t) after which the node will reboot. Note that this time may not be
      * accurate as the events are received asynchronously.*/
     APP_EVENT_REBOOT,
+
+    DEVICE_IDENTIFY,
+
 } esp_app_common_event_t;
