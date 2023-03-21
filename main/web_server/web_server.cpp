@@ -183,7 +183,7 @@ void web_server::handle_information_get(esp32::http_request &request)
         return;
     }
 
-    send_table_reponse(request, ui_interface::information_type::system);
+    send_table_response(request, ui_interface::information_type::system);
 }
 
 void web_server::handle_config_get(esp32::http_request &request)
@@ -1065,10 +1065,10 @@ void web_server::handle_homekit_info_get(esp32::http_request &request)
         return;
     }
 
-    send_table_reponse(request, ui_interface::information_type::homekit);
+    send_table_response(request, ui_interface::information_type::homekit);
 }
 
-void web_server::send_table_reponse(esp32::http_request &request, ui_interface::information_type type)
+void web_server::send_table_response(esp32::http_request &request, ui_interface::information_type type)
 {
     BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
     JsonArray arr = json_document.to<JsonArray>();
