@@ -45,4 +45,5 @@ class display final : esp32::noncopyable
     constexpr static uint32_t set_main_screen_changed_bit = BIT(total_sensors + 2);
     constexpr static uint32_t task_notify_restarting_bit = BIT(total_sensors + 3);
     constexpr static uint32_t config_changed_bit = BIT(total_sensors + 4);
+    constexpr static uint32_t idenitfy_device_bit = BIT(total_sensors + 5);
 };

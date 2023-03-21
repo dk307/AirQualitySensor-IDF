@@ -5,6 +5,7 @@
 #include "logging/logging_tags.h"
 #include "sensor/sensor.h"
 #include "util/cores.h"
+#include "util/default_event.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
 #include <array>
@@ -48,7 +49,7 @@ void homekit_integration::begin()
 static int device_identify(hap_acc_t *ha)
 {
     ESP_LOGI(HOMEKIT_TAG, "Accessory identified");
-    return HAP_SUCCESS;
+    return esp32::event_post(APP_COMMON_EVENT, DEVICE_IDENTIFY);
 }
 
 void homekit_integration::init_hap()

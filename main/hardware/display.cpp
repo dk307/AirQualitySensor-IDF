@@ -160,6 +160,11 @@ void display::gui_task()
                     ui_instance_.show_top_level_message("Restarting", 600000);
                 }
 
+                if (notification_value & idenitfy_device_bit)
+                {
+                    ui_instance_.show_top_level_message("Device Identify", 10000);
+                }
+
                 for (auto i = 1; i <= total_sensors; i++)
                 {
                     if ((notification_value & BIT(i)) || (notification_value & config_changed_bit))
@@ -202,6 +207,9 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
         break;
     case CONFIG_CHANGE:
         xTaskNotify(lvgl_task_.handle(), config_changed_bit, eSetBits);
+        break;
+    case DEVICE_IDENTIFY:
+        xTaskNotify(lvgl_task_.handle(), idenitfy_device_bit, eSetBits);
         break;
     }
 }
