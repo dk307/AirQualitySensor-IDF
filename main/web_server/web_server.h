@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vector>
-
 #include "app_events.h"
 #include "sensor/sensor.h"
+#include "ui/ui_interface.h"
 #include "util/async_web_server/http_event_source.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_server.h"
 #include "util/default_event.h"
+#include <vector>
 
 class web_server final : esp32::http_server
 {
@@ -79,6 +79,8 @@ class web_server final : esp32::http_server
     void on_run_command(esp32::http_request &request);
 
     void handle_homekit_info_get(esp32::http_request &request);
+
+    void send_table_reponse(esp32::http_request &request, ui_interface::information_type type);
 
     esp32::event_source events;
     esp32::event_source logging;

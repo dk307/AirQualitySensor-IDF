@@ -2,6 +2,7 @@
 #include "hardware/display.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
+#include "homekit/homekit_integration.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
@@ -212,6 +213,25 @@ ui_interface::information_table_type hardware::get_information_table(information
             {"Screen Brightness", esp32::string::sprintf("%d %%", (display_instance_.get_brightness() * 100) / 256)},
             {"SPS30 sensor status", get_sps30_error_register_status()},
         };
+
+    case information_type::homekit: {
+        ui_interface::information_table_type table;
+
+        const bool paired = homekit_integration::instance.is_paired();
+
+        table.push_back({"Paired", paired ? "Yes" : "No"});
+        if (!paired)
+        {
+            table.push_back({"Setup Code", homekit_integration::instance.get_password()});
+            table.push_back({"Setup Id", homekit_integration::instance.get_setup_id()});
+        }
+        else
+        {
+            table.push_back({"Connected Clients Count", esp32::string::to_string(homekit_integration::instance.get_connection_count())});
+        }
+
+        return table;
+    }
 
     case information_type::network: {
         ui_interface::information_table_type table;

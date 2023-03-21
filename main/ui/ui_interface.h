@@ -13,6 +13,7 @@ class ui_interface
     enum class information_type
     {
         network,
+        homekit,
         system,
         config
     };

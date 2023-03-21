@@ -30,6 +30,9 @@ class ui_information_screen : public ui_screen
         {
             auto tab = lv_tabview_add_tab(tab_view_, LV_SYMBOL_CALL);
             set_padding_zero(tab);
+
+            homekit_table_ = lv_table_create(tab);
+            lv_obj_set_size(homekit_table_, lv_pct(100), screen_width - tab_width);
         }
 
         // Settings tab
@@ -63,6 +66,7 @@ class ui_information_screen : public ui_screen
   private:
     lv_obj_t *tab_view_{};
     lv_obj_t *network_table_{};
+    lv_obj_t *homekit_table_{};
     lv_obj_t *config_table_{};
     lv_obj_t *system_table_{};
 
@@ -118,6 +122,7 @@ class ui_information_screen : public ui_screen
     void load_information(lv_timer_t *)
     {
         const auto current_tab = lv_tabview_get_tab_act(tab_view_);
+
         if (current_tab == 3)
         {
             const auto data = ui_interface_instance_.get_information_table(ui_interface::information_type::system);
@@ -127,6 +132,11 @@ class ui_information_screen : public ui_screen
         {
             const auto data = ui_interface_instance_.get_information_table(ui_interface::information_type::config);
             update_table(config_table_, data);
+        }
+        else if (current_tab == 1)
+        {
+            const auto data = ui_interface_instance_.get_information_table(ui_interface::information_type::homekit);
+            update_table(homekit_table_, data);
         }
         else if (current_tab == 0)
         {
