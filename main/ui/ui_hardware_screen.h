@@ -2,7 +2,7 @@
 
 #include "ui_screen.h"
 
-class ui_hardware_info_screen : public ui_screen
+class ui_hardware_screen : public ui_screen
 {
   public:
     using ui_screen::ui_screen;
@@ -11,16 +11,18 @@ class ui_hardware_info_screen : public ui_screen
         ui_screen::init();
         set_default_screen_color();
 
-        lv_obj_add_event_cb(screen_, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::screen_callback>, LV_EVENT_ALL, this);
+        lv_obj_add_event_cb(screen_, event_callback<ui_hardware_screen, &ui_hardware_screen::screen_callback>, LV_EVENT_ALL, this);
+
+        create_screen_title(4, "Hardware");
 
         // baseline
-        auto btn_clean = create_btn("Clean SPS 30", event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::clean_sps_30>);
+        auto btn_clean = create_btn("Clean SPS 30", event_callback<ui_hardware_screen, &ui_hardware_screen::clean_sps_30>);
 
-        lv_obj_align(btn_clean, LV_ALIGN_TOP_MID, 0, 25);
+        lv_obj_align(btn_clean, LV_ALIGN_TOP_MID, 0, 105);
 
         init_status_win();
 
-        create_close_button_to_main_screen(screen_, LV_ALIGN_BOTTOM_LEFT, 15, -15);
+        create_close_button_to_main_screen(screen_, LV_ALIGN_TOP_LEFT, 15, 15);
     }
 
     void show_screen()
@@ -45,7 +47,7 @@ class ui_hardware_info_screen : public ui_screen
     lv_obj_t *create_btn(const char *label_text, lv_event_cb_t event_cb)
     {
         auto btn_set_baseline = lv_btn_create(screen_);
-        lv_obj_add_event_cb(btn_set_baseline, event_cb, LV_EVENT_ALL, this);
+        lv_obj_add_event_cb(btn_set_baseline, event_cb, LV_EVENT_PRESSED, this);
         lv_obj_set_height(btn_set_baseline, LV_SIZE_CONTENT);
 
         auto label = lv_label_create(btn_set_baseline);
@@ -70,7 +72,7 @@ class ui_hardware_info_screen : public ui_screen
         lv_label_set_text_static(btn_close_label, "Close");
         lv_obj_center(btn_close_label);
 
-        lv_obj_add_event_cb(btn_close, event_callback<ui_hardware_info_screen, &ui_hardware_info_screen::close_win_confirm>, LV_EVENT_CLICKED, this);
+        lv_obj_add_event_cb(btn_close, event_callback<ui_hardware_screen, &ui_hardware_screen::close_win_confirm>, LV_EVENT_CLICKED, this);
 
         lv_obj_center(win_status_);
         lv_obj_align(win_status_label_, LV_ALIGN_TOP_MID, 0, 5);
@@ -81,7 +83,7 @@ class ui_hardware_info_screen : public ui_screen
 
     void close_win_confirm(lv_event_t *e)
     {
-        ESP_LOGI(UI_TAG, "No clicked");
+        ESP_LOGI(UI_TAG, "Close clicked");
         lv_obj_add_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
     }
 

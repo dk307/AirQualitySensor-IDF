@@ -99,7 +99,8 @@ void ui::init()
     launcher_screen_.init();
     sensor_detail_screen_.init();
     settings_screen_.init();
-    hardware_info_screen_.init();
+    hardware_screen_.init();
+    homekit_screen_.init();
     wifi_enroll_screen_.init();
     ESP_LOGI(UI_TAG, "UI screens initialized");
 }
@@ -236,7 +237,13 @@ void ui::show_launcher_screen()
 void ui::show_hardware_info_screen()
 {
     lv_obj_add_flag(top_message_panel_, LV_OBJ_FLAG_HIDDEN);
-    hardware_info_screen_.show_screen();
+    hardware_screen_.show_screen();
+}
+
+void ui::show_homekit_screen()
+{
+    lv_obj_add_flag(top_message_panel_, LV_OBJ_FLAG_HIDDEN);
+    homekit_screen_.show_screen();
 }
 
 void ui::show_wifi_enroll_screen()

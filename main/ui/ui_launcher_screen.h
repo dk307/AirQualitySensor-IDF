@@ -32,6 +32,8 @@ class ui_launcher_screen : public ui_screen
                       event_callback<ui_launcher_screen, &ui_launcher_screen::factory_reset>);
         create_button(LV_ALIGN_TOP_RIGHT, -pad, pad, "S:display/image/info.png", "Information",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::show_information>);
+        create_button(LV_ALIGN_BOTTOM_LEFT, pad, -pad - 25, "S:display/image/homekit.png", "Homekit",
+                      event_callback<ui_launcher_screen, &ui_launcher_screen::homekit_info>);
         create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25, "S:display/image/hardware.png", "Hardware",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::hardware_info>);
         create_button(LV_ALIGN_BOTTOM_RIGHT, -pad, -pad - 25, "S:display/image/wifi.png", "Wifi\nEnroll",
@@ -39,7 +41,7 @@ class ui_launcher_screen : public ui_screen
 
         init_confirm_win();
 
-        create_close_button_to_main_screen(screen_, LV_ALIGN_BOTTOM_LEFT, 15, -15);
+        create_close_button_to_main_screen(screen_, LV_ALIGN_TOP_LEFT, 15, 15);
     }
 
     void show_screen()
@@ -130,6 +132,12 @@ class ui_launcher_screen : public ui_screen
     {
         ESP_LOGI(UI_TAG, "Showing Hardware clicked");
         inter_screen_interface_.show_hardware_info_screen();
+    }
+
+    void homekit_info(lv_event_t *e)
+    {
+        ESP_LOGI(UI_TAG, "Showing Homekit screen");
+        inter_screen_interface_.show_homekit_screen();
     }
 
     void wifi_setup(lv_event_t *e)

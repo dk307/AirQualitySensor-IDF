@@ -29,5 +29,8 @@ class ui_interface
     virtual void start_wifi_enrollment() = 0;
     virtual void stop_wifi_enrollment() = 0;
 
+    virtual void forget_homekit_pairings() = 0;
+    virtual void reenable_homekit_pairing() = 0;
+
     virtual bool clean_sps_30() = 0;
 };

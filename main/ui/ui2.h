@@ -3,12 +3,13 @@
 #include "sensor/sensor.h"
 #include "sensor/sensor_id.h"
 #include "ui_boot_screen.h"
-#include "ui_hardware_info_screen.h"
+#include "ui_hardware_screen.h"
 #include "ui_information_screen.h"
 #include "ui_inter_screen_interface.h"
 #include "ui_interface.h"
 #include "ui_launcher_screen.h"
 #include "ui_main_screen.h"
+#include "ui_homekit_screen.h"
 #include "ui_sensor_detail_screen.h"
 #include "ui_wifi_enroll_screen.h"
 #include "util/noncopyable.h"
@@ -33,6 +34,7 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     void show_sensor_detail_screen(sensor_id_index index) override;
     void show_launcher_screen() override;
     void show_hardware_info_screen() override;
+    void show_homekit_screen() override;
     void show_wifi_enroll_screen() override;
 
   private:
@@ -56,7 +58,8 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     ui_sensor_detail_screen sensor_detail_screen_{ui_interface_instance_, *this, &common_fonts_};
     ui_information_screen settings_screen_{ui_interface_instance_, *this, &common_fonts_};
     ui_launcher_screen launcher_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_hardware_info_screen hardware_info_screen_{ui_interface_instance_, *this, &common_fonts_};
+    ui_hardware_screen hardware_screen_{ui_interface_instance_, *this, &common_fonts_};
+    ui_homekit_screen homekit_screen_{ui_interface_instance_, *this, &common_fonts_};
     ui_wifi_enroll_screen wifi_enroll_screen_{ui_interface_instance_, *this, &common_fonts_};
 
     void check_sd_card_ready();
