@@ -127,5 +127,4 @@ class ui_screen_with_sensor_panel : public ui_screen
 
         return label;
     }
-
 };
