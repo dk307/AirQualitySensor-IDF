@@ -15,7 +15,6 @@
 #include "util/noncopyable.h"
 #include <lvgl.h>
 
-
 class ui : public ui_inter_screen_interface, esp32::noncopyable
 {
   public:
