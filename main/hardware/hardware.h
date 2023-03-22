@@ -36,6 +36,8 @@ class hardware final : ui_interface, esp32::noncopyable
     bool clean_sps_30() override;
     void start_wifi_enrollment() override;
     void stop_wifi_enrollment() override;
+    void forget_homekit_pairings() override;
+    void reenable_homekit_pairing() override;
 
     esp_err_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count);
     esp_err_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);

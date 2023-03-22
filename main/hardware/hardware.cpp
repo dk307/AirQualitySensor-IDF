@@ -3,6 +3,7 @@
 #include "config/config_manager.h"
 #include "hardware/display.h"
 #include "hardware/sd_card.h"
+#include "homekit/homekit_integration.h"
 #include "logging/logging_tags.h"
 #include "util/cores.h"
 #include "util/exceptions.h"
@@ -73,6 +74,15 @@ void hardware::start_wifi_enrollment()
 void hardware::stop_wifi_enrollment()
 {
     wifi_manager::instance.stop_wifi_enrollment();
+}
+
+void hardware::forget_homekit_pairings()
+{
+    homekit_integration::instance.forget_pairings();
+}
+void hardware::reenable_homekit_pairing()
+{
+    homekit_integration::instance.reenable_pairing();
 }
 
 void hardware::begin()

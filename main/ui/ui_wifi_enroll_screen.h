@@ -11,6 +11,8 @@ class ui_wifi_enroll_screen : public ui_screen
         ui_screen::init();
         set_default_screen_color();
 
+        create_screen_title(4, "Wifi Enroll");
+
         lv_obj_add_event_cb(screen_, event_callback<ui_wifi_enroll_screen, &ui_wifi_enroll_screen::screen_callback>, LV_EVENT_ALL, this);
 
         auto message_label = create_message_label(screen_, &lv_font_montserrat_24, LV_ALIGN_CENTER, 0, -20, text_color);

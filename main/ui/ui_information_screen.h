@@ -22,14 +22,7 @@ class ui_information_screen : public ui_screen
             auto tab = lv_tabview_add_tab(tab_view_, LV_SYMBOL_WIFI);
             set_padding_zero(tab);
 
-            network_table_ = lv_table_create(tab);
-            lv_obj_set_size(network_table_, lv_pct(100), screen_width - tab_width);
-        }
-
-        // Homekit tab
-        {
-            auto tab = lv_tabview_add_tab(tab_view_, LV_SYMBOL_CALL);
-            set_padding_zero(tab);
+            network_table_ = create_table(tab);
         }
 
         // Settings tab
@@ -37,16 +30,14 @@ class ui_information_screen : public ui_screen
             auto tab = lv_tabview_add_tab(tab_view_, LV_SYMBOL_SETTINGS);
             set_padding_zero(tab);
 
-            config_table_ = lv_table_create(tab);
-            lv_obj_set_size(config_table_, lv_pct(100), screen_width - tab_width);
+            config_table_ = create_table(tab);
         }
 
         // Information tab
         {
             auto tab = lv_tabview_add_tab(tab_view_, LV_SYMBOL_LIST);
             set_padding_zero(tab);
-            system_table_ = lv_table_create(tab);
-            lv_obj_set_size(system_table_, lv_pct(100), screen_width - tab_width);
+            system_table_ = create_table(tab);
         }
 
         auto tab_btns = lv_tabview_get_tab_btns(tab_view_);
@@ -90,7 +81,19 @@ class ui_information_screen : public ui_screen
         }
     }
 
-    void tab_view_callback(lv_event_t *e)
+    static lv_obj_t *__attribute__((noinline)) create_table(lv_obj_t *tab)
+    {
+        auto table = lv_table_create(tab);
+        lv_obj_set_size(table, lv_pct(100), screen_height);
+
+        lv_obj_set_style_border_width(table, 0, LV_PART_MAIN);
+        lv_obj_set_style_border_width(table, 0, LV_PART_ITEMS);
+        lv_obj_set_style_bg_opa(table, LV_OPA_0, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(table, LV_OPA_0, LV_PART_ITEMS);
+        return table;
+    }
+
+    void __attribute__((noinline)) tab_view_callback(lv_event_t *e)
     {
         lv_event_code_t event_code = lv_event_get_code(e);
         if (event_code == LV_EVENT_VALUE_CHANGED)
@@ -100,38 +103,24 @@ class ui_information_screen : public ui_screen
         }
     }
 
-    static void __attribute__((noinline)) update_table(lv_obj_t *table, const ui_interface::information_table_type &data)
-    {
-        lv_table_set_col_cnt(table, 2);
-        lv_table_set_row_cnt(table, data.size());
-
-        lv_table_set_col_width(table, 0, 140);
-        lv_table_set_col_width(table, 1, screen_width - tab_width - 140 - 5); // 5 for borders ,etc
-
-        for (auto i = 0; i < data.size(); i++)
-        {
-            lv_table_set_cell_value(table, i, 0, std::get<0>(data[i]).c_str());
-            lv_table_set_cell_value(table, i, 1, std::get<1>(data[i]).c_str());
-        }
-    }
-
-    void load_information(lv_timer_t *)
+    void __attribute__((noinline)) load_information(lv_timer_t *)
     {
         const auto current_tab = lv_tabview_get_tab_act(tab_view_);
-        if (current_tab == 3)
+
+        if (current_tab == 2)
         {
             const auto data = ui_interface_instance_.get_information_table(ui_interface::information_type::system);
-            update_table(system_table_, data);
+            update_table(system_table_, data, tab_width);
         }
-        else if (current_tab == 2)
+        else if (current_tab == 1)
         {
             const auto data = ui_interface_instance_.get_information_table(ui_interface::information_type::config);
-            update_table(config_table_, data);
+            update_table(config_table_, data, tab_width);
         }
         else if (current_tab == 0)
         {
             const auto data = ui_interface_instance_.get_information_table(ui_interface::information_type::network);
-            update_table(network_table_, data);
+            update_table(network_table_, data, tab_width);
         }
     }
 };

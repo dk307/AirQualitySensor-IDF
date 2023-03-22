@@ -19,10 +19,10 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
         lv_obj_clear_flag(screen_, LV_OBJ_FLAG_SCROLLABLE);
 
-        sensor_detail_screen_top_label = create_sensor_label(screen_, fonts_->font_montserrat_medium_48, LV_ALIGN_TOP_MID, 0, y_pad, text_color);
+        sensor_detail_screen_top_label = create_screen_title(y_pad, "");
 
         sensor_detail_screen_top_label_units =
-            create_sensor_label(screen_, fonts_->font_montserrat_medium_units_18, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
+            create_a_label(screen_, fonts_->font_montserrat_medium_units_18, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
 
         lv_obj_set_style_text_align(sensor_detail_screen_top_label_units, LV_TEXT_ALIGN_AUTO, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -157,27 +157,13 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_radius(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);
 
-        auto current_static_label = create_sensor_label(panel, fonts_->font_montserrat_medium_14, LV_ALIGN_TOP_MID, 0, 3, text_color);
+        auto current_static_label = create_a_label(panel, fonts_->font_montserrat_medium_14, LV_ALIGN_TOP_MID, 0, 3, text_color);
 
         lv_label_set_text_static(current_static_label, label_text);
 
-        auto value_label = create_sensor_label(panel, fonts_->font_montserrat_regular_numbers_40, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
+        auto value_label = create_a_label(panel, fonts_->font_montserrat_regular_numbers_40, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
 
         return {panel, value_label};
-    }
-
-    static lv_obj_t *__attribute__((noinline))
-    create_sensor_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_color_t color)
-    {
-        auto *label = lv_label_create(parent);
-        lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-        lv_obj_align(label, align, x_ofs, y_ofs);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL);
-        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_color(label, color, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-        return label;
     }
 
     void chart_draw_event_cb(lv_event_t *e)

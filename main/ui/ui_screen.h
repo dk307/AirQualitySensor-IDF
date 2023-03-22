@@ -10,12 +10,12 @@
 
 struct ui_common_fonts
 {
-    // fonts loaded from sd card - bpp4
+    // fonts loaded from sd card - bpp4/8
     lv_font_t *font_big_panel;                     // 0x20,0,1,2,3,4,5,6,7,8,9,-
-    lv_font_t *font_temp_hum;                      // 0x20,0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-
+    lv_font_t *font_temp_hum;                      // 0x20,0,1,2,3,4,5,6,7,8,9,F,C,µ,g,/,m,³,°,F,⁒,p,-
     lv_font_t *font_montserrat_regular_numbers_40; // 0x20,0,1,2,3,4,5,6,7,8,9,-
     lv_font_t *font_montserrat_medium_48;          // 0x20-0x7F,0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-
-    lv_font_t *font_montserrat_medium_units_18;    // 0x20,F,µ,g,/,m,³,°,F,⁒,p,-
+    lv_font_t *font_montserrat_medium_units_18;    // 0x20,C,F,µ,g,/,m,³,°,F,⁒,p,-
     lv_font_t *font_montserrat_medium_14;          // 0x20-0x7F,0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-
 };
 
@@ -90,6 +90,42 @@ class ui_screen : esp32::noncopyable
         lv_obj_set_style_bg_grad_dir(screen_, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(screen_, lv_color_hex(0x0C0D0C), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_grad_color(screen_, lv_color_hex(0x111210), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    static lv_obj_t *__attribute__((noinline))
+    create_a_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_color_t color)
+    {
+        auto *label = lv_label_create(parent);
+        lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        lv_obj_align(label, align, x_ofs, y_ofs);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(label, color, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+        return label;
+    }
+
+    static void __attribute__((noinline)) update_table(lv_obj_t *table, const ui_interface::information_table_type &data, uint8_t col_diff)
+    {
+        lv_table_set_col_cnt(table, 2);
+        lv_table_set_row_cnt(table, data.size());
+
+        lv_table_set_col_width(table, 0, 140);
+        lv_table_set_col_width(table, 1, screen_width - col_diff - 140 - 5); // 5 for borders ,etc
+
+        for (auto i = 0; i < data.size(); i++)
+        {
+            lv_table_set_cell_value(table, i, 0, std::get<0>(data[i]).c_str());
+            lv_table_set_cell_value(table, i, 1, std::get<1>(data[i]).c_str());
+        }
+    }
+
+    lv_obj_t *__attribute__((noinline)) create_screen_title(lv_coord_t y_ofs, const char *title)
+    {
+        auto label = create_a_label(screen_, fonts_->font_montserrat_medium_48, LV_ALIGN_TOP_MID, 0, y_ofs, text_color);
+        lv_label_set_text_static(label, title);
+        return label;
     }
 
   private:

@@ -183,21 +183,7 @@ void web_server::handle_information_get(esp32::http_request &request)
         return;
     }
 
-    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
-    JsonArray arr = json_document.to<JsonArray>();
-
-    const auto data = hardware::instance.get_information_table(ui_interface::information_type::system);
-
-    for (auto &&[key, value] : data)
-    {
-        add_key_value_object(arr, key, value);
-    }
-
-    std::string data_str;
-    data_str.reserve(1024);
-    serializeJson(json_document, data_str);
-
-    esp32::array_response::send_response(request, data_str, js_media_type);
+    send_table_response(request, ui_interface::information_type::system);
 }
 
 void web_server::handle_config_get(esp32::http_request &request)
@@ -1079,20 +1065,19 @@ void web_server::handle_homekit_info_get(esp32::http_request &request)
         return;
     }
 
+    send_table_response(request, ui_interface::information_type::homekit);
+}
+
+void web_server::send_table_response(esp32::http_request &request, ui_interface::information_type type)
+{
     BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
     JsonArray arr = json_document.to<JsonArray>();
 
-    const bool paired = homekit_integration::instance.is_paired();
+    const auto data = hardware::instance.get_information_table(type);
 
-    add_key_value_object(arr, "Paired", paired ? "Yes" : "No");
-    if (!paired)
+    for (auto &&[key, value] : data)
     {
-        add_key_value_object(arr, "Setup Code", homekit_integration::instance.get_password());
-        add_key_value_object(arr, "Setup Id", homekit_integration::instance.get_setup_id());
-    }
-    else
-    {
-        add_key_value_object(arr, "Connected Clients Count", homekit_integration::instance.get_connection_count());
+        add_key_value_object(arr, key, value);
     }
 
     std::string data_str;

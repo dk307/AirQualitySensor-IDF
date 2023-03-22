@@ -306,10 +306,12 @@ const std::string &homekit_integration::get_setup_id() const
 
 void homekit_integration::forget_pairings()
 {
+    ESP_LOGW(HOMEKIT_TAG, "Resetting Homekit data");
     CHECK_HAP_RESULT(hap_reset_homekit_data());
 }
 
 void homekit_integration::reenable_pairing()
 {
+    ESP_LOGI(HOMEKIT_TAG, "Renabling Pairing");
     hap_pair_setup_re_enable();
 }
