@@ -4,16 +4,17 @@
 #include "sensor/sensor_id.h"
 #include "ui_boot_screen.h"
 #include "ui_hardware_screen.h"
+#include "ui_homekit_screen.h"
 #include "ui_information_screen.h"
 #include "ui_inter_screen_interface.h"
 #include "ui_interface.h"
 #include "ui_launcher_screen.h"
 #include "ui_main_screen.h"
-#include "ui_homekit_screen.h"
 #include "ui_sensor_detail_screen.h"
 #include "ui_wifi_enroll_screen.h"
 #include "util/noncopyable.h"
 #include <lvgl.h>
+
 
 class ui : public ui_inter_screen_interface, esp32::noncopyable
 {
