@@ -22,12 +22,14 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
     esp_log_level_set("*", ESP_LOG_WARN);
+    esp_log_level_set("nvs", ESP_LOG_INFO);
 
     try
     {
         const auto err = nvs_flash_init();
         if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
         {
+            ESP_LOGW(OPERATIONS_TAG, "Erasing flash");
             CHECK_THROW_ESP(nvs_flash_erase());
             CHECK_THROW_ESP(nvs_flash_init());
         }
@@ -35,8 +37,8 @@ extern "C" void app_main(void)
         CHECK_THROW_ESP(esp_event_loop_create_default());
 
         // order is important
-        sd_card::instance.begin();
         config::instance.begin();
+        sd_card::instance.begin();
         hardware::instance.begin();
         wifi_manager::instance.begin();
         web_server::instance.begin();
