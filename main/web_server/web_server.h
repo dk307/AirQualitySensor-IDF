@@ -34,7 +34,6 @@ class web_server final : esp32::http_server
 
     void handle_firmware_upload(esp32::http_request &request);
 
-
     // // ajax
     void handle_information_get(esp32::http_request &request);
     void handle_config_get(esp32::http_request &request);
