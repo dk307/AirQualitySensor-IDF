@@ -1,9 +1,16 @@
 #include "web_server.h"
 #include "config/config_manager.h"
+#include "generated/web/include/ansi_up.js.gz.h"
+#include "generated/web/include/bootstrap.min.css.gz.h"
+#include "generated/web/include/datatables.min.css.gz.h"
+#include "generated/web/include/datatables.min.js.gz.h"
 #include "generated/web/include/debug.html.gz.h"
 #include "generated/web/include/fs.html.gz.h"
 #include "generated/web/include/index.html.gz.h"
 #include "generated/web/include/login.html.gz.h"
+#include "generated/web/include/logo.png.h"
+#include "generated/web/include/moment.min.js.gz.h"
+#include "generated/web/include/s.js.gz.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
 #include "logging/commands.h"
@@ -54,15 +61,6 @@ static constexpr char index_url[] = "/index.html";
 static constexpr char debug_url[] = "/debug.html";
 static constexpr char fs_url[] = "/fs.html";
 
-// sd card file paths
-static constexpr char logo_file_path[] = "/sd/web/logo.png";
-static constexpr char all_js_file_path[] = "/sd/web/s.js";
-static constexpr char datatable_js_file_path[] = "/sd/web/extra/datatables.min.js";
-static constexpr char moment_js_file_path[] = "/sd/web/extra/moment.min.js";
-static constexpr char ansi_up_js_file_path[] = "/sd/web/extra/ansi_up.js";
-static constexpr char bootstrap_css_file_path[] = "/sd/web/bootstrap.min.css";
-static constexpr char datatables_css_file_path[] = "/sd/web/datatables.min.css";
-
 web_server web_server::instance;
 
 std::string create_hash(const credentials &cred, const std::string &host)
@@ -93,19 +91,17 @@ void web_server::begin()
     esp32::http_server::begin();
 
     ESP_LOGD(WEBSERVER_TAG, "Setting up web server routing");
-    add_fs_file_handler<logo_file_path, png_media_type>(favicon_url);
-    add_fs_file_handler<logo_file_path, png_media_type>(logo_url);
 
-    add_fs_file_handler<all_js_file_path, js_media_type>(all_js_url);
-    add_fs_file_handler<datatable_js_file_path, js_media_type>(datatables_js_url);
-    add_fs_file_handler<moment_js_file_path, js_media_type>(moment_js_url);
-    add_fs_file_handler<ansi_up_js_file_path, js_media_type>(ansi_up_js_url);
-
-    add_fs_file_handler<bootstrap_css_file_path, css_media_type>(bootstrap_css_url);
-    add_fs_file_handler<datatables_css_file_path, css_media_type>(datatable_css_url);
-
-    // static pages from flash
+    // static pages from flash , no auth
+    add_array_handler<logo_png, logo_png_len, logo_png_sha256, false, png_media_type>(favicon_url);
+    add_array_handler<logo_png, logo_png_len, logo_png_sha256, false, png_media_type>(logo_url);
     add_array_handler<login_html_gz, login_html_gz_len, login_html_gz_sha256, true, html_media_type>(login_url);
+    add_array_handler<ansi_up_js_gz, ansi_up_js_gz_len, ansi_up_js_gz_sha256, true, js_media_type>(ansi_up_js_url);
+    add_array_handler<bootstrap_min_css_gz, bootstrap_min_css_gz_len, bootstrap_min_css_gz_sha256, true, css_media_type>(bootstrap_css_url);
+    add_array_handler<datatables_min_css_gz, datatables_min_css_gz_len, datatables_min_css_gz_sha256, true, css_media_type>(datatable_css_url);
+    add_array_handler<datatables_min_js_gz, datatables_min_js_gz_len, datatables_min_js_gz_sha256, true, js_media_type>(datatables_js_url);
+    add_array_handler<s_js_gz, s_js_gz_len, s_js_gz_sha256, true, js_media_type>(all_js_url);
+    add_array_handler<moment_min_js_gz, moment_min_js_gz_len, moment_min_js_gz_sha256, true, js_media_type>(moment_js_url);
 
     // static pages from flash with auth
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len, index_html_gz_sha256>>(root_url, HTTP_GET);
@@ -116,9 +112,6 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<fs_html_gz, fs_html_gz_len, fs_html_gz_sha256>>(fs_url, HTTP_GET);
 
     // not static pages
-
-    ESP_LOGD(WEBSERVER_TAG, "Setup web server routing");
-
     add_handler_ftn<web_server, &web_server::handle_login>("/login.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_logout>("/logout.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_other_settings_update>("/othersettings.update.handler", HTTP_POST);

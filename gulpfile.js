@@ -90,7 +90,8 @@ gulp.task('js', function() {
       .pipe(concat('s.js'))
       .pipe(gzip({gzipOptions: {level: 9}}))
       .pipe(gulp.dest(tempWebFolder))
-      .pipe(gulp.dest(sdcardFolder + '/web'));
+      .pipe(toHeader(null, true))
+      .pipe(gulp.dest(staticWebInclude));
 });
 
 gulp.task('js-extra', function() {
@@ -98,7 +99,8 @@ gulp.task('js-extra', function() {
       .pipe(stripcomments())
       .pipe(gzip({gzipOptions: {level: 9}}))
       .pipe(gulp.dest(tempWebFolder))
-      .pipe(gulp.dest(sdcardFolder + '/web/extra'));
+      .pipe(toHeader(null, true))
+      .pipe(gulp.dest(staticWebInclude));
 });
 
 gulp.task('css', function() {
@@ -106,14 +108,16 @@ gulp.task('css', function() {
       .pipe(minify())
       .pipe(gzip({gzipOptions: {level: 9}}))
       .pipe(gulp.dest(tempWebFolder))
-      .pipe(gulp.dest(sdcardFolder + '/web'));
+      .pipe(toHeader(null, true))
+      .pipe(gulp.dest(staticWebInclude));
 });
 
 gulp.task('web-images', function() {
   return gulp.src(baseFolder + 'web/media/*.png')
       .pipe(imagemin())
       .pipe(gulp.dest(tempWebFolder))
-      .pipe(gulp.dest(sdcardFolder + '/web'));
+      .pipe(toHeader(null, true))
+      .pipe(gulp.dest(staticWebInclude));
 });
 
 gulp.task('display-images', function() {
