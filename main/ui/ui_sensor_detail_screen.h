@@ -64,7 +64,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
                                 LV_EVENT_DRAW_PART_BEGIN, this);
         }
 
-        create_close_button_to_main_screen(screen_, LV_ALIGN_BOTTOM_LEFT, 15, -15);
+        create_close_button_to_main_screen(screen_, LV_ALIGN_TOP_LEFT, 15, 15);
         lv_obj_add_event_cb(screen_, event_callback<ui_sensor_detail_screen, &ui_sensor_detail_screen::screen_callback>, LV_EVENT_ALL, this);
 
         ESP_LOGD(UI_TAG, "Sensor detail init done");

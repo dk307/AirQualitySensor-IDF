@@ -17,13 +17,13 @@ class ui_launcher_screen : public ui_screen
         lv_style_init(&button_style_default_);
         lv_style_set_text_color(&button_style_default_, text_color);
         lv_style_set_img_opa(&button_style_default_, LV_OPA_100);
-        lv_style_set_text_font(&button_style_default_, &lv_font_montserrat_16);
+        lv_style_set_text_font(&button_style_default_, &lv_font_montserrat_18);
 
         lv_style_init(&button_style_pressed_);
         lv_style_set_img_recolor_opa(&button_style_pressed_, LV_OPA_30);
         lv_style_set_img_recolor(&button_style_pressed_, text_color);
         lv_style_set_text_color(&button_style_pressed_, lv_color_lighten(text_color, LV_OPA_50));
-        lv_style_set_text_font(&button_style_pressed_, &lv_font_montserrat_16);
+        lv_style_set_text_font(&button_style_pressed_, &lv_font_montserrat_18);
 
         int pad = 30;
         create_button(LV_ALIGN_TOP_LEFT, pad, pad, "S:display/image/restart.png", "Restart",
