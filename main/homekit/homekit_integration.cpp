@@ -78,7 +78,7 @@ void homekit_integration::homekit_task_ftn()
         /* Initialise the mandatory parameters for Accessory which will be added as
          * the mandatory services internally
          */
-        name_ = config::instance.data.get_host_name();
+        name_ = config::instance.get_host_name();
         mac_address_ = hardware::get_default_mac_address();
         hap_acc_cfg_t cfg{};
         cfg.name = const_cast<char *>(name_.c_str());

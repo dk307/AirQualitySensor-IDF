@@ -10,8 +10,17 @@
 #include <esp_log.h>
 #include <filesystem>
 
-static const char ConfigFilePath[] = "/sd/config.json";
-static const char ConfigChecksumFilePath[] = "/sd/config_checksum.json";
+constexpr std::string_view host_name_key{"host_name"};
+constexpr std::string_view use_fahrenheit_key{"use_fahrenheit"};
+constexpr std::string_view web_login_username_key{"web_username"};
+constexpr std::string_view web_login_password_key{"web_password"};
+constexpr std::string_view ssid_key{"ssid"};
+constexpr std::string_view ssid_password_key{"ssid_password"};
+constexpr std::string_view screen_brightness_key{"scrn_brightness"};
+
+constexpr std::string_view default_host_name{"Air Quality Sensor"};
+constexpr std::string_view default_user_id_and_password{"admin"};
+
 static const char HostNameId[] = "hostname";
 static const char WebUserNameId[] = "webusername";
 static const char WebPasswordId[] = "webpassword";
@@ -22,116 +31,50 @@ static const char UsefahrenheitId[] = "usefahrenheit";
 
 config config::instance;
 
-size_t config::write_to_file(const char *file_name, const void *data, size_t size)
-{
-    auto file = fopen(file_name, "w");
-    if (!file)
-    {
-        return 0;
-    }
-
-    const auto bytesWritten = fwrite(data, 1, size, file);
-    fclose(file);
-    return bytesWritten;
-}
-
 void config::erase()
 {
-    esp32::filesystem::remove(ConfigChecksumFilePath);
-    esp32::filesystem::remove(ConfigFilePath);
 }
 
-bool config::begin()
+void config::begin()
 {
     ESP_LOGD(CONFIG_TAG, "Loading Configuration");
-    const auto config_data = read_file(ConfigFilePath);
 
-    ESP_LOGD(CONFIG_TAG, "Config File:[%s]", config_data.c_str());
+    nvs_storage.begin("nvs", "config");
 
-    if (config_data.empty())
-    {
-        ESP_LOGW(CONFIG_TAG, "No stored config found");
-        reset();
-        return false;
-    }
-
-    // read checksum from file
-    const auto read_checksum = read_file(ConfigChecksumFilePath);
-
-    ESP_LOGD(CONFIG_TAG, "Checksum File:[%s]", read_checksum.c_str());
-
-    const auto checksum = sha256_hash(config_data);
-
-    if (!esp32::string::equals_case_insensitive(checksum, read_checksum))
-    {
-        ESP_LOGE(CONFIG_TAG, "Config data checksum mismatch Expected from file:%s Expected:%s", read_checksum.c_str(), checksum.c_str());
-        reset();
-        return false;
-    }
-    else
-    {
-        ESP_LOGD(CONFIG_TAG, "Checksum file is correct");
-    }
-
-    BasicJsonDocument<esp32::psram::json_allocator> json_document(2048);
-    if (!deserialize_to_json(config_data.c_str(), json_document))
-    {
-        ESP_LOGE(CONFIG_TAG, "Config data  is not a valid json");
-        reset();
-        return false;
-    }
-
-    data.set_host_name(json_document[(HostNameId)].as<std::string>());
-    data.set_web_user_credentials(credentials(json_document[(WebUserNameId)].as<std::string>(), json_document[(WebPasswordId)].as<std::string>()));
-    data.set_wifi_credentials(credentials(json_document[(SsidId)].as<std::string>(), json_document[(SsidPasswordId)].as<std::string>()));
-
-    const auto screen_brightness = json_document[ScreenBrightnessId];
-    data.set_manual_screen_brightness(!screen_brightness.isNull() ? std::optional<uint8_t>(screen_brightness.as<uint8_t>()) : std::nullopt);
-
-    data.set_use_fahrenheit(json_document[UsefahrenheitId].as<bool>());
-
-    ESP_LOGI(CONFIG_TAG, "Loaded Config from file");
-
-    ESP_LOGI(CONFIG_TAG, "Hostname:%s", data.get_host_name().c_str());
-    ESP_LOGI(CONFIG_TAG, "Web user name:%s", data.get_web_user_credentials().get_user_name().c_str());
-    ESP_LOGI(CONFIG_TAG, "Web user password:%s", data.get_web_user_credentials().get_password().c_str());
-    ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", data.get_wifi_credentials().get_user_name().c_str());
-    ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", data.get_wifi_credentials().get_password().c_str());
-    ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", data.get_manual_screen_brightness().value_or(0));
-    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%d", data.is_use_fahrenheit());
-
-    return true;
+    ESP_LOGI(CONFIG_TAG, "Hostname:%s", get_host_name().c_str());
+    ESP_LOGI(CONFIG_TAG, "Web user name:%s", get_web_user_credentials().get_user_name().c_str());
+    ESP_LOGI(CONFIG_TAG, "Web user password:%s", get_web_user_credentials().get_password().c_str());
+    ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", get_wifi_credentials().get_user_name().c_str());
+    ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", get_wifi_credentials().get_password().c_str());
+    ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", get_manual_screen_brightness().value_or(0));
+    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%d", is_use_fahrenheit());
 }
 
 void config::reset()
 {
     ESP_LOGI(CONFIG_TAG, "config reset is requested");
-    data.setDefaults();
-    save_config();
 }
 
 void config::save()
 {
     ESP_LOGD(CONFIG_TAG, "config save is requested");
-    save_config();
+    nvs_storage.commit();
 }
 
-void config::save_config()
+std::string config::get_all_config_as_json()
 {
-    ESP_LOGI(CONFIG_TAG, "Saving configuration");
-
     BasicJsonDocument<esp32::psram::json_allocator> json_document(2048);
 
-    json_document[(HostNameId)] = data.get_host_name();
-    const auto web_cred = data.get_web_user_credentials();
+    json_document[(HostNameId)] = get_host_name();
+    const auto web_cred = get_web_user_credentials();
     json_document[(WebUserNameId)] = web_cred.get_user_name();
     json_document[(WebPasswordId)] = web_cred.get_password();
 
-    const auto wifi_cred = data.get_wifi_credentials();
+    const auto wifi_cred = get_wifi_credentials();
     json_document[(SsidId)] = wifi_cred.get_user_name();
     json_document[(SsidPasswordId)] = wifi_cred.get_password();
 
-    const auto brightness = data.get_manual_screen_brightness();
+    const auto brightness = get_manual_screen_brightness();
     if (brightness.has_value())
     {
         json_document[ScreenBrightnessId] = brightness.value();
@@ -141,111 +84,73 @@ void config::save_config()
         json_document[ScreenBrightnessId] = nullptr;
     }
 
-    json_document[(UsefahrenheitId)] = data.is_use_fahrenheit();
+    json_document[(UsefahrenheitId)] = is_use_fahrenheit();
 
     std::string json;
     serializeJson(json_document, json);
 
-    if (write_to_file((ConfigFilePath), json.c_str(), json.length()) == json.length())
-    {
-        const auto checksum_value = esp32::hash::sha256(json);
-        const auto checksum = esp32::format_hex(checksum_value.data(), checksum_value.size());
-
-        if (write_to_file((ConfigChecksumFilePath), checksum.c_str(), checksum.length()) != checksum.length())
-        {
-            ESP_LOGE(CONFIG_TAG, "Failed to write config checksum file");
-        }
-    }
-    else
-    {
-        ESP_LOGE(CONFIG_TAG, "Failed to write config file");
-    }
-
-    ESP_LOGI(CONFIG_TAG, "Saving Configuration done");
-    CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, CONFIG_CHANGE));
+    return json;
 }
 
-std::string config::read_file(const char *file_name)
+bool config::is_use_fahrenheit()
 {
-    esp32::filesystem::file_info file_info(file_name);
-
-    if (file_info.exists())
-    {
-        const auto size = file_info.size();
-        auto file = fopen(file_name, "r");
-        if (file)
-        {
-            std::string json;
-            json.resize(size);
-
-            if (fread(json.data(), 1, size, file) == size)
-            {
-                fclose(file);
-                return json;
-            }
-            else
-            {
-                fclose(file);
-            }
-        }
-    }
-    else
-    {
-        ESP_LOGI(CONFIG_TAG, "File not found %s", file_name);
-    }
-
-    return std::string();
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    return nvs_storage.get(use_fahrenheit_key, true);
 }
 
-std::string config::get_all_config_as_json()
+void config::set_use_fahrenheit(bool use_fahrenheit)
 {
-    return read_file(ConfigFilePath);
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    nvs_storage.save(use_fahrenheit_key, use_fahrenheit);
 }
 
-bool config::restore_all_config_as_json(const std::vector<uint8_t> &json, const std::string &hash)
+std::string config::get_host_name()
 {
-    BasicJsonDocument<esp32::psram::json_allocator> json_doc(4096);
-    if (!deserialize_to_json(json, json_doc))
-    {
-        return false;
-    }
-
-    const auto checksum_value = esp32::hash::sha256(json.data(), json.size());
-    const auto expected_hash = esp32::format_hex(checksum_value.data(), checksum_value.size());
-
-    if (!esp32::string::equals_case_insensitive(expected_hash, hash))
-    {
-        ESP_LOGE(CONFIG_TAG, "Uploaded hash for config does not match. File hash:%s", expected_hash.c_str());
-        return false;
-    }
-
-    if (write_to_file((ConfigFilePath), json.data(), json.size()) != json.size())
-    {
-        return false;
-    }
-
-    if (write_to_file((ConfigChecksumFilePath), hash.c_str(), hash.length()) != hash.length())
-    {
-        return false;
-    }
-    return true;
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    return nvs_storage.get(host_name_key, default_host_name);
 }
 
-template <class T, class JDoc> bool config::deserialize_to_json(const T &data, JDoc &jsonDocument)
+void config::set_host_name(const std::string &host_name)
 {
-    DeserializationError error = deserializeJson(jsonDocument, data);
-
-    // Test if parsing succeeds.
-    if (error)
-    {
-        ESP_LOGE(CONFIG_TAG, "deserializeJson for config failed: %s", error.c_str());
-        return false;
-    }
-    return true;
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    nvs_storage.save(host_name_key, host_name);
 }
 
-std::string config::sha256_hash(const std::string &data)
+credentials config::get_web_user_credentials()
 {
-    const auto checksum_value = esp32::hash::sha256(data);
-    return esp32::format_hex(checksum_value.data(), checksum_value.size());
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    return credentials(nvs_storage.get(web_login_username_key, default_user_id_and_password),
+                       nvs_storage.get(web_login_password_key, default_user_id_and_password));
+}
+
+void config::set_web_user_credentials(const credentials &web_user_credentials)
+{
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    nvs_storage.save(web_login_username_key, web_user_credentials.get_user_name());
+    nvs_storage.save(web_login_password_key, web_user_credentials.get_password());
+}
+
+std::optional<uint8_t> config::get_manual_screen_brightness()
+{
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    const auto value = nvs_storage.get(screen_brightness_key, static_cast<uint8_t>(0));
+    return value == 0 ? std::nullopt : std::optional<uint8_t>(value);
+}
+void config::set_manual_screen_brightness(const std::optional<uint8_t> &screen_brightness)
+{
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    nvs_storage.save(screen_brightness_key, screen_brightness.value_or(0));
+}
+
+void config::set_wifi_credentials(const credentials &wifi_credentials)
+{
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    nvs_storage.save(ssid_key, wifi_credentials.get_user_name());
+    nvs_storage.save(ssid_password_key, wifi_credentials.get_password());
+}
+
+credentials config::get_wifi_credentials()
+{
+    std::lock_guard<esp32::semaphore> lock(data_mutex_);
+    return credentials(nvs_storage.get(ssid_key, std::string_view()), nvs_storage.get(ssid_password_key, std::string_view()));
 }

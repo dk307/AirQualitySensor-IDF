@@ -226,6 +226,6 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
     sensor_id_index get_temperature_sensor_id_index()
     {
-        return config::instance.data.is_use_fahrenheit() ? sensor_id_index::temperatureF : sensor_id_index::temperatureC;
+        return config::instance.is_use_fahrenheit() ? sensor_id_index::temperatureF : sensor_id_index::temperatureC;
     }
 };

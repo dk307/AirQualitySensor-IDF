@@ -139,17 +139,6 @@
                             </div>
 
                             <div class="d-grid gap-2">
-                                <a role="button" class="btn btn-info" data-bs-dismiss="modal"
-                                    id="backupButtonId">Backup</a>
-                                <a href="/api/config/get" id="backupButtonAId" download="backup.json" hidden>Backup</a>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-info" data-bs-dismiss="modal"
-                                    id="restoreUploadButtonId">Restore</button>
-                            </div>
-
-                            <div class="d-grid gap-2">
                                 <button type="button" class="btn btn-info" data-bs-dismiss="modal"
                                     id="firmwareUploadButtonId">Firmware update</button>
                             </div>
@@ -686,20 +675,10 @@
                 showConfirmModal('factory reset', '/factory.reset.handler');
             });
 
-            document.getElementById('backupButtonId').addEventListener('click', function () {
-                $('#backupButtonAId')[0].click();
-            });
-
             document.getElementById('firmwareUploadButtonId').addEventListener('click', function () {
                 showUploadFileModal('/firmware.update.handler',
                     'Firmware upgrade',
                     'Select firmware file for upload and upgrade');
-            });
-
-            document.getElementById('restoreUploadButtonId').addEventListener('click', function () {
-                showUploadFileModal('/setting.restore.handler',
-                    'Restore Settings',
-                    'Select settings file for upload and restore');
             });
 
             document.getElementById('homekitModal').addEventListener('show.bs.modal', (e) => {

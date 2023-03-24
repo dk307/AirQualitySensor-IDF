@@ -303,7 +303,7 @@ uint8_t hardware::lux_to_intensity(uint16_t lux)
 
 void hardware::set_auto_display_brightness()
 {
-    const auto config_brightness = config::instance.data.get_manual_screen_brightness();
+    const auto config_brightness = config::instance.get_manual_screen_brightness();
 
     uint8_t required_brightness;
     if (config_brightness.has_value())

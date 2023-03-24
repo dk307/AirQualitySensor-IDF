@@ -128,7 +128,6 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_homekit_setting_reset>("/homekit.reset.handler", HTTP_POST);
 
     add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
-    add_handler_ftn<web_server, &web_server::restore_configuration_upload>("/setting.restore.handler", HTTP_POST);
 
     add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
@@ -206,7 +205,7 @@ bool web_server::is_authenticated(esp32::http_request &request)
     {
         ESP_LOGV(WEBSERVER_TAG, "Found cookie:%s", cookie->c_str());
 
-        const std::string token = create_hash(config::instance.data.get_web_user_credentials(), request.client_ip_address());
+        const std::string token = create_hash(config::instance.get_web_user_credentials(), request.client_ip_address());
 
         if (cookie == (std::string(AuthCookieName) + token))
         {
@@ -228,7 +227,7 @@ void web_server::handle_login(esp32::http_request &request)
 
     if (user_name.has_value() && password.has_value())
     {
-        const auto current_credentials = config::instance.data.get_web_user_credentials();
+        const auto current_credentials = config::instance.get_web_user_credentials();
 
         esp32::http_response response(request);
         const bool correct_credentials = esp32::string::equals_case_insensitive(user_name.value(), current_credentials.get_user_name()) &&
@@ -283,7 +282,7 @@ void web_server::handle_web_login_update(esp32::http_request &request)
     if (user_name.has_value() && password.has_value())
     {
         ESP_LOGI(WEBSERVER_TAG, "Updating web username/password");
-        config::instance.data.set_web_user_credentials(credentials(user_name.value(), password.value()));
+        config::instance.set_web_user_credentials(credentials(user_name.value(), password.value()));
         config::instance.save();
         redirect_to_root(request);
     }
@@ -311,20 +310,20 @@ void web_server::handle_other_settings_update(esp32::http_request &request)
 
     if (host_name.has_value())
     {
-        config::instance.data.set_host_name(host_name.value());
+        config::instance.set_host_name(host_name.value());
     }
 
     if (!auto_screen_brightness.has_value())
     {
         const auto value = screen_brightness.value_or("128");
-        config::instance.data.set_manual_screen_brightness(std::atoi(value.c_str()));
+        config::instance.set_manual_screen_brightness(std::atoi(value.c_str()));
     }
     else
     {
-        config::instance.data.set_manual_screen_brightness(std::nullopt);
+        config::instance.set_manual_screen_brightness(std::nullopt);
     }
 
-    config::instance.data.set_use_fahrenheit(use_fahrenheit.has_value());
+    config::instance.set_use_fahrenheit(use_fahrenheit.has_value());
 
     config::instance.save();
 
@@ -434,51 +433,6 @@ void web_server::handle_firmware_upload(esp32::http_request &request)
     ESP_LOGI(WEBSERVER_TAG, "Firmware updated");
     send_empty_200(request);
     operations::instance.reboot();
-}
-
-void web_server::restore_configuration_upload(esp32::http_request &request)
-{
-    ESP_LOGI(WEBSERVER_TAG, "restoreConfig");
-
-    if (!check_authenticated(request))
-    {
-        return;
-    }
-
-    const auto hash_arg = request.get_header("sha256");
-
-    if (!hash_arg)
-    {
-        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Hash not supplied for file");
-        return;
-    }
-
-    ESP_LOGD(WEBSERVER_TAG, "Expected file hash: %s", hash_arg.value().c_str());
-
-    std::vector<uint8_t> json;
-    json.reserve(request.content_length());
-
-    const auto result = request.read_body([&json](const std::vector<uint8_t> &data) {
-        json.insert(json.end(), data.begin(), data.end());
-        return ESP_OK;
-    });
-
-    if (result != ESP_OK)
-    {
-        log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read file");
-        return;
-    }
-
-    if (config::instance.restore_all_config_as_json(json, hash_arg.value()))
-    {
-        ESP_LOGI(WEBSERVER_TAG, "Setting Restored");
-        send_empty_200(request);
-        operations::instance.reboot();
-    }
-    else
-    {
-        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "Hash not valid supplied for file");
-    }
 }
 
 void web_server::notify_sensor_change(sensor_id_index id)
