@@ -14,13 +14,12 @@ var minify = require('gulp-minify');
 var shajs = require('sha.js');
 var grun = require('gulp-run');
 var log = require('fancy-log');
-const sizeOfImage = require('image-size')
+const sizeOfImage = require('image-size');
 
 
 const baseFolder = 'static/';
 const tempWebFolder = baseFolder + 'web/temp/data/';
 const staticWebInclude = 'main/generated/web/include';
-const staticDisplayInclude = 'main/generated/display/include';
 const staticDisplaySrc = 'main/generated/display/src';
 const sdcardFolder = 'sdcard/';
 
@@ -86,7 +85,7 @@ var toImageFile = function(name, debug) {
       output += '0x' + ('00' + source.contents[i].toString(16)).slice(-2);
     }
 
-    const dimensions = sizeOfImage(source.path)
+    const dimensions = sizeOfImage(source.path);
 
     output += '\n};\n\n';
     output += 'const lv_img_dsc_t ' + safename + '_img = {\n';

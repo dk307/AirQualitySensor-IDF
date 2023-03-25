@@ -21,8 +21,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
         sensor_detail_screen_top_label = create_screen_title(y_pad, "");
 
-        sensor_detail_screen_top_label_units =
-            create_a_label(screen_, &uints_18_font, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
+        sensor_detail_screen_top_label_units = create_a_label(screen_, &uints_18_font, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
 
         lv_obj_set_style_text_align(sensor_detail_screen_top_label_units, LV_TEXT_ALIGN_AUTO, LV_PART_MAIN | LV_STATE_DEFAULT);
 
