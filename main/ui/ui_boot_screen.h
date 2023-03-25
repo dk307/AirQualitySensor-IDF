@@ -1,6 +1,5 @@
 #pragma once
 
-#include "generated/display/include/logo.png.h"
 #include "ui_screen.h"
 
 extern lv_img_dsc_t logo_img;
@@ -18,16 +17,10 @@ class ui_boot_screen final : public ui_screen
         lv_obj_set_scrollbar_mode(screen_, LV_SCROLLBAR_MODE_OFF);
         lv_obj_set_style_bg_color(screen_, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-        auto boot_logo = lv_img_create(screen_);
-        logo_img.header.cf = LV_IMG_CF_RAW_ALPHA;
-        logo_img.header.always_zero = 0;
-        logo_img.header.reserved = 0;
-        logo_img.header.w = 100;
-        logo_img.header.h = 100;
-        logo_img.data_size = 2624;
-        logo_img.data = logo_map;
+        LV_IMG_DECLARE(logo_png_img);
 
-        lv_img_set_src(boot_logo, &logo_img);
+        auto boot_logo = lv_img_create(screen_);
+        lv_img_set_src(boot_logo, &logo_png_img);
         lv_obj_set_size(boot_logo, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
         lv_obj_align(boot_logo, LV_ALIGN_CENTER, 0, -20);
 

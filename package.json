@@ -26,6 +26,7 @@
     "gulp-html-minifier-terser": "^7.1.0",
     "gulp-imagemin": "^7.1.0",
     "gulp-run": "^1.7.1",
+    "image-size": "^1.0.2",
     "lv_font_conv": "^1.5.2",
     "lv_img_conv": "^0.4.0",
     "sha.js": "^2.4.11",

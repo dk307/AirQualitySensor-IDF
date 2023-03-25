@@ -2,7 +2,6 @@
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
 #include "logging/logging_tags.h"
-#include "lvgl_fs/lvgl_fs_sd_card.h"
 #include "ui/ui2.h"
 #include "util/cores.h"
 #include "util/default_event.h"
@@ -54,7 +53,6 @@ void display::start()
     instance_app_common_event_.subscribe();
 
     lv_init();
-    lv_fs_if_fatfs_init();
 
     if (!display_device_.init())
     {

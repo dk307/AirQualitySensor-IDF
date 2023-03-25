@@ -60,7 +60,6 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     ui_homekit_screen homekit_screen_{ui_interface_instance_, *this};
     ui_wifi_enroll_screen wifi_enroll_screen_{ui_interface_instance_, *this};
 
-    void check_sd_card_ready();
     void init_no_wifi_image();
     void init_top_message();
     static void no_wifi_img_animation_cb(void *var, int32_t v);

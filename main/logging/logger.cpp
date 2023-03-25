@@ -1,7 +1,8 @@
 #include "logger.h"
+#include "hardware/sd_card.h"
 #include "logging_tags.h"
+#include "util/exceptions.h"
 #include "util/helper.h"
-
 #include <esp_log.h>
 #include <string>
 #include <vector>
@@ -116,6 +117,11 @@ bool logger::enable_sd_logging()
     std::lock_guard<esp32::semaphore> lock(hook_mutex_);
 
     ESP_LOGI(LOGGING_TAG, "Enabling sd card logging");
+    if (!sd_card::instance.is_mounted())
+    {
+        ESP_LOGW(LOGGING_TAG, "No SD Card found");
+        CHECK_THROW_ESP(ESP_FAIL);
+    }
 
     hook_logger();
 

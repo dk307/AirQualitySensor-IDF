@@ -7,12 +7,12 @@
 #include <esp_log.h>
 #include <lvgl.h>
 
-extern lv_font_t big_panel_font;
-extern lv_font_t temp_hum_font;
-extern lv_font_t regular_numbers_40_font;
-extern lv_font_t all_48_font;
-extern lv_font_t all_14_font;
-extern lv_font_t uints_18_font;
+LV_FONT_DECLARE(big_panel_font);
+LV_FONT_DECLARE(temp_hum_font);
+LV_FONT_DECLARE(regular_numbers_40_font);
+LV_FONT_DECLARE(all_48_font);
+LV_FONT_DECLARE(all_14_font);
+LV_FONT_DECLARE(uints_18_font);
 
 class ui_screen : esp32::noncopyable
 {

@@ -14,6 +14,7 @@ var minify = require('gulp-minify');
 var shajs = require('sha.js');
 var grun = require('gulp-run');
 var log = require('fancy-log');
+const sizeOfImage = require('image-size')
 
 
 const baseFolder = 'static/';
@@ -64,6 +65,55 @@ var toHeader = function(name, debug) {
     callback(null, destination);
   });
 };
+
+var toImageFile = function(name, debug) {
+  return through.obj(function(source, encoding, callback) {
+    var parts = source.path.split(path.sep);
+    var filename = parts[parts.length - 1];
+    var safename = name || filename.split('.').join('_');
+
+    // Generate output
+    var output = '';
+    output += '#include <lvgl.h>\n';
+    output += 'const uint8_t ' + safename + '_data[] = {';
+    for (var i = 0; i < source.contents.length; i++) {
+      if (i > 0) {
+        output += ',';
+      }
+      if (0 === (i % 30)) {
+        output += '\n';
+      }
+      output += '0x' + ('00' + source.contents[i].toString(16)).slice(-2);
+    }
+
+    const dimensions = sizeOfImage(source.path)
+
+    output += '\n};\n\n';
+    output += 'const lv_img_dsc_t ' + safename + '_img = {\n';
+    output += '  .header.always_zero = 0,\n';
+    output += '  .header.reserved = 0,\n';
+    output += '  .header.cf = LV_IMG_CF_RAW_ALPHA,\n';
+    output += '  .header.w = ' + dimensions.width + ',\n';
+    output += '  .header.h = ' + dimensions.height + ',\n';
+    output += '  .data_size = ' + source.contents.length + ',\n';
+    output += '  .data = ' + safename + '_data\n';
+    output += '};\n';
+
+    // clone the contents
+    var destination = source.clone();
+    destination.path = source.path + '.c';
+    destination.contents = Buffer.from(output);
+
+    if (debug) {
+      console.info(
+          'Image ' + filename + ' \tsize: ' + source.contents.length +
+          ' bytes');
+    }
+
+    callback(null, destination);
+  });
+};
+
 
 gulp.task('html', function() {
   return gulp.src(baseFolder + 'web/*.html')
@@ -138,38 +188,44 @@ function font_create(bpp, size, font, output, symbols_and_range) {
 
 gulp.task('display-fonts-big-font', function() {
   return font_create(
-      8, 165, './node_modules/@fontsource/montserrat/files/montserrat-all-300-normal.woff',
+      8, 165,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-300-normal.woff',
       'big_panel_font.c', '--symbols="0,1,2,3,4,5,6,7,8,9,-"');
 });
 
 gulp.task('display-fonts-temp-hum', function() {
   return font_create(
-      4, 72, './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
+      4, 72,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
       'temp_hum_font.c', '--symbols="0,1,2,3,4,5,6,7,8,9,F,C,°,⁒,-"');
 });
 
 gulp.task('display-fonts-40-regular-number', function() {
   return font_create(
-      4, 40, './node_modules/@fontsource/montserrat/files/montserrat-all-400-normal.woff',
+      4, 40,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-400-normal.woff',
       'regular_numbers_40_font.c', '--symbols="0,1,2,3,4,5,6,7,8,9"');
 });
 
 gulp.task('display-fonts-48-all', function() {
   return font_create(
-      4, 48, './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
+      4, 48,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
       'all_48_font.c',
       '--range=0x20-0x7F --symbols="0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-"');
 });
 
 gulp.task('display-fonts-18-uints', function() {
   return font_create(
-      4, 18, './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
+      4, 18,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
       'uints_18_font.c', '--symbols="C,F,µ,g,/,m,³,°,F,⁒,p,-,l,u,x,b"');
 });
 
 gulp.task('display-fonts-14-all', function() {
   return font_create(
-      4, 14, './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
+      4, 14,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-500-normal.woff',
       'all_14_font.c',
       '--range=0x20-0x7F --symbols="0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-"');
 });
@@ -187,8 +243,8 @@ gulp.task('display-images', function() {
   return gulp.src(baseFolder + 'display/image/*.png')
       .pipe(imagemin())
       .pipe(gulp.dest(tempWebFolder))
-      .pipe(toHeader(null, true))
-      .pipe(gulp.dest(staticDisplayInclude));
+      .pipe(toImageFile(null, true))
+      .pipe(gulp.dest(staticDisplaySrc));
 });
 
 gulp.task('display-file-copy', function() {

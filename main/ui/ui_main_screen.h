@@ -127,8 +127,9 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_radius(panel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);
 
+        LV_IMG_DECLARE(temperature_png_img);
         auto image = lv_img_create(panel);
-        lv_img_set_src(image, "S:display/image/temperature.png");
+        lv_img_set_src(image, &temperature_png_img);
         lv_obj_align(image, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
         auto value_label = lv_label_create(panel);
@@ -159,7 +160,8 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         set_padding_zero(panel);
 
         auto image = lv_img_create(panel);
-        lv_img_set_src(image, "S:display/image/humidity.png");
+        LV_IMG_DECLARE(humidity_png_img);
+        lv_img_set_src(image, &humidity_png_img);
         lv_obj_align(image, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
 
         auto value_label = lv_label_create(panel);
