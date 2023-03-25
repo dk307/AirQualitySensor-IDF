@@ -51,19 +51,16 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     lv_obj_t *top_message_label_{};
     lv_timer_t *top_message_timer_{};
 
-    ui_common_fonts common_fonts_{};
-
-    ui_boot_screen boot_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_main_screen main_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_sensor_detail_screen sensor_detail_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_information_screen settings_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_launcher_screen launcher_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_hardware_screen hardware_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_homekit_screen homekit_screen_{ui_interface_instance_, *this, &common_fonts_};
-    ui_wifi_enroll_screen wifi_enroll_screen_{ui_interface_instance_, *this, &common_fonts_};
+    ui_boot_screen boot_screen_{ui_interface_instance_, *this};
+    ui_main_screen main_screen_{ui_interface_instance_, *this};
+    ui_sensor_detail_screen sensor_detail_screen_{ui_interface_instance_, *this};
+    ui_information_screen settings_screen_{ui_interface_instance_, *this};
+    ui_launcher_screen launcher_screen_{ui_interface_instance_, *this};
+    ui_hardware_screen hardware_screen_{ui_interface_instance_, *this};
+    ui_homekit_screen homekit_screen_{ui_interface_instance_, *this};
+    ui_wifi_enroll_screen wifi_enroll_screen_{ui_interface_instance_, *this};
 
     void check_sd_card_ready();
-    void load_from_sd_card();
     void init_no_wifi_image();
     void init_top_message();
     static void no_wifi_img_animation_cb(void *var, int32_t v);

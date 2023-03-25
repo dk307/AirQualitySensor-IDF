@@ -28,6 +28,12 @@ idf_component_register(SRCS "main.cpp"
                             "logging/logger.cpp"
                             "logging/commands.cpp"
                             "homekit/homekit_integration.cpp"
+                            "generated/display/src/big_panel_font.c"
+                            "generated/display/src/temp_hum_font.c"
+                            "generated/display/src/regular_numbers_40_font.c"
+                            "generated/display/src/all_48_font.c"
+                            "generated/display/src/all_14_font.c"
+                            "generated/display/src/uints_18_font.c"
 
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi 

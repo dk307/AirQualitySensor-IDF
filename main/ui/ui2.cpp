@@ -3,6 +3,8 @@
 #include <memory>
 #include <tuple>
 
+lv_img_dsc_t logo_img;
+
 void lv_logger(const char *dsc)
 {
     ESP_LOGI(UI_TAG, "%s", dsc);
@@ -45,18 +47,6 @@ void ui::check_sd_card_ready()
     }
 }
 
-void ui::load_from_sd_card()
-{
-    common_fonts_.font_montserrat_regular_numbers_40 = lv_font_from_sd_card("S:/display/font/ui_font_m40regularnumbers.bin");
-    common_fonts_.font_big_panel = lv_font_from_sd_card("S:display/font/big_panel_top.bin");
-    common_fonts_.font_montserrat_medium_48 = lv_font_from_sd_card("S:display/font/ui_font_m48medium.bin");
-    common_fonts_.font_montserrat_medium_14 = lv_font_from_sd_card("S:display/font/ui_font_m14medium.bin");
-    common_fonts_.font_montserrat_medium_units_18 = lv_font_from_sd_card("S:display/font/ui_font_m18unitsmedium.bin");
-    common_fonts_.font_temp_hum = lv_font_from_sd_card("S:display/font/temp_hum.bin");
-
-    ESP_LOGI(UI_TAG, "Loaded From SD Card");
-}
-
 void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 {
     auto pThis = reinterpret_cast<ui *>(var);
@@ -86,8 +76,6 @@ void ui::load_boot_screen()
 
 void ui::init()
 {
-    load_from_sd_card(); // might take some time
-
     // dont't cache boot screen
     lv_img_cache_invalidate_src(NULL);
 

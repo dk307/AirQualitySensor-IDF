@@ -1,29 +1,24 @@
 #pragma once
 
-#include <esp_log.h>
-#include <lvgl.h>
-
 #include "logging/logging_tags.h"
 #include "ui_inter_screen_interface.h"
 #include "ui_interface.h"
 #include "util/noncopyable.h"
+#include <esp_log.h>
+#include <lvgl.h>
 
-struct ui_common_fonts
-{
-    // fonts loaded from sd card - bpp4/8
-    lv_font_t *font_big_panel;                     // 0x20,0,1,2,3,4,5,6,7,8,9,-
-    lv_font_t *font_temp_hum;                      // 0x20,0,1,2,3,4,5,6,7,8,9,F,C,µ,g,/,m,³,°,F,⁒,p,-
-    lv_font_t *font_montserrat_regular_numbers_40; // 0x20,0,1,2,3,4,5,6,7,8,9,-
-    lv_font_t *font_montserrat_medium_48;          // 0x20-0x7F,0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-
-    lv_font_t *font_montserrat_medium_units_18;    // 0x20,C,F,µ,g,/,m,³,°,F,⁒,p,-
-    lv_font_t *font_montserrat_medium_14;          // 0x20-0x7F,0,1,2,3,4,5,6,7,8,9,F,µ,g,/,m,³,°,F,⁒,p,-
-};
+extern lv_font_t big_panel_font;
+extern lv_font_t temp_hum_font;
+extern lv_font_t regular_numbers_40_font;
+extern lv_font_t all_48_font;
+extern lv_font_t all_14_font;
+extern lv_font_t uints_18_font;
 
 class ui_screen : esp32::noncopyable
 {
   public:
-    ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface, const ui_common_fonts *fonts_)
-        : ui_interface_instance_(ui_interface_instance_), inter_screen_interface_(ui_inter_screen_interface), fonts_(fonts_)
+    ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface)
+        : ui_interface_instance_(ui_interface_instance_), inter_screen_interface_(ui_inter_screen_interface)
     {
     }
 
@@ -45,7 +40,6 @@ class ui_screen : esp32::noncopyable
 
     ui_interface &ui_interface_instance_;
     ui_inter_screen_interface &inter_screen_interface_;
-    const ui_common_fonts *fonts_{};
     lv_obj_t *screen_{};
 
     static void __attribute__((noinline)) set_padding_zero(lv_obj_t *obj)
@@ -123,7 +117,7 @@ class ui_screen : esp32::noncopyable
 
     lv_obj_t *__attribute__((noinline)) create_screen_title(lv_coord_t y_ofs, const char *title)
     {
-        auto label = create_a_label(screen_, fonts_->font_montserrat_medium_48, LV_ALIGN_TOP_MID, 0, y_ofs, text_color);
+        auto label = create_a_label(screen_, &all_48_font, LV_ALIGN_TOP_MID, 0, y_ofs, text_color);
         lv_label_set_text_static(label, title);
         return label;
     }
