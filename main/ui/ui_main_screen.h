@@ -81,7 +81,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
         lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
         lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(value_label, fonts_->font_big_panel, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(value_label, &big_panel_font, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<index>>, LV_EVENT_SHORT_CLICKED, this);
@@ -127,8 +127,9 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_radius(panel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);
 
+        LV_IMG_DECLARE(temperature_png_img);
         auto image = lv_img_create(panel);
-        lv_img_set_src(image, "S:display/image/temperature.png");
+        lv_img_set_src(image, &temperature_png_img);
         lv_obj_align(image, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
         auto value_label = lv_label_create(panel);
@@ -136,7 +137,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_align(value_label, LV_ALIGN_BOTTOM_LEFT, 56, 0);
         lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
         lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(value_label, fonts_->font_temp_hum, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(value_label, &temp_hum_font, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 
@@ -159,7 +160,8 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         set_padding_zero(panel);
 
         auto image = lv_img_create(panel);
-        lv_img_set_src(image, "S:display/image/humidity.png");
+        LV_IMG_DECLARE(humidity_png_img);
+        lv_img_set_src(image, &humidity_png_img);
         lv_obj_align(image, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
 
         auto value_label = lv_label_create(panel);
@@ -167,7 +169,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_align(value_label, LV_ALIGN_BOTTOM_RIGHT, -56, 0);
         lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
         lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(value_label, fonts_->font_temp_hum, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(value_label, &temp_hum_font, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 

@@ -3,6 +3,8 @@
 #include <memory>
 #include <tuple>
 
+lv_img_dsc_t logo_img;
+
 void lv_logger(const char *dsc)
 {
     ESP_LOGI(UI_TAG, "%s", dsc);
@@ -32,31 +34,6 @@ lv_font_t *ui::lv_font_from_sd_card(const char *path)
     return font;
 }
 
-void ui::check_sd_card_ready()
-{
-    if (lv_fs_is_ready('S'))
-    {
-        ESP_LOGI(UI_TAG, "lv fs is ready. Loading from SD Card");
-    }
-    else
-    {
-        ESP_LOGE(UI_TAG, "lv fs not ready");
-        CHECK_THROW_ESP2(ESP_FAIL, "SD Card is not ready");
-    }
-}
-
-void ui::load_from_sd_card()
-{
-    common_fonts_.font_montserrat_regular_numbers_40 = lv_font_from_sd_card("S:/display/font/ui_font_m40regularnumbers.bin");
-    common_fonts_.font_big_panel = lv_font_from_sd_card("S:display/font/big_panel_top.bin");
-    common_fonts_.font_montserrat_medium_48 = lv_font_from_sd_card("S:display/font/ui_font_m48medium.bin");
-    common_fonts_.font_montserrat_medium_14 = lv_font_from_sd_card("S:display/font/ui_font_m14medium.bin");
-    common_fonts_.font_montserrat_medium_units_18 = lv_font_from_sd_card("S:display/font/ui_font_m18unitsmedium.bin");
-    common_fonts_.font_temp_hum = lv_font_from_sd_card("S:display/font/temp_hum.bin");
-
-    ESP_LOGI(UI_TAG, "Loaded From SD Card");
-}
-
 void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 {
     auto pThis = reinterpret_cast<ui *>(var);
@@ -67,7 +44,6 @@ void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 
 void ui::load_boot_screen()
 {
-    check_sd_card_ready();
 
 #if LV_USE_LOG
     lv_log_register_print_cb(&lv_logger);
@@ -86,8 +62,6 @@ void ui::load_boot_screen()
 
 void ui::init()
 {
-    load_from_sd_card(); // might take some time
-
     // dont't cache boot screen
     lv_img_cache_invalidate_src(NULL);
 
@@ -107,8 +81,10 @@ void ui::init()
 
 void ui::init_no_wifi_image()
 {
+    LV_IMG_DECLARE(nowifi_png_img);
+
     no_wifi_image_ = lv_img_create(lv_layer_sys());
-    lv_img_set_src(no_wifi_image_, "S:display/image/nowifi.png");
+    lv_img_set_src(no_wifi_image_, &nowifi_png_img);
     lv_obj_align(no_wifi_image_, LV_ALIGN_TOP_LEFT, 5, 5);
     lv_obj_add_flag(no_wifi_image_, LV_OBJ_FLAG_HIDDEN);
 

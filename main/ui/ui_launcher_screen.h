@@ -9,6 +9,13 @@ class ui_launcher_screen : public ui_screen
     using ui_screen::ui_screen;
     void init() override
     {
+        LV_IMG_DECLARE(restart_png_img);
+        LV_IMG_DECLARE(factory_reset_png_img);
+        LV_IMG_DECLARE(info_png_img);
+        LV_IMG_DECLARE(homekit_png_img);
+        LV_IMG_DECLARE(hardware_png_img);
+        LV_IMG_DECLARE(wifi_png_img);
+
         ui_screen::init();
         set_default_screen_color();
 
@@ -17,26 +24,25 @@ class ui_launcher_screen : public ui_screen
         lv_style_init(&button_style_default_);
         lv_style_set_text_color(&button_style_default_, text_color);
         lv_style_set_img_opa(&button_style_default_, LV_OPA_100);
-        lv_style_set_text_font(&button_style_default_, &lv_font_montserrat_16);
+        lv_style_set_text_font(&button_style_default_, &lv_font_montserrat_18);
 
         lv_style_init(&button_style_pressed_);
         lv_style_set_img_recolor_opa(&button_style_pressed_, LV_OPA_30);
         lv_style_set_img_recolor(&button_style_pressed_, text_color);
         lv_style_set_text_color(&button_style_pressed_, lv_color_lighten(text_color, LV_OPA_50));
-        lv_style_set_text_font(&button_style_pressed_, &lv_font_montserrat_16);
+        lv_style_set_text_font(&button_style_pressed_, &lv_font_montserrat_18);
 
         int pad = 30;
-        create_button(LV_ALIGN_TOP_LEFT, pad, pad, "S:display/image/restart.png", "Restart",
-                      event_callback<ui_launcher_screen, &ui_launcher_screen::restart>);
-        create_button(LV_ALIGN_TOP_MID, 0, pad, "S:display/image/factory-reset.png", "Factory\nReset",
+        create_button(LV_ALIGN_TOP_LEFT, pad, pad, &restart_png_img, "Restart", event_callback<ui_launcher_screen, &ui_launcher_screen::restart>);
+        create_button(LV_ALIGN_TOP_MID, 0, pad, &factory_reset_png_img, "Factory\nReset",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::factory_reset>);
-        create_button(LV_ALIGN_TOP_RIGHT, -pad, pad, "S:display/image/info.png", "Information",
+        create_button(LV_ALIGN_TOP_RIGHT, -pad, pad, &info_png_img, "Information",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::show_information>);
-        create_button(LV_ALIGN_BOTTOM_LEFT, pad, -pad - 25, "S:display/image/homekit.png", "Homekit",
+        create_button(LV_ALIGN_BOTTOM_LEFT, pad, -pad - 25, &homekit_png_img, "Homekit",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::homekit_info>);
-        create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25, "S:display/image/hardware.png", "Hardware",
+        create_button(LV_ALIGN_BOTTOM_MID, 0, -pad - 25, &hardware_png_img, "Hardware",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::hardware_info>);
-        create_button(LV_ALIGN_BOTTOM_RIGHT, -pad, -pad - 25, "S:display/image/wifi.png", "Wifi\nEnroll",
+        create_button(LV_ALIGN_BOTTOM_RIGHT, -pad, -pad - 25, &wifi_png_img, "Wifi\nEnroll",
                       event_callback<ui_launcher_screen, &ui_launcher_screen::wifi_setup>);
 
         init_confirm_win();
@@ -66,7 +72,7 @@ class ui_launcher_screen : public ui_screen
     }
 
     lv_obj_t *__attribute__((noinline))
-    create_button(lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, const char *src, const char *label_str, lv_event_cb_t event_cb)
+    create_button(lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, const lv_img_dsc_t *src, const char *label_str, lv_event_cb_t event_cb)
     {
         auto btn = lv_imgbtn_create(screen_);
         lv_obj_set_size(btn, LV_SIZE_CONTENT, LV_SIZE_CONTENT);

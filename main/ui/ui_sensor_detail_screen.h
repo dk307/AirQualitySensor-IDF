@@ -21,8 +21,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
         sensor_detail_screen_top_label = create_screen_title(y_pad, "");
 
-        sensor_detail_screen_top_label_units =
-            create_a_label(screen_, fonts_->font_montserrat_medium_units_18, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
+        sensor_detail_screen_top_label_units = create_a_label(screen_, &uints_18_font, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
 
         lv_obj_set_style_text_align(sensor_detail_screen_top_label_units, LV_TEXT_ALIGN_AUTO, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -54,7 +53,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
             lv_obj_set_style_size(sensor_detail_screen_chart, 0, LV_PART_INDICATOR);
             sensor_detail_screen_chart_series =
                 lv_chart_add_series(sensor_detail_screen_chart, lv_theme_get_color_primary(sensor_detail_screen_chart), LV_CHART_AXIS_PRIMARY_Y);
-            lv_obj_set_style_text_font(sensor_detail_screen_chart, fonts_->font_montserrat_medium_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(sensor_detail_screen_chart, &all_14_font, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_chart_set_axis_tick(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_Y, 5, 1, 3, 1, true, 200);
             lv_chart_set_axis_tick(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_X, 10, 5, chart_total_x_ticks, 1, true, 50);
 
@@ -64,7 +63,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
                                 LV_EVENT_DRAW_PART_BEGIN, this);
         }
 
-        create_close_button_to_main_screen(screen_, LV_ALIGN_BOTTOM_LEFT, 15, -15);
+        create_close_button_to_main_screen(screen_, LV_ALIGN_TOP_LEFT, 15, 15);
         lv_obj_add_event_cb(screen_, event_callback<ui_sensor_detail_screen, &ui_sensor_detail_screen::screen_callback>, LV_EVENT_ALL, this);
 
         ESP_LOGD(UI_TAG, "Sensor detail init done");
@@ -157,11 +156,11 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_radius(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);
 
-        auto current_static_label = create_a_label(panel, fonts_->font_montserrat_medium_14, LV_ALIGN_TOP_MID, 0, 3, text_color);
+        auto current_static_label = create_a_label(panel, &all_14_font, LV_ALIGN_TOP_MID, 0, 3, text_color);
 
         lv_label_set_text_static(current_static_label, label_text);
 
-        auto value_label = create_a_label(panel, fonts_->font_montserrat_regular_numbers_40, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
+        auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
 
         return {panel, value_label};
     }

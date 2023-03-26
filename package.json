@@ -18,11 +18,18 @@
     "gulp-watch": "^5.0.1"
   },
   "dependencies": {
+    "@fontsource/montserrat": "^4.5.14",
+    "cli": "^1.0.1",
     "eslint": "^8.36.0",
     "gulp-html": "^5.0.0",
     "gulp-html-minifier": "^0.1.8",
     "gulp-html-minifier-terser": "^7.1.0",
     "gulp-imagemin": "^7.1.0",
-    "sha.js": "^2.4.11"
+    "gulp-run": "^1.7.1",
+    "image-size": "^1.0.2",
+    "lv_font_conv": "^1.5.2",
+    "lv_img_conv": "^0.4.0",
+    "sha.js": "^2.4.11",
+    "typescript": "^5.0.2"
   }
 }

@@ -259,7 +259,7 @@ ui_interface::information_table_type hardware::get_information_table(information
             {"SSID", config::instance.get_wifi_credentials().get_user_name()},
             {"Web user name", config::instance.get_web_user_credentials().get_user_name()},
             {"Screen brightness (%)", esp32::string::to_string((100 * config::instance.get_manual_screen_brightness().value_or(0)) / 256)},
-            {"Use Fahrenheit", esp32::string::to_string(config::instance.is_use_fahrenheit())},
+            {"Use Fahrenheit", config::instance.is_use_fahrenheit() ? "Yes" : "No"},
         };
         break;
     }

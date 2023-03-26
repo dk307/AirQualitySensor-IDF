@@ -41,52 +41,65 @@ void sd_card::begin()
     CHECK_THROW_ESP(spi_bus_initialize(device_config.host_id, &bus_cfg, SDSPI_DEFAULT_DMA));
 
     ESP_LOGI(HARDWARE_TAG, "Mounting filesystem");
-    CHECK_THROW_ESP(esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_));
-    ESP_LOGI(HARDWARE_TAG, "Filesystem mounted");
-
-    ESP_LOGI(HARDWARE_TAG, "%s", get_info().c_str());
+    const auto err = esp_vfs_fat_sdspi_mount(mount_point, &host, &device_config, &mount_config, &sd_card_);
+    if (err != ESP_OK)
+    {
+        ESP_LOGI(HARDWARE_TAG, "Failed to load SD card with %s", esp_err_to_name(err));
+    }
+    else
+    {
+        ESP_LOGI(HARDWARE_TAG, "SD Card Filesystem mounted");
+        ESP_LOGI(HARDWARE_TAG, "%s", get_info().c_str());
+    }
 }
 
 std::string sd_card::get_info()
 {
+    if (sd_card_)
+    {
 #define SD_OCR_SDHC_CAP (1 << 30)
 
-    std::string info;
-    info.reserve(256);
+        std::string info;
+        info.reserve(256);
 
-    const char *type;
-    info += "Name: " + std::string(sd_card_->cid.name) + "\n";
-    if (sd_card_->is_sdio)
-    {
-        type = "SDIO";
-    }
-    else if (sd_card_->is_mmc)
-    {
-        type = "MMC";
-    }
-    else
-    {
-
-        type = (sd_card_->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC";
-    }
-
-    info += "Type: " + std::string(type) + "\n";
-    if (sd_card_->max_freq_khz < 1000)
-    {
-        info += "Speed: " + esp32::string::to_string(sd_card_->max_freq_khz) + " kHz\n";
-    }
-    else
-    {
-        info += "Speed: " + esp32::string::to_string(sd_card_->max_freq_khz / 1000) + " kHz\n";
-        ;
-        if (sd_card_->is_ddr)
+        const char *type;
+        info += "Name: " + std::string(sd_card_->cid.name) + "\n";
+        if (sd_card_->is_sdio)
         {
-            info += ", DDR";
+            type = "SDIO";
         }
-        info += "\n";
+        else if (sd_card_->is_mmc)
+        {
+            type = "MMC";
+        }
+        else
+        {
+
+            type = (sd_card_->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC";
+        }
+
+        info += "Type: " + std::string(type) + "\n";
+        if (sd_card_->max_freq_khz < 1000)
+        {
+            info += "Speed: " + esp32::string::to_string(sd_card_->max_freq_khz) + " kHz\n";
+        }
+        else
+        {
+            info += "Speed: " + esp32::string::to_string(sd_card_->max_freq_khz / 1000) + " kHz\n";
+            ;
+            if (sd_card_->is_ddr)
+            {
+                info += ", DDR";
+            }
+            info += "\n";
+        }
+
+        info += "Size: " + esp32::string::stringify_size(static_cast<uint64_t>(sd_card_->csd.capacity) * sd_card_->csd.sector_size) + "\n";
+
+        return info;
     }
-
-    info += "Size: " + esp32::string::stringify_size(static_cast<uint64_t>(sd_card_->csd.capacity) * sd_card_->csd.sector_size) + "\n";
-
-    return info;
+    else
+    {
+        return "No card found";
+    }
 }

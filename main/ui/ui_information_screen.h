@@ -12,7 +12,7 @@ class ui_information_screen : public ui_screen
         set_default_screen_color();
 
         tab_view_ = lv_tabview_create(screen_, LV_DIR_LEFT, tab_width);
-        lv_obj_set_style_text_font(screen_, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(screen_, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_add_event_cb(screen_, event_callback<ui_information_screen, &ui_information_screen::screen_callback>, LV_EVENT_ALL, this);
         lv_obj_add_event_cb(tab_view_, event_callback<ui_information_screen, &ui_information_screen::tab_view_callback>, LV_EVENT_ALL, this);

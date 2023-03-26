@@ -36,8 +36,8 @@ class display final : esp32::noncopyable
     esp32::default_event_subscriber instance_app_common_event_{
         APP_COMMON_EVENT, ESP_EVENT_ANY_ID, [this](esp_event_base_t base, int32_t event, void *data) { app_event_handler(base, event, data); }};
 
-    static void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-    static void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
+    static void IRAM_ATTR display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+    static void IRAM_ATTR touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
     void gui_task();
     void app_event_handler(esp_event_base_t, int32_t, void *);
 
