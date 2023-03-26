@@ -180,7 +180,7 @@ void hardware::sensor_task_ftn()
 
 void hardware::read_bh1750_sensor()
 {
-    std::optional<uint16_t> lux;
+    float lux = NAN;
     uint16_t level_lux = 0;
     auto err = bh1750_read(&bh1750_sensor, &level_lux);
     if (err != ESP_OK)
@@ -196,10 +196,9 @@ void hardware::read_bh1750_sensor()
     const auto now = esp32::millis();
     if (now - bh1750_sensor_last_read >= sensor_history::sensor_interval)
     {
-        if (lux.has_value())
+        if (!std::isnan(lux))
         {
-            const auto value = lux.value();
-            ESP_LOGI(SENSOR_BH1750_TAG, "Read BH1750 value:%d lux", value);
+            ESP_LOGI(SENSOR_BH1750_TAG, "Read BH1750 value:%g lux", lux);
             bh1750_sensor_last_read = now;
         }
         else
@@ -207,7 +206,7 @@ void hardware::read_bh1750_sensor()
             ESP_LOGW(SENSOR_BH1750_TAG, "Failed to read from BH1750");
         }
 
-        set_sensor_value(sensor_id_index::light_intensity, lux.has_value() ? lux.value() : NAN, 1);
+        set_sensor_value(sensor_id_index::light_intensity, lux, 1);
     }
 }
 

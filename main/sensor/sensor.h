@@ -157,7 +157,7 @@ class sensor_value
     }
 };
 
-template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
+template <uint16_t countT> class sensor_history_t
 {
   public:
     typedef struct
@@ -178,7 +178,7 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
     void add_value(float value)
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        last_x_values_.push(std::lround<int32_t>(value * multiplierT));
+        last_x_values_.push(value);
     }
 
     void clear()
@@ -196,7 +196,8 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
         if (size)
         {
             return_values.reserve(1 + (size / group_by_count));
-            stats stats_value{0, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min()};
+            float value_max = std::numeric_limits<float>::max();
+            float value_min = std::numeric_limits<float>::min();
             double sum = 0;
             double group_sum = 0;
             for (auto i = 0; i < size; i++)
@@ -204,12 +205,12 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
                 const auto value = last_x_values_[i];
                 sum += value;
                 group_sum += value;
-                stats_value.max = std::max<int16_t>(std::lround<int16_t>(value / multiplierT), stats_value.max);
-                stats_value.min = std::min<int16_t>(std::lround<int16_t>(value / multiplierT), stats_value.min);
+                value_max = std::max<float>(value, value_max);
+                value_min = std::min<float>(value, value_min);
 
                 if (((i + 1) % group_by_count) == 0)
                 {
-                    return_values.push_back(std::lround<int16_t>(group_sum / (multiplierT * group_by_count)));
+                    return_values.push_back(std::lround<int16_t>(group_sum / (group_by_count)));
                     group_sum = 0;
                 }
             }
@@ -217,10 +218,13 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
             // add partial group average
             if (size % group_by_count)
             {
-                return_values.push_back(std::lround<int16_t>(group_sum / (multiplierT * (size % group_by_count))));
+                return_values.push_back(std::lround<int16_t>(group_sum / (size % group_by_count)));
             }
 
-            stats_value.mean = std::lround<int16_t>(sum / (size * multiplierT));
+            stats stats_value;
+            stats_value.max = std::lround<int16_t>(value_max);
+            stats_value.min = std::lround<int16_t>(value_min);
+            stats_value.mean = std::lround<int16_t>(sum / size);
             return {stats_value, return_values};
         }
         else
@@ -240,7 +244,7 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
             {
                 sum += last_x_values_[i];
             }
-            return static_cast<int16_t>(sum / (size * multiplierT));
+            return static_cast<int16_t>(sum / size);
         }
         else
         {
@@ -250,10 +254,10 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
 
   private:
     mutable esp32::semaphore data_mutex_;
-    circular_buffer<int32_t, countT> last_x_values_;
+    circular_buffer<float, countT> last_x_values_;
 };
 
-template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_minute_t : public sensor_history_t<reads_per_minuteT * minutesT, 10>
+template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_minute_t : public sensor_history_t<reads_per_minuteT * minutesT>
 {
   public:
     static constexpr auto total_minutes = minutesT;
