@@ -15,9 +15,7 @@ class config : public esp32::noncopyable
   public:
     void begin();
     void save();
-    void reset();
-
-    static void erase();
+    
     static config instance;
 
     std::string get_all_config_as_json();

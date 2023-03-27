@@ -41,14 +41,13 @@ void operations::factory_reset()
 {
     ESP_LOGW(OPERATIONS_TAG, "Doing Factory Reset");
     erase_all_nvs_partitions();
-    config::erase();
     reboot_timer_no_exception(3);
 }
 
 void operations::reboot()
 {
     ESP_LOGI(OPERATIONS_TAG, "Restarting...");
-    reboot_timer_no_exception(3);
+    reboot_timer_no_exception(2);
 }
 
 void operations::mark_running_parition_as_valid()
