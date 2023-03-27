@@ -43,7 +43,7 @@ void config::begin()
     ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", get_wifi_credentials().get_user_name().c_str());
     ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", get_wifi_credentials().get_password().c_str());
     ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", get_manual_screen_brightness().value_or(0));
-    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%d", is_use_fahrenheit());
+    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%d", is_use_fahrenheit() ? "Yes" : "No");
 }
 
 void config::save()
