@@ -26,7 +26,7 @@ class ui_screen_with_sensor_panel : public ui_screen
     }
 
   protected:
-    const static uint8_t no_value_label_ = std::numeric_limits<uint8_t>::max();
+    constexpr static uint8_t no_value_label_ = 0;
 
     static void __attribute__((noinline)) set_default_value_in_panel(const panel_and_label &pair)
     {
@@ -48,31 +48,31 @@ class ui_screen_with_sensor_panel : public ui_screen
 
         switch (level)
         {
-        default:
-        case 0:
+        case 1:
             color = 0x9BDE31; // green
             color_grad = 0x7EB528;
             break;
-        case 1:
+        case 2:
             color = 0xD8E358; // yellow
             color_grad = 0xA3AB42;
             break;
-        case 2:
+        case 3:
             color = 0xF59D06; // orange
             color_grad = 0xC98105;
             break;
-        case 3:
+        case 4:
             color = 0xF0262D; // red
             color_grad = 0x9E191E;
             break;
-        case 4:
+        case 5:
             color = 0xB202E8; // purple
             color_grad = 0x9301BF;
             break;
-        case 5:
+        case 6:
             color = 0x940606; // Maroon
             color_grad = 0xc30808;
             break;
+        default:
         case no_value_label_:
             color = 0xC0C0C0; // Silver
             color_grad = 0x696969;

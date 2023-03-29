@@ -55,16 +55,16 @@ class sensor_definition
     {
     }
 
-    sensor_level calculate_level(double value_p) const
+    constexpr sensor_level calculate_level(float value_p) const noexcept
     {
         for (uint8_t i = 0; i < display_definitions_count_; i++)
         {
             if (display_definitions_[i].is_in_range(value_p))
             {
-                return display_definitions_[i].get_level();
+                return display_definitions_[i].get_level() + 1;
             }
         }
-        return display_definitions_[0].get_level();
+        return 0;
     }
 
     constexpr const std::string_view &get_unit() const noexcept
