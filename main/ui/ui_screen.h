@@ -27,7 +27,7 @@ class ui_screen : esp32::noncopyable
         screen_ = lv_obj_create(NULL);
     }
 
-    bool is_active()
+    bool is_active() const
     {
         return lv_scr_act() == screen_;
     }
