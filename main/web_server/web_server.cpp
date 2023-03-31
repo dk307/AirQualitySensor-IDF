@@ -747,7 +747,7 @@ void web_server::handle_file_upload(esp32::http_request &request)
     // try setting last modified time
     if (last_modified_arg.has_value())
     {
-        const auto last_modified = esp32::parse_number<time_t>(last_modified_arg.value());
+        const auto last_modified = esp32::string::parse_number<time_t>(last_modified_arg.value());
         if (last_modified.has_value())
         {
             if (!esp32::filesystem::set_last_modified_time(upload_file_name, last_modified.value()))
@@ -968,7 +968,7 @@ void web_server::on_set_logging_level(esp32::http_request &request)
         return;
     }
 
-    const auto log_level = esp32::parse_number<uint8_t>(level_arg.value());
+    const auto log_level = esp32::string::parse_number<uint8_t>(level_arg.value());
 
     if (!log_level.has_value() || (log_level.value() > ESP_LOG_VERBOSE) || (log_level.value() < ESP_LOG_NONE))
     {

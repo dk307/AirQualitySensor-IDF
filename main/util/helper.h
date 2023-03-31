@@ -66,6 +66,47 @@ std::string stringify_size(uint64_t bytes, int max_unit = 128);
 /// Compare strings for equality in case-insensitive manner.
 bool equals_case_insensitive(const std::string &a, const std::string &b);
 
+///@}
+
+/// @name Parsing & formatting
+///@{
+
+/// Parse an unsigned decimal number from a null-terminated string.
+template <typename T>
+std::optional<T> parse_number(const std::string_view &str)
+    requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
+{
+    char *end = nullptr;
+    const auto value = ::strtoull(str.data(), &end, 10);
+    if (end == str || *end != '\0' || value > std::numeric_limits<T>::max())
+        return {};
+    return value;
+}
+
+/// Parse a signed decimal number from a null-terminated string.
+template <typename T>
+std::optional<T> parse_number(const std::string_view &str)
+    requires(std::is_integral_v<T> && std::is_signed_v<T>)
+{
+    char *end = nullptr;
+    const auto value = ::strtoll(str.data(), &end, 10);
+    if (end == str || *end != '\0' || value < std::numeric_limits<T>::min() || value > std::numeric_limits<T>::max())
+        return {};
+    return value;
+}
+
+/// Parse a decimal floating-point number from a null-terminated string.
+template <typename T>
+std::optional<T> parse_number(const std::string_view &str)
+    requires(std::is_integral_v<T> && std::is_same_v<T, float>)
+{
+    char *end = nullptr;
+    const auto value = ::strtof(str.data(), &end);
+    if (end == str || *end != '\0' || value == HUGE_VALF)
+        return {};
+    return value;
+}
+
 } // namespace string
 
 // std::byteswap from C++23
@@ -188,58 +229,6 @@ std::string str_snake_case(const std::string &str);
 /// Sanitizes the input string by removing all characters but alphanumerics,
 /// dashes and underscores.
 std::string str_sanitize(const std::string &str);
-
-///@}
-
-/// @name Parsing & formatting
-///@{
-
-/// Parse an unsigned decimal number from a null-terminated string.
-template <typename T, std::enable_if_t<(std::is_integral<T>::value && std::is_unsigned<T>::value), int> = 0>
-std::optional<T> parse_number(const char *str)
-{
-    char *end = nullptr;
-    unsigned long value = ::strtoul(str, &end, 10);
-    if (end == str || *end != '\0' || value > std::numeric_limits<T>::max())
-        return {};
-    return value;
-}
-/// Parse an unsigned decimal number.
-template <typename T, std::enable_if_t<(std::is_integral<T>::value && std::is_unsigned<T>::value), int> = 0>
-std::optional<T> parse_number(const std::string &str)
-{
-    return parse_number<T>(str.c_str());
-}
-/// Parse a signed decimal number from a null-terminated string.
-template <typename T, std::enable_if_t<(std::is_integral<T>::value && std::is_signed<T>::value), int> = 0>
-std::optional<T> parse_number(const char *str)
-{
-    char *end = nullptr;
-    signed long value = ::strtol(str, &end, 10);
-    if (end == str || *end != '\0' || value < std::numeric_limits<T>::min() || value > std::numeric_limits<T>::max())
-        return {};
-    return value;
-}
-/// Parse a signed decimal number.
-template <typename T, std::enable_if_t<(std::is_integral<T>::value && std::is_signed<T>::value), int> = 0>
-std::optional<T> parse_number(const std::string &str)
-{
-    return parse_number<T>(str.c_str());
-}
-/// Parse a decimal floating-point number from a null-terminated string.
-template <typename T, std::enable_if_t<(std::is_same<T, float>::value), int> = 0> std::optional<T> parse_number(const char *str)
-{
-    char *end = nullptr;
-    float value = ::strtof(str, &end);
-    if (end == str || *end != '\0' || value == HUGE_VALF)
-        return {};
-    return value;
-}
-/// Parse a decimal floating-point number.
-template <typename T, std::enable_if_t<(std::is_same<T, float>::value), int> = 0> std::optional<T> parse_number(const std::string &str)
-{
-    return parse_number<T>(str.c_str());
-}
 
 /** Parse bytes from a hex-encoded string into a byte array.
  *

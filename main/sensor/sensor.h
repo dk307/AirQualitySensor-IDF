@@ -131,7 +131,7 @@ class sensor_value
         return std::lround<T>(value);
     }
 
-    bool set_value(float value, double precision)
+    bool set_value(float value, float precision)
     {
         return set_value_(round(value, precision));
     }

@@ -110,7 +110,7 @@ class ui_screen : esp32::noncopyable
 
         for (auto i = 0; i < data.size(); i++)
         {
-            lv_table_set_cell_value(table, i, 0, std::get<0>(data[i]).c_str());
+            lv_table_set_cell_value(table, i, 0, std::get<0>(data[i]).data());
             lv_table_set_cell_value(table, i, 1, std::get<1>(data[i]).c_str());
         }
     }
