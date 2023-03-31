@@ -67,11 +67,11 @@ class sensor_definition
         return 0;
     }
 
-    constexpr const std::string_view &get_unit() const noexcept
+    constexpr auto &&get_unit() const noexcept
     {
         return unit_;
     }
-    constexpr const std::string_view &get_name() const noexcept
+    constexpr auto &&get_name() const noexcept
     {
         return name_;
     }
@@ -267,6 +267,49 @@ template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_min
 
 using sensor_history = sensor_history_minute_t<12, 240>;
 
-const sensor_definition &get_sensor_definition(sensor_id_index id);
-const std::string_view &get_sensor_name(sensor_id_index id);
-const std::string_view &get_sensor_unit(sensor_id_index id);
+constexpr std::array<sensor_definition_display, 0> no_level{};
+
+constexpr std::array<sensor_definition_display, 6> pm_2_5_definition_display{
+    sensor_definition_display{std::numeric_limits<uint32_t>::min(), 12, 0},
+    sensor_definition_display{12, 35.4, 1},
+    sensor_definition_display{35.4, 55.4, 2},
+    sensor_definition_display{55.4, 150.4, 3},
+    sensor_definition_display{150.4, 250.4, 4},
+    sensor_definition_display{250.4, std::numeric_limits<uint32_t>::max(), 5},
+};
+
+constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
+    sensor_definition_display{std::numeric_limits<uint32_t>::min(), 54, 0},
+    sensor_definition_display{55, 154, 1},
+    sensor_definition_display{154, 254, 2},
+    sensor_definition_display{254, 354, 3},
+    sensor_definition_display{354, 424, 4},
+    sensor_definition_display{424, std::numeric_limits<uint32_t>::max(), 5},
+};
+
+constexpr std::array<sensor_definition, total_sensors> sensor_definitions{
+    sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"Temperature(F)", "°F", no_level.data(), no_level.size(), -40, 140, 1},
+    sensor_definition{"Temperature(C)", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
+    sensor_definition{"Humidity", "⁒", no_level.data(), no_level.size(), 0, 100, 1},
+    sensor_definition{"PM 1", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
+    sensor_definition{"PM 4", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
+    sensor_definition{"PM 10", "µg/m³", pm_10_definition_display.data(), pm_10_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"Typical Particle Size", "µg", no_level.data(), no_level.size(), 0, 10, 0.1},
+    sensor_definition{"Light Intensity", "lux", no_level.data(), no_level.size(), 0, 65535, 1},
+};
+
+constexpr auto &&get_sensor_definition(sensor_id_index id)
+{
+    return sensor_definitions[static_cast<size_t>(id)];
+}
+
+constexpr auto &&get_sensor_name(sensor_id_index id)
+{
+    return sensor_definitions[static_cast<size_t>(id)].get_name();
+}
+
+constexpr auto &&get_sensor_unit(sensor_id_index id)
+{
+    return sensor_definitions[static_cast<size_t>(id)].get_unit();
+}

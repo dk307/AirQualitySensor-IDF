@@ -42,7 +42,7 @@ class homekit_integration
     std::map<std::string_view, hap_serv_t *> services_;
     std::map<sensor_id_index, hap_char_t *> chars1_;
     std::map<hap_char_t *, sensor_id_index> chars2_;
-    hap_char_t * air_quality_char{};
+    hap_char_t *air_quality_char{};
 
     void init_hap();
     void homekit_task_ftn();

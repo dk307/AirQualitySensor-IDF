@@ -187,7 +187,7 @@ void homekit_integration::create_sensor_services_and_chars()
     for (auto &&definition : homekit_definitions)
     {
         hap_serv_t *service;
-        auto iter = services_.find(definition.get_service_type_uuid());
+        const auto iter = services_.find(definition.get_service_type_uuid());
         if (iter == services_.end())
         {
             service = hap_serv_create(const_cast<char *>(definition.get_service_type_uuid().data()));
