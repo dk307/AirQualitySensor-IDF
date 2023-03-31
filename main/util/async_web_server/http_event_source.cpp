@@ -13,9 +13,9 @@ constexpr const std::string_view id_sv{"id: "};
 constexpr const std::string_view retry_sv{"retry: "};
 constexpr const std::string_view data_sv{"data: "};
 
-event_source_connection::event_source_connection(event_source *source, http_request *request) : source_(source)
+event_source_connection::event_source_connection(event_source &source, http_request &request) : source_(source)
 {
-    auto req = request->req_;
+    auto req = request.req_;
     hd_ = req->handle;
     fd_ = httpd_req_to_sockfd(req);
 
@@ -33,7 +33,7 @@ void event_source_connection::destroy(void *ptr)
 {
     ESP_LOGI(WEBSERVER_TAG, "events disconnect");
     auto *connection = static_cast<event_source_connection *>(ptr);
-    connection->source_->connections_.erase(connection);
+    connection->source_.connections_.erase(connection);
     delete connection;
 }
 
@@ -101,9 +101,9 @@ event_source::~event_source()
     }
 }
 
-void event_source::add_request(http_request *request)
+void event_source::add_request(http_request &request)
 {
-    auto connection = new event_source_connection(this, request);
+    auto connection = new event_source_connection(*this, request);
     std::lock_guard<esp32::semaphore> lock(connections_mutex_);
     connections_.insert(connection);
 }

@@ -775,7 +775,7 @@ void web_server::handle_events(esp32::http_request &request)
         return;
     }
 
-    events.add_request(&request);
+    events.add_request(request);
 
     ESP_LOGI(WEBSERVER_TAG, "Events client first time");
 
@@ -795,7 +795,7 @@ void web_server::handle_logging(esp32::http_request &request)
         return;
     }
 
-    logging.add_request(&request);
+    logging.add_request(request);
     ESP_LOGI(WEBSERVER_TAG, "Logging first time");
 }
 
