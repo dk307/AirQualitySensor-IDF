@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sensor/sensor_id.h"
+#include "hardware/sensors/sensor_id.h"
 #include "util/circular_buffer.h"
 #include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
@@ -114,11 +114,6 @@ class sensor_value
         return value;
     }
 
-    static float round(float value, float precision)
-    {
-        return (!std::isnan(value)) ? std::round(value / precision) * precision : value;
-    }
-
     template <class T>
     std::optional<T> get_value_as() const
         requires std::is_integral_v<T>
@@ -131,9 +126,9 @@ class sensor_value
         return std::lround<T>(value);
     }
 
-    bool set_value(float value, float precision)
+    bool set_value(float value)
     {
-        return set_value_(round(value, precision));
+        return set_value_(value);
     }
 
     bool set_invalid_value()

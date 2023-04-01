@@ -96,7 +96,7 @@ class Esp32Hook
     std::vector<logger_hook_sink *> sinks_;
 };
 
-logger::logger()
+logger::logger(sd_card &sd_card) : sd_card_(sd_card)
 {
     esp_register_shutdown_handler(logging_shutdown_handler);
 }
@@ -117,7 +117,7 @@ bool logger::enable_sd_logging()
     std::lock_guard<esp32::semaphore> lock(hook_mutex_);
 
     ESP_LOGI(LOGGING_TAG, "Enabling sd card logging");
-    if (!sd_card::instance.is_mounted())
+    if (!sd_card_.is_mounted())
     {
         ESP_LOGW(LOGGING_TAG, "No SD Card found");
         CHECK_THROW_ESP(ESP_FAIL);
@@ -201,10 +201,4 @@ void logger::set_logging_level(const char *tag, esp_log_level_t level)
 
     ESP_LOGI(LOGGING_TAG, "Setting log level for %s to %d", tag, level);
     esp_log_level_set(logging_tags[logging_tags.size() - 1].data(), level);
-}
-
-logger &logger::get_instance()
-{
-    static logger instance;
-    return instance;
 }

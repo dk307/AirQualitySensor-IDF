@@ -1,9 +1,9 @@
-#include "homekit_integration.h"
+#include "homekit/homekit_integration.h"
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
+#include "hardware/sensors/sensor.h"
 #include "homekit_definitions.h"
 #include "logging/logging_tags.h"
-#include "sensor/sensor.h"
 #include "util/cores.h"
 #include "util/default_event.h"
 #include "util/exceptions.h"
@@ -12,6 +12,7 @@
 #include <esp_log.h>
 #include <esp_random.h>
 #include <string_view>
+
 
 // these functions are internal functions for hap
 extern "C" bool is_accessory_paired();
@@ -36,8 +37,6 @@ constexpr auto air_quality_sensor_id = sensor_id_index::pm_2_5;
             CHECK_THROW_ESP(ESP_FAIL);                                                                                                               \
         }                                                                                                                                            \
     } while (false);
-
-homekit_integration homekit_integration::instance;
 
 void homekit_integration::begin()
 {
@@ -80,8 +79,8 @@ void homekit_integration::homekit_task_ftn()
         /* Initialise the mandatory parameters for Accessory which will be added as
          * the mandatory services internally
          */
-        name_ = config::instance.get_host_name();
-        mac_address_ = hardware::get_default_mac_address();
+        name_ = config_.get_host_name();
+        mac_address_ = ui_interface::get_default_mac_address();
         hap_acc_cfg_t cfg{};
         cfg.name = const_cast<char *>(name_.c_str());
         cfg.manufacturer = const_cast<char *>("Espressif");
@@ -167,13 +166,13 @@ int homekit_integration::sensor_read(hap_char_t *hc, hap_status_t *status_code, 
         ESP_LOGI(HOMEKIT_TAG, "Received read from %s", hap_req_get_ctrl_id(read_priv));
     }
 
-    auto &instance = homekit_integration::instance;
+    auto &instance = homekit_integration::get_instance();
 
     auto iter = instance.chars2_.find(hc);
     if (iter != instance.chars2_.end())
     {
         hap_val_t new_val{};
-        new_val.f = get_sensor_value(iter->second);
+        new_val.f = homekit_integration::get_instance().get_sensor_value(iter->second);
         hap_char_update_val(hc, &new_val);
         *status_code = HAP_STATUS_SUCCESS;
         return HAP_SUCCESS;
@@ -234,7 +233,7 @@ void homekit_integration::create_sensor_services_and_chars()
 
 uint8_t homekit_integration::get_air_quality()
 {
-    const auto value = hardware::instance.get_sensor(air_quality_sensor_id).get_value();
+    const auto value = homekit_integration::get_instance().hardware_.get_sensor(air_quality_sensor_id).get_value();
 
     if (!value.has_value())
     {
@@ -303,7 +302,7 @@ void homekit_integration::app_event_handler(esp_event_base_t base, int32_t event
 
 float homekit_integration::get_sensor_value(sensor_id_index id)
 {
-    const auto &sensor = hardware::instance.get_sensor(id);
+    const auto &sensor = hardware_.get_sensor(id);
     return sensor.get_value().value_or(0);
 }
 

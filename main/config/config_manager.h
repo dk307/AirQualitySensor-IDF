@@ -4,19 +4,18 @@
 #include "preferences.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
+#include "util/singleton.h"
 #include <ArduinoJson.h>
 #include <atomic>
 #include <mutex>
 #include <optional>
 #include <vector>
 
-class config : public esp32::noncopyable
+class config : public esp32::singleton<config>
 {
   public:
     void begin();
     void save();
-
-    static config instance;
 
     std::string get_all_config_as_json();
 
@@ -37,6 +36,8 @@ class config : public esp32::noncopyable
 
   private:
     config() = default;
+
+    friend class esp32::singleton<config>;
 
     mutable esp32::semaphore data_mutex_;
     preferences nvs_storage;

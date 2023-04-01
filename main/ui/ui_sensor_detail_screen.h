@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sensor/sensor.h"
+#include "hardware/sensors/sensor.h"
 #include "ui_screen_with_sensor_panel.h"
 #include "util/helper.h"
 #include "util/misc.h"

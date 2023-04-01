@@ -29,8 +29,6 @@ static const char SsidPasswordId[] = "ssidpassword";
 static const char ScreenBrightnessId[] = "screenbrightness";
 static const char UsefahrenheitId[] = "usefahrenheit";
 
-config config::instance;
-
 void config::begin()
 {
     ESP_LOGD(CONFIG_TAG, "Loading Configuration");

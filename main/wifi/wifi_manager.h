@@ -1,6 +1,8 @@
 #pragma once
 
 #include "app_events.h"
+#include "config/config_manager.h"
+#include "util/singleton.h"
 #include "util/default_event.h"
 #include "util/noncopyable.h"
 #include "util/task_wrapper.h"
@@ -17,23 +19,24 @@ struct wifi_status
     std::string status;
 };
 
-class wifi_manager final : public esp32::noncopyable
+class wifi_manager final : public esp32::singleton<wifi_manager>
 {
   public:
     void begin();
 
     wifi_status get_wifi_status();
-    static wifi_manager instance;
-
     void start_wifi_enrollment();
     void stop_wifi_enrollment();
 
     static void set_wifi_power_mode(wifi_ps_type_t mode);
 
   private:
-    wifi_manager() : wifi_task_([this] { wifi_task_ftn(); })
+    wifi_manager(config &config) : config_(config), wifi_task_([this] { wifi_task_ftn(); })
     {
     }
+    friend class esp32::singleton<wifi_manager>;
+    
+    config &config_;
     wifi_events_notify events_notify_;
     std::unique_ptr<wifi_sta> wifi_instance_;
     esp32::task wifi_task_;
@@ -50,6 +53,6 @@ class wifi_manager final : public esp32::noncopyable
 
     std::string_view get_ssid();
 
-    static std::string get_rfc_name();
+    std::string get_rfc_name();
     static std::string get_rfc_952_host_name(const std::string &name);
 };

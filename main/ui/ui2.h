@@ -1,7 +1,7 @@
 #pragma once
 
-#include "sensor/sensor.h"
-#include "sensor/sensor_id.h"
+#include "hardware/sensors/sensor.h"
+#include "hardware/sensors/sensor_id.h"
 #include "ui_boot_screen.h"
 #include "ui_hardware_screen.h"
 #include "ui_homekit_screen.h"
@@ -18,7 +18,7 @@
 class ui : public ui_inter_screen_interface, esp32::noncopyable
 {
   public:
-    ui(ui_interface &ui_interface_) : ui_interface_instance_(ui_interface_)
+    ui(config & config, ui_interface &ui_interface_) : config_(config), ui_interface_instance_(ui_interface_)
     {
     }
     void load_boot_screen();
@@ -38,6 +38,7 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     void show_wifi_enroll_screen() override;
 
   private:
+    config& config_;
     ui_interface &ui_interface_instance_;
 
     constexpr static uint32_t top_message_timer_period = 10000;
@@ -51,14 +52,14 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     lv_obj_t *top_message_label_{};
     lv_timer_t *top_message_timer_{};
 
-    ui_boot_screen boot_screen_{ui_interface_instance_, *this};
-    ui_main_screen main_screen_{ui_interface_instance_, *this};
-    ui_sensor_detail_screen sensor_detail_screen_{ui_interface_instance_, *this};
-    ui_information_screen settings_screen_{ui_interface_instance_, *this};
-    ui_launcher_screen launcher_screen_{ui_interface_instance_, *this};
-    ui_hardware_screen hardware_screen_{ui_interface_instance_, *this};
-    ui_homekit_screen homekit_screen_{ui_interface_instance_, *this};
-    ui_wifi_enroll_screen wifi_enroll_screen_{ui_interface_instance_, *this};
+    ui_boot_screen boot_screen_{config_, ui_interface_instance_, *this};
+    ui_main_screen main_screen_{config_, ui_interface_instance_, *this};
+    ui_sensor_detail_screen sensor_detail_screen_{config_, ui_interface_instance_, *this};
+    ui_information_screen settings_screen_{config_, ui_interface_instance_, *this};
+    ui_launcher_screen launcher_screen_{config_, ui_interface_instance_, *this};
+    ui_hardware_screen hardware_screen_{config_, ui_interface_instance_, *this};
+    ui_homekit_screen homekit_screen_{config_, ui_interface_instance_, *this};
+    ui_wifi_enroll_screen wifi_enroll_screen_{config_, ui_interface_instance_, *this};
 
     void init_no_wifi_image();
     void init_top_message();

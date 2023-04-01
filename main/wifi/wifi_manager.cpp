@@ -10,8 +10,6 @@
 #include <esp_timer.h>
 #include <memory>
 
-wifi_manager wifi_manager::instance;
-
 void wifi_manager::begin()
 {
     CHECK_THROW_ESP(esp_netif_init());
@@ -27,7 +25,7 @@ void wifi_manager::begin()
 
 bool wifi_manager::connect_saved_wifi()
 {
-    const auto wifi_credentials = config::instance.get_wifi_credentials();
+    const auto wifi_credentials = config_.get_wifi_credentials();
 
     if (!wifi_credentials.empty())
     {
@@ -75,7 +73,7 @@ void wifi_manager::wifi_task_ftn()
         do
         {
             // not connected or ssid changed
-            if (!connected_to_ap_ || (get_ssid() != config::instance.get_wifi_credentials().get_user_name()))
+            if (!connected_to_ap_ || (get_ssid() != config_.get_wifi_credentials().get_user_name()))
             {
                 disconnect();
                 connected_to_ap_ = connect_saved_wifi();
@@ -125,8 +123,8 @@ void wifi_manager::wifi_task_ftn()
                     if (!ssid.empty())
                     {
                         ESP_LOGI(WIFI_TAG, "Updating wifi ssid/password");
-                        config::instance.set_wifi_credentials(credentials(ssid, wifi_enroll_instance->get_password()));
-                        config::instance.save();
+                        config_.set_wifi_credentials(credentials(ssid, wifi_enroll_instance->get_password()));
+                        config_.save();
                     }
                     else
                     {
@@ -199,7 +197,7 @@ std::string wifi_manager::get_rfc_952_host_name(const std::string &name)
 
 std::string wifi_manager::get_rfc_name()
 {
-    auto rfc_name = config::instance.get_host_name();
+    auto rfc_name = config_.get_host_name();
     esp32::trim(rfc_name);
 
     if (rfc_name.empty())

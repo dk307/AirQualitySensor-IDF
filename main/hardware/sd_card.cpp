@@ -1,4 +1,4 @@
-#include "sd_card.h"
+#include "hardware/sd_card.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
@@ -9,8 +9,6 @@
 #define SD_MOSI GPIO_NUM_40
 #define SD_SCLK GPIO_NUM_39
 #define SD_CS GPIO_NUM_41
-
-sd_card sd_card::instance;
 
 void sd_card::begin()
 {

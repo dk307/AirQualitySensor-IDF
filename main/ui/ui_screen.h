@@ -17,8 +17,8 @@ LV_FONT_DECLARE(uints_18_font);
 class ui_screen : esp32::noncopyable
 {
   public:
-    ui_screen(ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface)
-        : ui_interface_instance_(ui_interface_instance_), inter_screen_interface_(ui_inter_screen_interface)
+    ui_screen(config &config, ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface)
+        : config_(config), ui_interface_instance_(ui_interface_instance_), inter_screen_interface_(ui_inter_screen_interface)
     {
     }
 
@@ -38,6 +38,7 @@ class ui_screen : esp32::noncopyable
     const lv_color_t off_black_color = lv_color_hex(0x1E1E1E);
     const lv_color_t text_color = lv_color_hex(0xFFFAFA);
 
+    config &config_;
     ui_interface &ui_interface_instance_;
     ui_inter_screen_interface &inter_screen_interface_;
     lv_obj_t *screen_{};

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sensor/sensor_id.h"
+#include "hardware/sensors/sensor_id.h"
 #include <hap_apple_chars.h>
 #include <hap_apple_servs.h>
 #include <string_view>
