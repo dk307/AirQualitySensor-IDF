@@ -2,9 +2,9 @@
 
 #include "app_events.h"
 #include "config/config_manager.h"
-#include "util/singleton.h"
 #include "util/default_event.h"
 #include "util/noncopyable.h"
+#include "util/singleton.h"
 #include "util/task_wrapper.h"
 #include "wifi/smart_config_wifi_enroll.h"
 #include "wifi/wifi_events_notify.h"
@@ -35,7 +35,7 @@ class wifi_manager final : public esp32::singleton<wifi_manager>
     {
     }
     friend class esp32::singleton<wifi_manager>;
-    
+
     config &config_;
     wifi_events_notify events_notify_;
     std::unique_ptr<wifi_sta> wifi_instance_;

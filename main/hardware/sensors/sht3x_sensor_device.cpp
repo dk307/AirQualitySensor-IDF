@@ -10,7 +10,6 @@
 #include <i2cdev.h>
 #include <sht3x.h>
 
-
 void sht3x_sensor_device::init()
 {
     // sht3x

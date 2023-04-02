@@ -13,7 +13,6 @@
 #include <esp_random.h>
 #include <string_view>
 
-
 // these functions are internal functions for hap
 extern "C" bool is_accessory_paired();
 
