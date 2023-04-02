@@ -1,8 +1,8 @@
 #pragma once
 
 #include "sd_card_sink.h"
-#include "util/singleton.h"
 #include "util/semaphore_lockable.h"
+#include "util/singleton.h"
 #include "web_callback_sink.h"
 #include <esp_log.h>
 #include <vector>
@@ -31,10 +31,10 @@ class logger : public esp32::singleton<logger>
     }
 
   private:
-    logger(sd_card& sd_card);
+    logger(sd_card &sd_card);
     friend class esp32::singleton<logger>;
 
-    sd_card& sd_card_;
+    sd_card &sd_card_;
 
     static void logging_shutdown_handler();
 

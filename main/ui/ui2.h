@@ -18,7 +18,7 @@
 class ui : public ui_inter_screen_interface, esp32::noncopyable
 {
   public:
-    ui(config & config, ui_interface &ui_interface_) : config_(config), ui_interface_instance_(ui_interface_)
+    ui(config &config, ui_interface &ui_interface_) : config_(config), ui_interface_instance_(ui_interface_)
     {
     }
     void load_boot_screen();
@@ -38,7 +38,7 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     void show_wifi_enroll_screen() override;
 
   private:
-    config& config_;
+    config &config_;
     ui_interface &ui_interface_instance_;
 
     constexpr static uint32_t top_message_timer_period = 10000;
