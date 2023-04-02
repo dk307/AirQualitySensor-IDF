@@ -10,7 +10,6 @@
 #include <esp_log.h>
 #include <i2cdev.h>
 
-
 void sps30_sensor_device::init()
 {
     sps30_sensor.addr = SPS30_I2C_ADDRESS;

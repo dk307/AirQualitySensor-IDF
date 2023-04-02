@@ -7,18 +7,18 @@
 #include <string>
 #include <vector>
 
-class Esp32Hook;
-Esp32Hook *esp32_hook_ = nullptr;
+class esp32_hook;
+esp32_hook *esp32_hook_ = nullptr;
 
-class Esp32Hook
+class esp32_hook
 {
   public:
-    Esp32Hook()
+    esp32_hook()
     {
         esp32_hook_ = this;
         prev_hooker_ = esp_log_set_vprintf(esp32hook);
     }
-    ~Esp32Hook()
+    ~esp32_hook()
     {
         esp_log_set_vprintf(prev_hooker_);
         esp32_hook_ = nullptr;
@@ -190,7 +190,7 @@ void logger::hook_logger()
 {
     if (!hook_instance_)
     {
-        hook_instance_ = std::make_unique<Esp32Hook>();
+        hook_instance_ = std::make_unique<esp32_hook>();
     }
 }
 

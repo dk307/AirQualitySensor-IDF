@@ -10,7 +10,6 @@
 #include <esp_log.h>
 #include <i2cdev.h>
 
-
 void bh1750_sensor_device::init()
 {
     CHECK_THROW_ESP(bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire));
