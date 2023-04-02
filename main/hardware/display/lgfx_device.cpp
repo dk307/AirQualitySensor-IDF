@@ -1,5 +1,5 @@
-#include "lgfx_device.h"
-#include "pins.h"
+#include "hardware/display/lgfx_device.h"
+#include "hardware/pins.h"
 
 LGFX::LGFX()
 {

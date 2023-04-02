@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sensor/sensor_id.h"
+#include "hardware/sensors/sensor_id.h"
 #include "util/circular_buffer.h"
 #include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
@@ -55,23 +55,23 @@ class sensor_definition
     {
     }
 
-    sensor_level calculate_level(double value_p) const
+    constexpr sensor_level calculate_level(float value_p) const noexcept
     {
         for (uint8_t i = 0; i < display_definitions_count_; i++)
         {
             if (display_definitions_[i].is_in_range(value_p))
             {
-                return display_definitions_[i].get_level();
+                return display_definitions_[i].get_level() + 1;
             }
         }
-        return display_definitions_[0].get_level();
+        return 0;
     }
 
-    constexpr const std::string_view &get_unit() const noexcept
+    constexpr auto &&get_unit() const noexcept
     {
         return unit_;
     }
-    constexpr const std::string_view &get_name() const noexcept
+    constexpr auto &&get_name() const noexcept
     {
         return name_;
     }
@@ -114,11 +114,6 @@ class sensor_value
         return value;
     }
 
-    static float round(float value, float precision)
-    {
-        return (!std::isnan(value)) ? std::round(value / precision) * precision : value;
-    }
-
     template <class T>
     std::optional<T> get_value_as() const
         requires std::is_integral_v<T>
@@ -131,9 +126,9 @@ class sensor_value
         return std::lround<T>(value);
     }
 
-    bool set_value(float value, double precision)
+    bool set_value(float value)
     {
-        return set_value_(round(value, precision));
+        return set_value_(value);
     }
 
     bool set_invalid_value()
@@ -157,7 +152,7 @@ class sensor_value
     }
 };
 
-template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
+template <uint16_t countT> class sensor_history_t
 {
   public:
     typedef struct
@@ -178,7 +173,7 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
     void add_value(float value)
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
-        last_x_values_.push(std::lround<int32_t>(value * multiplierT));
+        last_x_values_.push(value);
     }
 
     void clear()
@@ -196,7 +191,8 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
         if (size)
         {
             return_values.reserve(1 + (size / group_by_count));
-            stats stats_value{0, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min()};
+            float value_max = std::numeric_limits<float>::max();
+            float value_min = std::numeric_limits<float>::min();
             double sum = 0;
             double group_sum = 0;
             for (auto i = 0; i < size; i++)
@@ -204,12 +200,12 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
                 const auto value = last_x_values_[i];
                 sum += value;
                 group_sum += value;
-                stats_value.max = std::max<int16_t>(std::lround<int16_t>(value / multiplierT), stats_value.max);
-                stats_value.min = std::min<int16_t>(std::lround<int16_t>(value / multiplierT), stats_value.min);
+                value_max = std::max<float>(value, value_max);
+                value_min = std::min<float>(value, value_min);
 
                 if (((i + 1) % group_by_count) == 0)
                 {
-                    return_values.push_back(std::lround<int16_t>(group_sum / (multiplierT * group_by_count)));
+                    return_values.push_back(std::lround<int16_t>(group_sum / (group_by_count)));
                     group_sum = 0;
                 }
             }
@@ -217,10 +213,13 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
             // add partial group average
             if (size % group_by_count)
             {
-                return_values.push_back(std::lround<int16_t>(group_sum / (multiplierT * (size % group_by_count))));
+                return_values.push_back(std::lround<int16_t>(group_sum / (size % group_by_count)));
             }
 
-            stats_value.mean = std::lround<int16_t>(sum / (size * multiplierT));
+            stats stats_value;
+            stats_value.max = std::lround<int16_t>(value_max);
+            stats_value.min = std::lround<int16_t>(value_min);
+            stats_value.mean = std::lround<int16_t>(sum / size);
             return {stats_value, return_values};
         }
         else
@@ -240,7 +239,7 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
             {
                 sum += last_x_values_[i];
             }
-            return static_cast<int16_t>(sum / (size * multiplierT));
+            return static_cast<int16_t>(sum / size);
         }
         else
         {
@@ -250,10 +249,10 @@ template <uint16_t countT, uint8_t multiplierT> class sensor_history_t
 
   private:
     mutable esp32::semaphore data_mutex_;
-    circular_buffer<int32_t, countT> last_x_values_;
+    circular_buffer<float, countT> last_x_values_;
 };
 
-template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_minute_t : public sensor_history_t<reads_per_minuteT * minutesT, 10>
+template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_minute_t : public sensor_history_t<reads_per_minuteT * minutesT>
 {
   public:
     static constexpr auto total_minutes = minutesT;
@@ -263,6 +262,49 @@ template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_min
 
 using sensor_history = sensor_history_minute_t<12, 240>;
 
-const sensor_definition &get_sensor_definition(sensor_id_index id);
-const std::string_view &get_sensor_name(sensor_id_index id);
-const std::string_view &get_sensor_unit(sensor_id_index id);
+constexpr std::array<sensor_definition_display, 0> no_level{};
+
+constexpr std::array<sensor_definition_display, 6> pm_2_5_definition_display{
+    sensor_definition_display{std::numeric_limits<uint32_t>::min(), 12, 0},
+    sensor_definition_display{12, 35.4, 1},
+    sensor_definition_display{35.4, 55.4, 2},
+    sensor_definition_display{55.4, 150.4, 3},
+    sensor_definition_display{150.4, 250.4, 4},
+    sensor_definition_display{250.4, std::numeric_limits<uint32_t>::max(), 5},
+};
+
+constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
+    sensor_definition_display{std::numeric_limits<uint32_t>::min(), 54, 0},
+    sensor_definition_display{55, 154, 1},
+    sensor_definition_display{154, 254, 2},
+    sensor_definition_display{254, 354, 3},
+    sensor_definition_display{354, 424, 4},
+    sensor_definition_display{424, std::numeric_limits<uint32_t>::max(), 5},
+};
+
+constexpr std::array<sensor_definition, total_sensors> sensor_definitions{
+    sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"Temperature(F)", "°F", no_level.data(), no_level.size(), -40, 140, 1},
+    sensor_definition{"Temperature(C)", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
+    sensor_definition{"Humidity", "⁒", no_level.data(), no_level.size(), 0, 100, 1},
+    sensor_definition{"PM 1", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
+    sensor_definition{"PM 4", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
+    sensor_definition{"PM 10", "µg/m³", pm_10_definition_display.data(), pm_10_definition_display.size(), 0, 1000, 1},
+    sensor_definition{"Typical Particle Size", "µg", no_level.data(), no_level.size(), 0, 10, 0.1},
+    sensor_definition{"Light Intensity", "lux", no_level.data(), no_level.size(), 0, 65535, 1},
+};
+
+constexpr auto &&get_sensor_definition(sensor_id_index id)
+{
+    return sensor_definitions[static_cast<size_t>(id)];
+}
+
+constexpr auto &&get_sensor_name(sensor_id_index id)
+{
+    return sensor_definitions[static_cast<size_t>(id)].get_name();
+}
+
+constexpr auto &&get_sensor_unit(sensor_id_index id)
+{
+    return sensor_definitions[static_cast<size_t>(id)].get_unit();
+}

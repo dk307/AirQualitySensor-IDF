@@ -29,12 +29,6 @@ static const char SsidPasswordId[] = "ssidpassword";
 static const char ScreenBrightnessId[] = "screenbrightness";
 static const char UsefahrenheitId[] = "usefahrenheit";
 
-config config::instance;
-
-void config::erase()
-{
-}
-
 void config::begin()
 {
     ESP_LOGD(CONFIG_TAG, "Loading Configuration");
@@ -47,18 +41,14 @@ void config::begin()
     ESP_LOGI(CONFIG_TAG, "Wifi ssid:%s", get_wifi_credentials().get_user_name().c_str());
     ESP_LOGI(CONFIG_TAG, "Wifi ssid password:%s", get_wifi_credentials().get_password().c_str());
     ESP_LOGI(CONFIG_TAG, "Manual screen brightness:%d", get_manual_screen_brightness().value_or(0));
-    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%d", is_use_fahrenheit());
-}
-
-void config::reset()
-{
-    ESP_LOGI(CONFIG_TAG, "config reset is requested");
+    ESP_LOGI(CONFIG_TAG, "Use Fahrenheit:%s", is_use_fahrenheit() ? "Yes" : "No");
 }
 
 void config::save()
 {
-    ESP_LOGD(CONFIG_TAG, "config save is requested");
+    ESP_LOGI(CONFIG_TAG, "config save");
     nvs_storage.commit();
+    CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, CONFIG_CHANGE));
 }
 
 std::string config::get_all_config_as_json()

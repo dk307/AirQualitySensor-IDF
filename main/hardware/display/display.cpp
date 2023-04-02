@@ -46,7 +46,7 @@ void display::touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     }
 }
 
-void display::start()
+void display::begin()
 {
     ESP_LOGI(DISPLAY_TAG, "Setting up display");
 
@@ -67,6 +67,8 @@ void display::start()
     const auto screenHeight = display_device_.height();
 
     ESP_LOGI(DISPLAY_TAG, "Display initialized width:%ld height:%ld", screenWidth, screenHeight);
+
+    current_brightness_ = display_device_.getBrightness();
 
     ESP_LOGI(DISPLAY_TAG, "LV initialized");
     const int buffer_size = 80;
@@ -107,18 +109,13 @@ void display::start()
 
     CHECK_THROW_ESP(lvgl_task_.spawn_pinned("lv_gui", 1024 * 6, esp32::task::default_priority, esp32::display_core));
 
-    display_device_.setBrightness(128);
+    set_screen_brightness(128);
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 }
 
-uint8_t display::get_brightness()
+uint8_t display::get_screen_brightness()
 {
     return display_device_.getBrightness();
-}
-
-void display::set_brightness(uint8_t value)
-{
-    display_device_.setBrightness(value);
 }
 
 void display::gui_task()
@@ -168,7 +165,7 @@ void display::gui_task()
                     if ((notification_value & BIT(i)) || (notification_value & config_changed_bit))
                     {
                         const auto id = static_cast<sensor_id_index>(i - 1);
-                        const auto &sensor = hardware::instance.get_sensor(id);
+                        const auto &sensor = ui_interface_.get_sensor(id);
                         const auto value = sensor.get_value_as<int16_t>();
                         ui_instance_.set_sensor_value(id, value);
                     }
@@ -209,5 +206,14 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
     case DEVICE_IDENTIFY:
         xTaskNotify(lvgl_task_.handle(), idenitfy_device_bit, eSetBits);
         break;
+    }
+}
+void display::set_screen_brightness(uint8_t value)
+{
+    if (current_brightness_ != value)
+    {
+        ESP_LOGI(DISPLAY_TAG, "Setting display brightness to %d", value);
+        display_device_.setBrightness(std::max<uint8_t>(30, value));
+        current_brightness_ = value;
     }
 }

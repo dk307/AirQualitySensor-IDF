@@ -1,7 +1,6 @@
 #pragma once
 
-#include "config/config_manager.h"
-#include "sensor/sensor.h"
+#include "hardware/sensors/sensor.h"
 #include "ui_screen_with_sensor_panel.h"
 
 class ui_main_screen final : public ui_screen_with_sensor_panel
@@ -228,6 +227,6 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
     sensor_id_index get_temperature_sensor_id_index()
     {
-        return config::instance.is_use_fahrenheit() ? sensor_id_index::temperatureF : sensor_id_index::temperatureC;
+        return config_.is_use_fahrenheit() ? sensor_id_index::temperatureF : sensor_id_index::temperatureC;
     }
 };

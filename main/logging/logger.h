@@ -1,15 +1,16 @@
 #pragma once
 
 #include "sd_card_sink.h"
-#include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
+#include "util/singleton.h"
 #include "web_callback_sink.h"
 #include <esp_log.h>
 #include <vector>
 
-class Esp32Hook;
+class esp32_hook;
+class sd_card;
 
-class logger : esp32::noncopyable
+class logger : public esp32::singleton<logger>
 {
   public:
     bool enable_sd_logging();
@@ -29,21 +30,22 @@ class logger : esp32::noncopyable
         set_logging_level("*", level);
     }
 
-    static logger &get_instance();
-
   private:
-    logger();
+    logger(sd_card &sd_card);
+    friend class esp32::singleton<logger>;
+
+    sd_card &sd_card_;
 
     static void logging_shutdown_handler();
 
     esp32::semaphore hook_mutex_;
     std::unique_ptr<sd_card_sink> sd_card_sink_instance_;
     std::unique_ptr<web_callback_sink> web_callback_sink_instance_;
-    std::unique_ptr<Esp32Hook> hook_instance_{nullptr};
+    std::unique_ptr<esp32_hook> hook_instance_{nullptr};
     std::vector<std::string> logging_tags;
 
     void hook_logger();
 
     template <class T> void remove_sink(std::unique_ptr<T> &p);
-    friend class Esp32Hook;
+    friend class esp32_hook;
 };

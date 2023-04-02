@@ -1,26 +1,73 @@
+#include "ui_interface.h"
 #include "config/config_manager.h"
-#include "hardware/display.h"
+#include "hardware/display/display.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
 #include "homekit/homekit_integration.h"
 #include "logging/logging_tags.h"
-#include "util/exceptions.h"
-#include "util/helper.h"
-#include "util/misc.h"
-#include "wifi/wifi_manager.h"
-#include "wifi/wifi_sta.h"
-#include <driver/i2c.h>
+#include <esp_app_desc.h>
 #include <esp_chip_info.h>
 #include <esp_efuse.h>
 #include <esp_flash.h>
+#include <esp_log.h>
 #include <esp_mac.h>
 #include <esp_netif_types.h>
-#include <esp_ota_ops.h>
-#include <esp_timer.h>
-#include <esp_wifi.h>
-#include <memory>
 
-std::string hardware::get_up_time()
+const sensor_value &ui_interface::get_sensor(sensor_id_index index)
+{
+    configASSERT(hardware_);
+    return hardware_->get_sensor(index);
+}
+
+std::optional<int16_t> ui_interface::get_sensor_value(sensor_id_index index)
+{
+    configASSERT(hardware_);
+    return hardware_->get_sensor_value(index);
+}
+
+sensor_history::sensor_history_snapshot ui_interface::get_sensor_detail_info(sensor_id_index index)
+{
+    configASSERT(hardware_);
+    return hardware_->get_sensor_detail_info(index);
+}
+
+wifi_status ui_interface::get_wifi_status()
+{
+    configASSERT(wifi_manager_);
+    return wifi_manager_->get_wifi_status();
+}
+
+bool ui_interface::clean_sps_30()
+{
+    configASSERT(hardware_);
+    return hardware_->clean_sps_30();
+}
+
+void ui_interface::start_wifi_enrollment()
+{
+    configASSERT(hardware_);
+    wifi_manager_->start_wifi_enrollment();
+}
+
+void ui_interface::stop_wifi_enrollment()
+{
+    configASSERT(hardware_);
+    wifi_manager_->stop_wifi_enrollment();
+}
+
+void ui_interface::forget_homekit_pairings()
+{
+    configASSERT(homekit_integration_);
+    homekit_integration_->forget_pairings();
+}
+
+void ui_interface::reenable_homekit_pairing()
+{
+    configASSERT(homekit_integration_);
+    homekit_integration_->reenable_pairing();
+}
+
+std::string ui_interface::get_up_time()
 {
     const auto now = esp_timer_get_time() / (1000 * 1000);
     const uint8_t hour = now / 3600;
@@ -30,7 +77,7 @@ std::string hardware::get_up_time()
     return esp32::string::sprintf("%02d hours %02d mins %02d secs", hour, mins, sec);
 }
 
-std::string hardware::get_heap_info_str(uint32_t caps)
+std::string ui_interface::get_heap_info_str(uint32_t caps)
 {
     multi_heap_info_t info;
     heap_caps_get_info(&info, caps);
@@ -38,7 +85,7 @@ std::string hardware::get_heap_info_str(uint32_t caps)
                                   esp32::string::stringify_size(info.total_allocated_bytes + info.total_free_bytes, 1).c_str());
 }
 
-std::string hardware::get_chip_details()
+std::string ui_interface::get_chip_details()
 {
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
@@ -78,7 +125,7 @@ std::string hardware::get_chip_details()
                                   static_cast<int>(chip_info.cores), flash_size_str.c_str());
 }
 
-std::string hardware::get_reset_reason_string()
+std::string ui_interface::get_reset_reason_string()
 {
     const auto reset_reason = esp_reset_reason();
     std::string_view reset_reason_string;
@@ -118,13 +165,13 @@ std::string hardware::get_reset_reason_string()
     return std::string(reset_reason_string);
 }
 
-std::string hardware::get_version()
+std::string ui_interface::get_version()
 {
     const auto desc = esp_app_get_description();
     return esp32::string::sprintf("%s %s %s", desc->date, desc->time, desc->version);
 }
 
-std::string hardware::get_default_mac_address()
+std::string ui_interface::get_default_mac_address()
 {
     uint8_t mac[6];
     esp_efuse_mac_get_default(mac);
@@ -133,40 +180,13 @@ std::string hardware::get_default_mac_address()
     return std::string(mac_address);
 }
 
-std::string hardware::get_sps30_error_register_status()
+std::string ui_interface::get_sps30_error_register_status()
 {
-    uint32_t device_status_flags{};
-    const auto error = sps30_read_device_status_register(&device_status_flags);
-
-    if (error != NO_ERROR)
-    {
-        return esp32::string::sprintf("Failed to read status with %s", esp_err_to_name(error));
-    }
-
-    std::string status;
-    status.reserve(128);
-
-    if (device_status_flags & SPS30_DEVICE_STATUS_FAN_ERROR_MASK)
-    {
-        status += "Fan Error.";
-    }
-    if (device_status_flags & SPS30_DEVICE_STATUS_LASER_ERROR_MASK)
-    {
-        status += "Laser Error.";
-    }
-    if (device_status_flags & SPS30_DEVICE_STATUS_FAN_SPEED_WARNING)
-    {
-        status += "Fan Speed Warning.";
-    }
-
-    if (status.empty())
-    {
-        status = "Normal";
-    }
-    return status;
+    configASSERT(hardware_);
+    return hardware_->get_sps30_error_register_status();
 }
 
-void hardware::get_nw_info(ui_interface::information_table_type &table)
+void ui_interface::get_nw_info(ui_interface::information_table_type &table)
 {
     esp_netif_ip_info_t ip_info{};
 
@@ -196,11 +216,13 @@ void hardware::get_nw_info(ui_interface::information_table_type &table)
     }
 }
 
-ui_interface::information_table_type hardware::get_information_table(information_type type)
+ui_interface::information_table_type ui_interface::get_information_table(information_type type)
 {
     switch (type)
     {
     case information_type::system:
+        configASSERT(sd_card_);
+        configASSERT(hardware_);
         return {
             {"Version", get_version()},
             {"Chip", get_chip_details()},
@@ -209,25 +231,27 @@ ui_interface::information_table_type hardware::get_information_table(information
             {"Uptime", get_up_time()},
             {"Reset Reason", get_reset_reason_string()},
             {"Mac Address", get_default_mac_address()},
-            {"SD Card", sd_card::instance.get_info()},
-            {"Screen Brightness", esp32::string::sprintf("%d %%", (display_instance_.get_brightness() * 100) / 256)},
-            {"SPS30 sensor status", get_sps30_error_register_status()},
+            {"SD Card", sd_card_->get_info()},
+            //  {"Screen Brightness", esp32::string::sprintf("%d %%", (display_.get_brightness() * 100) / 256)},
+            {"SPS30 sensor status", hardware_->get_sps30_error_register_status()},
         };
 
     case information_type::homekit: {
         ui_interface::information_table_type table;
 
-        const bool paired = homekit_integration::instance.is_paired();
+        configASSERT(homekit_integration_);
+
+        const bool paired = homekit_integration_->is_paired();
 
         table.push_back({"Paired", paired ? "Yes" : "No"});
         if (!paired)
         {
-            table.push_back({"Setup Code", homekit_integration::instance.get_password()});
-            table.push_back({"Setup Id", homekit_integration::instance.get_setup_id()});
+            table.push_back({"Setup Code", homekit_integration_->get_password()});
+            table.push_back({"Setup Id", homekit_integration_->get_setup_id()});
         }
         else
         {
-            table.push_back({"Connected Clients Count", esp32::string::to_string(homekit_integration::instance.get_connection_count())});
+            table.push_back({"Connected Clients Count", esp32::string::to_string(homekit_integration_->get_connection_count())});
         }
 
         return table;
@@ -254,12 +278,13 @@ ui_interface::information_table_type hardware::get_information_table(information
         return table;
     }
     case information_type::config:
+        configASSERT(config_);
         return {
-            {"Hostname", config::instance.get_host_name()},
-            {"SSID", config::instance.get_wifi_credentials().get_user_name()},
-            {"Web user name", config::instance.get_web_user_credentials().get_user_name()},
-            {"Screen brightness (%)", esp32::string::to_string((100 * config::instance.get_manual_screen_brightness().value_or(0)) / 256)},
-            {"Use Fahrenheit", config::instance.is_use_fahrenheit() ? "Yes" : "No"},
+            {"Hostname", config_->get_host_name()},
+            {"SSID", config_->get_wifi_credentials().get_user_name()},
+            {"Web user name", config_->get_web_user_credentials().get_user_name()},
+            {"Screen brightness (%)", esp32::string::to_string((100 * config_->get_manual_screen_brightness().value_or(0)) / 256)},
+            {"Use Fahrenheit", config_->is_use_fahrenheit() ? "Yes" : "No"},
         };
         break;
     }

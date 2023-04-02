@@ -61,8 +61,6 @@ static constexpr char index_url[] = "/index.html";
 static constexpr char debug_url[] = "/debug.html";
 static constexpr char fs_url[] = "/fs.html";
 
-web_server web_server::instance;
-
 std::string create_hash(const credentials &cred, const std::string &host)
 {
     esp32::hash::hash<MBEDTLS_MD_SHA256> hasher;
@@ -185,7 +183,7 @@ void web_server::handle_config_get(esp32::http_request &request)
     {
         return;
     }
-    const auto json = config::instance.get_all_config_as_json();
+    const auto json = config_.get_all_config_as_json();
     esp32::array_response::send_response(request, json, js_media_type);
 }
 
@@ -198,7 +196,7 @@ bool web_server::is_authenticated(esp32::http_request &request)
     {
         ESP_LOGV(WEBSERVER_TAG, "Found cookie:%s", cookie->c_str());
 
-        const std::string token = create_hash(config::instance.get_web_user_credentials(), request.client_ip_address());
+        const std::string token = create_hash(config_.get_web_user_credentials(), request.client_ip_address());
 
         if (cookie == (std::string(AuthCookieName) + token))
         {
@@ -220,7 +218,7 @@ void web_server::handle_login(esp32::http_request &request)
 
     if (user_name.has_value() && password.has_value())
     {
-        const auto current_credentials = config::instance.get_web_user_credentials();
+        const auto current_credentials = config_.get_web_user_credentials();
 
         esp32::http_response response(request);
         const bool correct_credentials = esp32::string::equals_case_insensitive(user_name.value(), current_credentials.get_user_name()) &&
@@ -275,8 +273,8 @@ void web_server::handle_web_login_update(esp32::http_request &request)
     if (user_name.has_value() && password.has_value())
     {
         ESP_LOGI(WEBSERVER_TAG, "Updating web username/password");
-        config::instance.set_web_user_credentials(credentials(user_name.value(), password.value()));
-        config::instance.save();
+        config_.set_web_user_credentials(credentials(user_name.value(), password.value()));
+        config_.save();
         redirect_to_root(request);
     }
     else
@@ -303,22 +301,22 @@ void web_server::handle_other_settings_update(esp32::http_request &request)
 
     if (host_name.has_value())
     {
-        config::instance.set_host_name(host_name.value());
+        config_.set_host_name(host_name.value());
     }
 
     if (!auto_screen_brightness.has_value())
     {
         const auto value = screen_brightness.value_or("128");
-        config::instance.set_manual_screen_brightness(std::atoi(value.c_str()));
+        config_.set_manual_screen_brightness(std::atoi(value.c_str()));
     }
     else
     {
-        config::instance.set_manual_screen_brightness(std::nullopt);
+        config_.set_manual_screen_brightness(std::nullopt);
     }
 
-    config::instance.set_use_fahrenheit(use_fahrenheit.has_value());
+    config_.set_use_fahrenheit(use_fahrenheit.has_value());
 
-    config::instance.save();
+    config_.save();
 
     redirect_to_root(request);
 }
@@ -357,7 +355,7 @@ void web_server::handle_homekit_setting_reset(esp32::http_request &request)
         return;
     }
 
-    homekit_integration::instance.forget_pairings();
+    ui_interface_.forget_homekit_pairings();
     send_empty_200(request);
     operations::instance.reboot();
 }
@@ -371,7 +369,7 @@ void web_server::handle_homekit_enable_pairing(esp32::http_request &request)
         return;
     }
 
-    homekit_integration::instance.reenable_pairing();
+    ui_interface_.reenable_homekit_pairing();
     send_empty_200(request);
 }
 
@@ -446,7 +444,7 @@ void web_server::notify_sensor_change(sensor_id_index id)
 void web_server::send_sensor_data(sensor_id_index id)
 {
     ESP_LOGD(WEBSERVER_TAG, "Sending sensor info for %.*s", get_sensor_name(id).size(), get_sensor_name(id).data());
-    const auto &sensor = hardware::instance.get_sensor(id);
+    const auto &sensor = ui_interface_.get_sensor(id);
     const auto value = sensor.get_value();
     const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
 
@@ -747,7 +745,7 @@ void web_server::handle_file_upload(esp32::http_request &request)
     // try setting last modified time
     if (last_modified_arg.has_value())
     {
-        const auto last_modified = esp32::parse_number<time_t>(last_modified_arg.value());
+        const auto last_modified = esp32::string::parse_number<time_t>(last_modified_arg.value());
         if (last_modified.has_value())
         {
             if (!esp32::filesystem::set_last_modified_time(upload_file_name, last_modified.value()))
@@ -775,7 +773,7 @@ void web_server::handle_events(esp32::http_request &request)
         return;
     }
 
-    events.add_request(&request);
+    events.add_request(request);
 
     ESP_LOGI(WEBSERVER_TAG, "Events client first time");
 
@@ -795,7 +793,7 @@ void web_server::handle_logging(esp32::http_request &request)
         return;
     }
 
-    logging.add_request(&request);
+    logging.add_request(request);
     ESP_LOGI(WEBSERVER_TAG, "Logging first time");
 }
 
@@ -808,7 +806,7 @@ void web_server::handle_web_logging_start(esp32::http_request &request)
         return;
     }
 
-    if (logger::get_instance().enable_web_logging([this](std::unique_ptr<std::string> log) { received_log_data(std::move(log)); }))
+    if (logger_.enable_web_logging([this](std::unique_ptr<std::string> log) { received_log_data(std::move(log)); }))
     {
         send_empty_200(request);
     }
@@ -827,7 +825,7 @@ void web_server::handle_web_logging_stop(esp32::http_request &request)
         return;
     }
 
-    logger::get_instance().disable_web_logging();
+    logger_.disable_web_logging();
     send_empty_200(request);
 }
 
@@ -840,7 +838,7 @@ void web_server::handle_sd_card_logging_start(esp32::http_request &request)
         return;
     }
 
-    if (logger::get_instance().enable_sd_logging())
+    if (logger_.enable_sd_logging())
     {
         send_empty_200(request);
     }
@@ -859,7 +857,7 @@ void web_server::handle_sd_card_logging_stop(esp32::http_request &request)
         return;
     }
 
-    logger::get_instance().disable_sd_logging();
+    logger_.disable_sd_logging();
     send_empty_200(request);
 }
 
@@ -968,7 +966,7 @@ void web_server::on_set_logging_level(esp32::http_request &request)
         return;
     }
 
-    const auto log_level = esp32::parse_number<uint8_t>(level_arg.value());
+    const auto log_level = esp32::string::parse_number<uint8_t>(level_arg.value());
 
     if (!log_level.has_value() || (log_level.value() > ESP_LOG_VERBOSE) || (log_level.value() < ESP_LOG_NONE))
     {
@@ -976,7 +974,7 @@ void web_server::on_set_logging_level(esp32::http_request &request)
         return;
     }
 
-    logger::get_instance().set_logging_level(tag_arg.value().c_str(), static_cast<esp_log_level_t>(log_level.value()));
+    logger_.set_logging_level(tag_arg.value().c_str(), static_cast<esp_log_level_t>(log_level.value()));
     send_empty_200(request);
 }
 
@@ -1020,7 +1018,7 @@ void web_server::send_table_response(esp32::http_request &request, ui_interface:
     BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
     JsonArray arr = json_document.to<JsonArray>();
 
-    const auto data = hardware::instance.get_information_table(type);
+    const auto data = ui_interface_.get_information_table(type);
 
     for (auto &&[key, value] : data)
     {

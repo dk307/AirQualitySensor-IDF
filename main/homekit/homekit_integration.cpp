@@ -1,9 +1,9 @@
-#include "homekit_integration.h"
+#include "homekit/homekit_integration.h"
 #include "config/config_manager.h"
 #include "hardware/hardware.h"
+#include "hardware/sensors/sensor.h"
 #include "homekit_definitions.h"
 #include "logging/logging_tags.h"
-#include "sensor/sensor.h"
 #include "util/cores.h"
 #include "util/default_event.h"
 #include "util/exceptions.h"
@@ -15,6 +15,8 @@
 
 // these functions are internal functions for hap
 extern "C" bool is_accessory_paired();
+
+constexpr auto air_quality_sensor_id = sensor_id_index::pm_2_5;
 
 #define CHECK_HAP_RESULT(x)                                                                                                                          \
     do                                                                                                                                               \
@@ -34,8 +36,6 @@ extern "C" bool is_accessory_paired();
             CHECK_THROW_ESP(ESP_FAIL);                                                                                                               \
         }                                                                                                                                            \
     } while (false);
-
-homekit_integration homekit_integration::instance;
 
 void homekit_integration::begin()
 {
@@ -78,8 +78,8 @@ void homekit_integration::homekit_task_ftn()
         /* Initialise the mandatory parameters for Accessory which will be added as
          * the mandatory services internally
          */
-        name_ = config::instance.get_host_name();
-        mac_address_ = hardware::get_default_mac_address();
+        name_ = config_.get_host_name();
+        mac_address_ = ui_interface::get_default_mac_address();
         hap_acc_cfg_t cfg{};
         cfg.name = const_cast<char *>(name_.c_str());
         cfg.manufacturer = const_cast<char *>("Espressif");
@@ -137,6 +137,13 @@ void homekit_integration::homekit_task_ftn()
                             h_value.f = get_sensor_value(id);
                             hap_char_update_val(iter->second, &h_value);
                         }
+
+                        if (id == air_quality_sensor_id)
+                        {
+                            hap_val_t h_value{};
+                            h_value.u = get_air_quality();
+                            hap_char_update_val(air_quality_char, &h_value);
+                        }
                     }
                 }
             }
@@ -158,13 +165,13 @@ int homekit_integration::sensor_read(hap_char_t *hc, hap_status_t *status_code, 
         ESP_LOGI(HOMEKIT_TAG, "Received read from %s", hap_req_get_ctrl_id(read_priv));
     }
 
-    auto &instance = homekit_integration::instance;
+    auto &instance = homekit_integration::get_instance();
 
     auto iter = instance.chars2_.find(hc);
     if (iter != instance.chars2_.end())
     {
         hap_val_t new_val{};
-        new_val.f = get_sensor_value(iter->second);
+        new_val.f = homekit_integration::get_instance().get_sensor_value(iter->second);
         hap_char_update_val(hc, &new_val);
         *status_code = HAP_STATUS_SUCCESS;
         return HAP_SUCCESS;
@@ -178,7 +185,7 @@ void homekit_integration::create_sensor_services_and_chars()
     for (auto &&definition : homekit_definitions)
     {
         hap_serv_t *service;
-        auto iter = services_.find(definition.get_service_type_uuid());
+        const auto iter = services_.find(definition.get_service_type_uuid());
         if (iter == services_.end())
         {
             service = hap_serv_create(const_cast<char *>(definition.get_service_type_uuid().data()));
@@ -202,16 +209,46 @@ void homekit_integration::create_sensor_services_and_chars()
         const auto sensor_def = get_sensor_definition(definition.get_sensor());
 
         hap_char_float_set_constraints(sensor_char, sensor_def.get_min_value(), sensor_def.get_max_value(), sensor_def.get_value_step());
-        hap_char_add_unit(sensor_char, definition.get_uint_str().data());
+        if (definition.get_uint_str().length())
+        {
+            hap_char_add_unit(sensor_char, definition.get_uint_str().data());
+        }
         chars1_.insert(std::make_pair(definition.get_sensor(), sensor_char));
         chars2_.insert(std::make_pair(sensor_char, definition.get_sensor()));
 
         CHECK_HAP_RESULT(hap_serv_add_char(service, sensor_char));
     }
 
+    air_quality_char = hap_char_air_quality_create(get_air_quality());
+    CHECK_NULL_RESULT(air_quality_char);
+    static_assert(homekit_definitions[0].get_sensor() == air_quality_sensor_id);
+    CHECK_HAP_RESULT(hap_serv_add_char(services_[homekit_definitions[0].get_service_type_uuid()], air_quality_char));
+
     for (auto &&[_, service] : services_)
     {
         CHECK_HAP_RESULT(hap_acc_add_serv(accessory_, service));
+    }
+}
+
+uint8_t homekit_integration::get_air_quality()
+{
+    const auto value = homekit_integration::get_instance().hardware_.get_sensor(air_quality_sensor_id).get_value();
+
+    if (!value.has_value())
+    {
+        return 0; // unknown
+    }
+    else
+    {
+        const auto sensor_def = get_sensor_definition(air_quality_sensor_id);
+        auto level = sensor_def.calculate_level(value.value());
+
+        if (level > 5)
+        {
+            level = 5;
+        }
+
+        return level;
     }
 }
 
@@ -264,7 +301,7 @@ void homekit_integration::app_event_handler(esp_event_base_t base, int32_t event
 
 float homekit_integration::get_sensor_value(sensor_id_index id)
 {
-    const auto &sensor = hardware::instance.get_sensor(id);
+    const auto &sensor = hardware_.get_sensor(id);
     return sensor.get_value().value_or(0);
 }
 

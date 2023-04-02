@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sensor/sensor_id.h"
+#include "hardware/sensors/sensor_id.h"
 #include <hap_apple_chars.h>
 #include <hap_apple_servs.h>
 #include <string_view>
@@ -42,10 +42,10 @@ struct homekit_definition
 };
 
 constexpr std::array<homekit_definition, 5> homekit_definitions{
-    homekit_definition{sensor_id_index::pm_2_5, HAP_SERV_UUID_AIR_QUALITY_SENSOR, HAP_CHAR_UUID_PM_2_5_DENSITY, ""},
+    homekit_definition{sensor_id_index::pm_2_5, HAP_SERV_UUID_AIR_QUALITY_SENSOR, HAP_CHAR_UUID_PM_2_5_DENSITY, std::string_view()},
     homekit_definition{sensor_id_index::temperatureC, HAP_SERV_UUID_TEMPERATURE_SENSOR, HAP_CHAR_UUID_CURRENT_TEMPERATURE, HAP_CHAR_UNIT_CELSIUS},
     homekit_definition{sensor_id_index::humidity, HAP_SERV_UUID_HUMIDITY_SENSOR, HAP_CHAR_UUID_CURRENT_RELATIVE_HUMIDITY, HAP_CHAR_UNIT_PERCENTAGE},
-    homekit_definition{sensor_id_index::pm_10, HAP_SERV_UUID_AIR_QUALITY_SENSOR, HAP_CHAR_UUID_PM_10_DENSITY, ""},
+    homekit_definition{sensor_id_index::pm_10, HAP_SERV_UUID_AIR_QUALITY_SENSOR, HAP_CHAR_UUID_PM_10_DENSITY, std::string_view()},
     homekit_definition{sensor_id_index::light_intensity, HAP_SERV_UUID_LIGHT_SENSOR, HAP_CHAR_UUID_CURRENT_AMBIENT_LIGHT_LEVEL, HAP_CHAR_UNIT_LUX},
 };
 

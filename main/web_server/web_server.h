@@ -1,24 +1,35 @@
 #pragma once
 
 #include "app_events.h"
-#include "sensor/sensor.h"
+#include "hardware/sensors/sensor.h"
 #include "ui/ui_interface.h"
 #include "util/async_web_server/http_event_source.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_server.h"
 #include "util/default_event.h"
+#include "util/singleton.h"
 #include <vector>
 
-class web_server final : esp32::http_server
+class config;
+class logger;
+
+class web_server final : esp32::http_server, public esp32::singleton<web_server>
 {
   public:
     void begin() override;
     static web_server instance;
 
   private:
-    web_server() : esp32::http_server(80)
+    web_server(config &config, ui_interface &ui_interface, logger &logger)
+        : esp32::http_server(80), config_(config), ui_interface_(ui_interface), logger_(logger)
     {
     }
+
+    friend class esp32::singleton<web_server>;
+
+    config &config_;
+    ui_interface &ui_interface_;
+    logger &logger_;
 
     template <const uint8_t data[], const auto len, const char *sha256> void handle_array_page_with_auth(esp32::http_request &request);
 

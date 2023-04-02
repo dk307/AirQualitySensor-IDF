@@ -1,6 +1,5 @@
 ## IDF Component Manager Manifest File
 dependencies:
-  espressif/qrcode: "*"
   bblanchon/arduinojson: "^6.20.0-1"
   ## Required IDF version
   idf:
