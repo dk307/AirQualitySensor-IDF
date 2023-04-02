@@ -8,7 +8,7 @@
 #include <esp_wifi_types.h>
 #include <string>
 
-class smart_config_enroll : esp32::noncopyable
+class smart_config_enroll final : esp32::noncopyable
 {
   public:
     smart_config_enroll(wifi_events_notify &events_notify_);

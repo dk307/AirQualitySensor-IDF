@@ -23,7 +23,6 @@ extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
     esp_log_level_set("*", ESP_LOG_WARN);
-    esp_log_level_set("nvs", ESP_LOG_INFO);
 
     try
     {
