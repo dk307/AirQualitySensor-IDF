@@ -32,3 +32,8 @@ std::array<std::tuple<sensor_id_index, float>, 1> bh1750_sensor_device::read()
 
     return {std::tuple<sensor_id_index, float>{sensor_id_index::light_intensity, esp32::round_with_precision(lux, 1)}};
 }
+
+TickType_t bh1750_sensor_device::get_initial_delay()
+{
+    return pdMS_TO_TICKS(180);
+}

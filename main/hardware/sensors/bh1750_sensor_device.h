@@ -7,11 +7,13 @@
 #include <sht3x.h>
 #include <tuple>
 
-class bh1750_sensor_device : public esp32::singleton<bh1750_sensor_device>
+class bh1750_sensor_device final : public esp32::singleton<bh1750_sensor_device>
 {
   public:
     void init();
     std::array<std::tuple<sensor_id_index, float>, 1> read();
+
+    TickType_t get_initial_delay();
 
   private:
     i2c_dev_t bh1750_sensor{};

@@ -1607,6 +1607,12 @@ CONFIG_WPA_MBEDTLS_TLS_CLIENT=y
 # end of Supplicant
 
 #
+# Project
+#
+CONFIG_SHT3X_SENSOR_ENABLE=y
+# end of Project
+
+#
 # I2C
 #
 CONFIG_I2CDEV_TIMEOUT=1000

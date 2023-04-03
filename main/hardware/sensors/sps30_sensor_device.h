@@ -8,7 +8,7 @@
 #include <string>
 #include <tuple>
 
-class sps30_sensor_device : public esp32::singleton<sps30_sensor_device>
+class sps30_sensor_device final : public esp32::singleton<sps30_sensor_device>
 {
   public:
     void init();

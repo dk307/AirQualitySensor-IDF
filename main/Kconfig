@@ -1,0 +1,6 @@
+menu "Project"
+    
+config SHT3X_SENSOR_ENABLE
+	bool "Enable Sensor SHT 3x for temperature & humidity"
+	default n    
+endmenu
