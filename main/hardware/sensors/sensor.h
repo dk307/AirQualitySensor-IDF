@@ -191,8 +191,8 @@ template <uint16_t countT> class sensor_history_t
         if (size)
         {
             return_values.reserve(1 + (size / group_by_count));
-            float value_max = std::numeric_limits<float>::max();
-            float value_min = std::numeric_limits<float>::min();
+            float value_max = std::numeric_limits<float>::min();
+            float value_min = std::numeric_limits<float>::max();
             double sum = 0;
             double group_sum = 0;
             for (auto i = 0; i < size; i++)
