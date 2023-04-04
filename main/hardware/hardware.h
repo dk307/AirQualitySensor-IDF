@@ -70,9 +70,9 @@ class hardware final : public esp32::singleton<hardware>
     void set_sensor_value(sensor_id_index index, float value);
 
     void read_bh1750_sensor();
-#ifdef CONFIG_SHT3X_SENSOR_ENABLE    
+#ifdef CONFIG_SHT3X_SENSOR_ENABLE
     void read_sht3x_sensor();
-#endif    
+#endif
     esp_err_t sps30_i2c_init();
     void read_sps30_sensor();
     uint8_t lux_to_intensity(uint16_t lux);
