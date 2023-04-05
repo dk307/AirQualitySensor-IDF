@@ -77,21 +77,27 @@ void hardware::sensor_task_ftn()
     {
         ESP_LOGI(HARDWARE_TAG, "Sensor task started on core:%d", xPortGetCoreID());
 
+        TickType_t initial_delay = 0;
+
         sps30_sensor.init();
         bh1750_sensor.init();
-        sht3x_sensor.init();
+        initial_delay = std::max(initial_delay, bh1750_sensor.get_initial_delay());
 
-        const auto bh1750_wait = pdMS_TO_TICKS(180);
-        const auto sht3x_wait = sht3x_get_measurement_duration(SHT3X_HIGH);
+#ifdef CONFIG_SHT3X_SENSOR_ENABLE
+        sht3x_sensor.init();
+        initial_delay = std::max<TickType_t>(initial_delay, sht3x_sensor.get_initial_delay());
+#endif
 
         // Wait until all sensors are ready
-        vTaskDelay(std::max<uint64_t>(bh1750_wait, sht3x_wait));
+        vTaskDelay(initial_delay);
 
         do
         {
             read_bh1750_sensor();
             set_auto_display_brightness();
+#ifdef CONFIG_SHT3X_SENSOR_ENABLE
             read_sht3x_sensor();
+#endif
             read_sps30_sensor();
 
             vTaskDelay(pdMS_TO_TICKS(500));
@@ -127,10 +133,12 @@ void hardware::read_bh1750_sensor()
     }
 }
 
+#ifdef CONFIG_SHT3X_SENSOR_ENABLE
 void hardware::read_sht3x_sensor()
 {
     read_sensor_if_time(sht3x_sensor, sht3x_sensor_last_read);
 }
+#endif
 
 void hardware::read_sps30_sensor()
 {

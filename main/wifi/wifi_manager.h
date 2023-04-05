@@ -52,7 +52,6 @@ class wifi_manager final : public esp32::singleton<wifi_manager>
     void post_wifi_status_changed();
 
     std::string_view get_ssid();
-
     std::string get_rfc_name();
     static std::string get_rfc_952_host_name(const std::string &name);
 };

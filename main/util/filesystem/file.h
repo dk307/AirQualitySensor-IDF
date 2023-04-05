@@ -56,6 +56,6 @@ class file : esp32::noncopyable
     }
 
   private:
-    FILE *file_;
+    FILE *file_{nullptr};
 };
 } // namespace esp32::filesystem

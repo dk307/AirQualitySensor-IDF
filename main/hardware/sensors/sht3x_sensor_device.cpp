@@ -1,6 +1,8 @@
 
 
 #include "hardware/sensors/sht3x_sensor_device.h"
+
+#ifdef CONFIG_SHT3X_SENSOR_ENABLE
 #include "hardware/pins.h"
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
@@ -37,3 +39,9 @@ std::array<std::tuple<sensor_id_index, float>, 3> sht3x_sensor_device::read()
             std::tuple<sensor_id_index, float>{sensor_id_index::temperatureF, esp32::round_with_precision(temperatureF, 0.1)},
             std::tuple<sensor_id_index, float>{sensor_id_index::humidity, esp32::round_with_precision(humidity, 1)}};
 }
+
+uint8_t sht3x_sensor_device::get_initial_delay()
+{
+    return sht3x_get_measurement_duration(SHT3X_HIGH);
+}
+#endif

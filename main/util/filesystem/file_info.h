@@ -41,7 +41,7 @@ class file_info
         return modified;
     }
 
-    const std::chrono::system_clock::time_point last_modified_point()
+    const std::chrono::system_clock::time_point last_modified_point() const
     {
         return std::chrono::system_clock::from_time_t(modified);
     }
