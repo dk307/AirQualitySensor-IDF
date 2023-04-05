@@ -284,8 +284,8 @@ constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
 
 constexpr std::array<sensor_definition, total_sensors> sensor_definitions{
     sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size(), 0, 1000, 1},
-    sensor_definition{"Temperature(F)", "°F", no_level.data(), no_level.size(), -40, 140, 1},
-    sensor_definition{"Temperature(C)", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
+    sensor_definition{"Temperature", "°F", no_level.data(), no_level.size(), -40, 140, 1},
+    sensor_definition{"Temperature", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
     sensor_definition{"Humidity", "⁒", no_level.data(), no_level.size(), 0, 100, 1},
     sensor_definition{"PM 1", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
     sensor_definition{"PM 4", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},

@@ -434,8 +434,8 @@
         var eventsSource = new EventSource('/events');
         var informationUpdateRefreshInterval;
         var homekitUpdateRefreshInterval;
-        var sensorsData = new Map();
         var uploadAjax = null;
+        var sensorsData = {};
 
         function updateHostName() {
             $.ajax({
@@ -452,28 +452,33 @@
             });
         }
 
+        function createSensorTable() {
+            var tableBody = document.getElementById("sensors-table-body");
+
+            // Reset the table
+            tableBody.innerHTML = "";
+
+            // insert the data
+            for (let [id, value] of sensorsData) {
+
+                var valueStr = "<span class='level" + value.level + "'><span id='sensor" + id + "'>" + value.value + "</span>&nbsp;" + value.unit + "</span>";
+                var row = $('<tr/>');
+                row.append($('<td/>').text(value.type));
+                row.append($('<td/>').html(valueStr));
+                $(tableBody).append(row);
+            }
+        }
+
         function updateSensorValue(e) {
             var data = e.data;
             if (data != null) {
                 var sensorData = JSON.parse(data);
 
-                var valueStr = "<span class='level" + sensorData["level"] + "'>" + sensorData["value"] + "&nbsp;" + sensorData["unit"] + "</span>";
-                sensorsData.set(sensorData["type"], valueStr);
-                // console.log(sensorsData);
+                var id = sensorData.id;
+                var value = sensorData.value;
 
-                var tableBody = document.getElementById("sensors-table-body");
-
-                // Reset the table
-                tableBody.innerHTML = "";
-
-                // insert the data
-                for (let [key, value] of sensorsData) {
-                    // console.log(key + " = " + value);
-                    var row = $('<tr/>');
-                    row.append($('<td/>').html(key));
-                    row.append($('<td/>').html(value));
-                    $(tableBody).append(row);
-                }
+                $('#sensor' + id).text(value);
+                sensorsData.get(id).value = value;
             }
         }
 
@@ -598,6 +603,19 @@
                     }
 
                     $('#homekitModal').modal('handleUpdate');
+                }
+            });
+        }
+
+        function updateSensors() {
+            $.ajax({
+                type: "GET",
+                url: "/api/sensor/get",
+                dataType: "json",
+                success: function (data) {
+                    // console.log(data);
+                    sensorsData = new Map(data.map(sensor => [sensor["id"], sensor]));
+                    createSensorTable();
                 }
             });
         }
@@ -765,6 +783,7 @@
                 $("#fileUploadFileUploadId").focus();
             });
 
+            updateSensors();
             eventsSource.addEventListener("sensor", updateSensorValue);
             updateHostName();
         });

@@ -109,7 +109,7 @@ void web_server::begin()
                                                                                                                                   HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<fs_html_gz, fs_html_gz_len, fs_html_gz_sha256>>(fs_url, HTTP_GET);
 
-    // not static pages
+    // non static pages
     add_handler_ftn<web_server, &web_server::handle_login>("/login.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_logout>("/logout.handler", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_other_settings_update>("/othersettings.update.handler", HTTP_POST);
@@ -120,6 +120,7 @@ void web_server::begin()
 
     add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
 
+    add_handler_ftn<web_server, &web_server::handle_sensor_get>("/api/sensor/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_homekit_info_get>("/api/homekit/get", HTTP_GET);
@@ -174,6 +175,39 @@ void web_server::handle_information_get(esp32::http_request &request)
     }
 
     send_table_response(request, ui_interface::information_type::system);
+}
+
+void web_server::handle_sensor_get(esp32::http_request &request)
+{
+    ESP_LOGD(WEBSERVER_TAG, "/api/sensor/get");
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+    JsonArray array = json_document.to<JsonArray>();
+
+    for (auto i = 0; i < total_sensors; i++)
+    {
+        const auto id = static_cast<sensor_id_index>(i);
+        const auto &sensor = ui_interface_.get_sensor(id);
+        const auto value = sensor.get_value();
+        const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
+        auto obj = array.createNestedObject();
+
+        auto &&definition = get_sensor_definition(id);
+        obj["value"] = value_str;
+        obj["id"] = static_cast<uint8_t>(id);
+        obj["unit"] = definition.get_unit();
+        obj["type"] = definition.get_name();
+        obj["level"] = definition.calculate_level(value.value_or(0));
+    }
+
+    std::string json;
+    json.reserve(1024);
+    serializeJson(json_document, json);
+    esp32::array_response::send_response(request, json, js_media_type);
 }
 
 void web_server::handle_config_get(esp32::http_request &request)
@@ -452,8 +486,8 @@ void web_server::send_sensor_data(sensor_id_index id)
 
     auto &&definition = get_sensor_definition(id);
     json_document["value"] = value_str;
-    json_document["unit"] = definition.get_unit();
-    json_document["type"] = definition.get_name();
+    json_document["id"] = static_cast<uint8_t>(id);
+
     json_document["level"] = definition.calculate_level(value.value_or(0));
 
     std::string json;
