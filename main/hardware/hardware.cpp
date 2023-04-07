@@ -56,7 +56,7 @@ void hardware::set_sensor_value(sensor_id_index index, float value)
         (*sensors_history)[i].add_value(value);
         changed = sensors[i].set_value(value);
         ESP_LOGI(HARDWARE_TAG, "Updated for sensor:%.*s Value:%g", get_sensor_name(index).size(), get_sensor_name(index).data(),
-                 sensors[i].get_value().value_or(NAN));
+                 sensors[i].get_value());
     }
     else
     {

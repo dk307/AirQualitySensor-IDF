@@ -234,14 +234,14 @@ uint8_t homekit_integration::get_air_quality()
 {
     const auto value = homekit_integration::get_instance().hardware_.get_sensor(air_quality_sensor_id).get_value();
 
-    if (!value.has_value())
+    if (!std::isnan(value))
     {
         return 0; // unknown
     }
     else
     {
         const auto sensor_def = get_sensor_definition(air_quality_sensor_id);
-        auto level = sensor_def.calculate_level(value.value());
+        auto level = sensor_def.calculate_level(value);
 
         if (level > 5)
         {
@@ -301,8 +301,8 @@ void homekit_integration::app_event_handler(esp_event_base_t base, int32_t event
 
 float homekit_integration::get_sensor_value(sensor_id_index id)
 {
-    const auto &sensor = hardware_.get_sensor(id);
-    return sensor.get_value().value_or(0);
+    const auto value = hardware_.get_sensor(id).get_value();
+    return std::isnan(value) ? 0 : value;
 }
 
 void homekit_integration::generate_password()

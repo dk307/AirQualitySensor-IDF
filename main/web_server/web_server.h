@@ -47,6 +47,7 @@ class web_server final : esp32::http_server, public esp32::singleton<web_server>
 
     // // ajax
     void handle_sensor_get(esp32::http_request &request);
+    void handle_sensor_stats(esp32::http_request &request);
     void handle_information_get(esp32::http_request &request);
     void handle_config_get(esp32::http_request &request);
 

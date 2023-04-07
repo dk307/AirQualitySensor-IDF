@@ -8,6 +8,7 @@
     <link rel="icon" href="media/favicon.png" type="image/x-icon">
 
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/chartist.min.css" />
     <title>Main</title>
     <style>
         .level {
@@ -42,6 +43,13 @@
         .level6 {
             color: #940606;
             font-weight: bold;
+        }
+
+        .ct-series-a .ct-line {
+            /* Set the colour of this series line */
+            /* stroke: rgb(3, 30, 5);*/
+            /* Control the thikness of your lines */
+            stroke-width: 2px;
         }
     </style>
 </head>
@@ -88,7 +96,7 @@
     </nav>
     <!-- Navbar End -->
 
-    <main class="mt-5 pt-5">
+    <main class="mt-2 pt-2">
         <div class="container">
             <div class="row row-cols-1 row-cols-md-2 g-4">
                 <div class="col">
@@ -99,6 +107,23 @@
                                 <tbody id="sensors-table-body"></tbody>
                             </table>
 
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card shadow-lg">
+                        <div class="card-header d-flex">
+                            <h5 class="w-50">History</h5>
+                            <div class="w-50">
+                                <form>
+                                    <select class="form-select form-select-sm" id="sensorHistorySelect" disabled>
+                                        <option selected>No sensor found</option>
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="sensorchart"></div>
                         </div>
                     </div>
                 </div>
@@ -429,13 +454,18 @@
     </main>
 
     <script src="js/s.js"></script>
+    <!-- <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/chartist.min.js"></script>
+    <script src="js/sha256.js"></script> -->
 
     <script>
         var eventsSource = new EventSource('/events');
         var informationUpdateRefreshInterval;
         var homekitUpdateRefreshInterval;
         var uploadAjax = null;
-        var sensorsData = {};
+        var sensorsData = null;
+        var sensorChart = null;
 
         function updateHostName() {
             $.ajax({
@@ -452,6 +482,14 @@
             });
         }
 
+        function create_sensor_value_str(value) {
+            if (value != null && !isNaN(value)) {
+                return String(Math.round(value * 100) / 100);
+            } else {
+                return "-";
+            }
+        }
+
         function createSensorTable() {
             var tableBody = document.getElementById("sensors-table-body");
 
@@ -461,12 +499,86 @@
             // insert the data
             for (let [id, value] of sensorsData) {
 
-                var valueStr = "<span class='level" + value.level + "'><span id='sensor" + id + "'>" + value.value + "</span>&nbsp;" + value.unit + "</span>";
+                var valueStr = "<span class='level" + value.level + "'><span id='sensor" + id + "'>" +
+                    create_sensor_value_str(value.value) + "</span>&nbsp;" + value.unit + "</span>";
                 var row = $('<tr/>');
                 row.append($('<td/>').text(value.type));
                 row.append($('<td/>').html(valueStr));
                 $(tableBody).append(row);
             }
+        }
+
+        function createChart() {
+            $("#sensorHistorySelect option").remove();
+
+            for (let [id, value] of sensorsData) {
+                $('#sensorHistorySelect').append('<option value="' + id + '">' + value.type + '&nbsp;(' + value.unit + ')</option>');
+            }
+            $("#sensorHistorySelect").attr('disabled', false);
+
+            sensorChart = new Chartist.LineChart('#sensorchart', {labels: [], series:[[]]}, {});
+        }
+
+        function updateChart() {
+            var selectedSensor = $("#sensorHistorySelect").val();
+
+            $.ajax({
+                type: "GET",
+                url: "/api/sensor/history/get?id=" + selectedSensor,
+                dataType: "json",
+                success: function (data) {
+                    updateChartSeries(data);
+                }
+            });
+        }
+
+        function secondsToTimestring(seconds) {
+            if (seconds <= 1) {
+                return "now";
+            }
+            else if (seconds < 60) {
+                var plural = seconds > 1 ? "s" : "";
+                return `${seconds} sec${plural} ago`;
+            }
+            else if (seconds < 60 * 60) {
+                var unit = Math.round(seconds / 60.0);
+                var plural = unit > 1 ? "s" : "";
+                return `${unit} min${plural} ago`;
+            }
+            else if (seconds < 60 * 60 * 24) {
+                var unit = Math.round(seconds / (60.0 * 60.0));
+                var plural = unit > 1 ? "s" : "";
+                return `${unit} hrs${plural} ago`;
+            }
+            else {
+                var unit = Math.round(seconds / (60.0 * 60.0 * 24));
+                var plural = unit > 1 ? "s" : "";
+                return `${unit} days${plural} ago`;
+            }
+        }
+
+        function updateChartSeries(sensorHistory) {         
+            var series = sensorHistory.history;
+            var count = Math.max(Math.floor(series.length / 4), 1);
+
+            sensorChart.update({ labels: [], series: [series] }, {
+                fullWidth: true,
+                showPoint: series.length == 1,
+                showArea: true,
+                height: 285,
+                axisY: {
+                    onlyInteger: true,
+                    offset: 25
+                },
+                axisX: {
+                    offset: 40,
+                    labelInterpolationFnc: function (value, index) {
+                        var reverseIndex = (series.length - index);
+                        return reverseIndex % count === 0 ? secondsToTimestring(60 * reverseIndex) : null;
+                    }
+                },
+                lineSmooth: Chartist.Interpolation.monotoneCubic(),
+            });
         }
 
         function updateSensorValue(e) {
@@ -477,8 +589,10 @@
                 var id = sensorData.id;
                 var value = sensorData.value;
 
-                $('#sensor' + id).text(value);
-                sensorsData.get(id).value = value;
+                $('#sensor' + id).text(create_sensor_value_str(value));
+                if (sensorsData) {
+                    sensorsData.get(id).value = value;
+                }
             }
         }
 
@@ -616,6 +730,8 @@
                     // console.log(data);
                     sensorsData = new Map(data.map(sensor => [sensor["id"], sensor]));
                     createSensorTable();
+                    createChart();
+                    updateChart();
                 }
             });
         }
@@ -723,6 +839,10 @@
                 });
             });
 
+            document.getElementById('sensorHistorySelect').addEventListener('change', function (event) {
+                updateChart();
+            });
+
             $("#confirmActionForm").on('submit', function (e) {
                 e.preventDefault();
                 var form = $('#confirmActionForm');
@@ -784,8 +904,13 @@
             });
 
             updateSensors();
+            //createSensorTable();
+            //createChart();
+
+            //updateChart(data2);
             eventsSource.addEventListener("sensor", updateSensorValue);
             updateHostName();
+            setInterval(updateChart, 60 * 1000);
         });
 
     </script>

@@ -18,6 +18,7 @@ const sizeOfImage = require('image-size');
 
 
 const baseFolder = 'static/';
+const baseWebFolder = 'static/web';
 const tempWebFolder = baseFolder + 'web/temp/data/';
 const staticWebInclude = 'main/generated/web/include';
 const staticDisplaySrc = 'main/generated/display/src';

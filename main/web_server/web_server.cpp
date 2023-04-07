@@ -2,6 +2,7 @@
 #include "config/config_manager.h"
 #include "generated/web/include/ansi_up.js.gz.h"
 #include "generated/web/include/bootstrap.min.css.gz.h"
+#include "generated/web/include/chartist.min.css.gz.h"
 #include "generated/web/include/datatables.min.css.gz.h"
 #include "generated/web/include/datatables.min.js.gz.h"
 #include "generated/web/include/debug.html.gz.h"
@@ -17,6 +18,7 @@
 #include "logging/logger.h"
 #include "logging/logging_tags.h"
 #include "operations/operations.h"
+#include "util/arduino_json_helper.h"
 #include "util/async_web_server/http_request.h"
 #include "util/async_web_server/http_response.h"
 #include "util/filesystem/file.h"
@@ -28,7 +30,6 @@
 #include "util/misc.h"
 #include "util/ota.h"
 #include "util/psram_allocator.h"
-#include <ArduinoJson.h>
 #include <dirent.h>
 #include <esp_log.h>
 #include <filesystem>
@@ -54,6 +55,7 @@ static constexpr char datatables_js_url[] = "/js/extra/datatables.min.js";
 static constexpr char moment_js_url[] = "/js/extra/moment.min.js";
 static constexpr char ansi_up_js_url[] = "/js/extra/ansi_up.js";
 static constexpr char bootstrap_css_url[] = "/css/bootstrap.min.css";
+static constexpr char chartist_css_url[] = "/css/chartist.min.css";
 static constexpr char datatable_css_url[] = "/css/datatables.min.css";
 static constexpr char root_url[] = "/";
 static constexpr char login_url[] = "/login.html";
@@ -95,6 +97,7 @@ void web_server::begin()
     add_array_handler<logo_png, logo_png_len, logo_png_sha256, false, png_media_type>(logo_url);
     add_array_handler<login_html_gz, login_html_gz_len, login_html_gz_sha256, true, html_media_type>(login_url);
     add_array_handler<ansi_up_js_gz, ansi_up_js_gz_len, ansi_up_js_gz_sha256, true, js_media_type>(ansi_up_js_url);
+    add_array_handler<chartist_min_css_gz, chartist_min_css_gz_len, chartist_min_css_gz_sha256, true, css_media_type>(chartist_css_url);
     add_array_handler<bootstrap_min_css_gz, bootstrap_min_css_gz_len, bootstrap_min_css_gz_sha256, true, css_media_type>(bootstrap_css_url);
     add_array_handler<datatables_min_css_gz, datatables_min_css_gz_len, datatables_min_css_gz_sha256, true, css_media_type>(datatable_css_url);
     add_array_handler<datatables_min_js_gz, datatables_min_js_gz_len, datatables_min_js_gz_sha256, true, js_media_type>(datatables_js_url);
@@ -121,6 +124,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_firmware_upload>("/firmware.update.handler", HTTP_POST);
 
     add_handler_ftn<web_server, &web_server::handle_sensor_get>("/api/sensor/get", HTTP_GET);
+    add_handler_ftn<web_server, &web_server::handle_sensor_stats>("/api/sensor/history/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_information_get>("/api/information/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_config_get>("/api/config/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_homekit_info_get>("/api/homekit/get", HTTP_GET);
@@ -193,16 +197,63 @@ void web_server::handle_sensor_get(esp32::http_request &request)
         const auto id = static_cast<sensor_id_index>(i);
         const auto &sensor = ui_interface_.get_sensor(id);
         const auto value = sensor.get_value();
-        const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
         auto obj = array.createNestedObject();
 
         auto &&definition = get_sensor_definition(id);
-        obj["value"] = value_str;
+        obj["value"] = value;
         obj["id"] = static_cast<uint8_t>(id);
         obj["unit"] = definition.get_unit();
         obj["type"] = definition.get_name();
-        obj["level"] = definition.calculate_level(value.value_or(0));
+        obj["level"] = definition.calculate_level(value);
     }
+
+    std::string json;
+    json.reserve(1024);
+    serializeJson(json_document, json);
+    esp32::array_response::send_response(request, json, js_media_type);
+}
+
+void web_server::handle_sensor_stats(esp32::http_request &request)
+{
+    ESP_LOGD(WEBSERVER_TAG, "api/sensor/history/get");
+    if (!check_authenticated(request))
+    {
+        return;
+    }
+
+    const auto arguments = request.get_url_arguments({"id"});
+    auto &&id_arg = arguments[0];
+
+    auto id_arg_num = id_arg.has_value() ? esp32::string::parse_number<uint8_t>(id_arg.value()) : std::nullopt;
+
+    if (!id_arg_num.has_value() || (id_arg_num.value() >= total_sensors))
+    {
+        log_and_send_error(request, HTTPD_400_BAD_REQUEST, "sensor id not supplied or invalid");
+        return;
+    }
+
+    const auto id = static_cast<sensor_id_index>(id_arg_num.value());
+    const auto &sensor_detail_info = ui_interface_.get_sensor_detail_info(id);
+
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+
+    auto stats_json = json_document.createNestedObject("stats");
+
+    if (sensor_detail_info.stat.has_value())
+    {
+        auto &&stats = sensor_detail_info.stat.value();
+        stats_json["max"].set(stats.max);
+        stats_json["min"].set(stats.min);
+        stats_json["mean"].set(stats.mean);
+    }
+    else
+    {
+        stats_json["max"].set(nullptr);
+        stats_json["min"].set(nullptr);
+        stats_json["mean"].set(nullptr);
+    }
+
+    json_document["history"].set(sensor_detail_info.history);
 
     std::string json;
     json.reserve(1024);
@@ -480,15 +531,13 @@ void web_server::send_sensor_data(sensor_id_index id)
     ESP_LOGD(WEBSERVER_TAG, "Sending sensor info for %.*s", get_sensor_name(id).size(), get_sensor_name(id).data());
     const auto &sensor = ui_interface_.get_sensor(id);
     const auto value = sensor.get_value();
-    const std::string value_str = value.has_value() ? esp32::string::to_string(value.value()) : std::string("-");
 
     BasicJsonDocument<esp32::psram::json_allocator> json_document(128);
 
     auto &&definition = get_sensor_definition(id);
-    json_document["value"] = value_str;
+    json_document["value"] = value;
     json_document["id"] = static_cast<uint8_t>(id);
-
-    json_document["level"] = definition.calculate_level(value.value_or(0));
+    json_document["level"] = definition.calculate_level(value);
 
     std::string json;
     serializeJson(json_document, json);

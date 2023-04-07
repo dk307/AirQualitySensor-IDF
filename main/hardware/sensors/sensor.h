@@ -104,14 +104,9 @@ class sensor_definition
 class sensor_value
 {
   public:
-    std::optional<float> get_value() const
+    float get_value() const
     {
-        const auto value = value_.load();
-        if (std::isnan(value))
-        {
-            return std::nullopt;
-        }
-        return value;
+        return value_.load();
     }
 
     template <class T>
