@@ -548,12 +548,12 @@
             else if (seconds < 60 * 60 * 24) {
                 var unit = Math.round(seconds / (60.0 * 60.0));
                 var plural = unit > 1 ? "s" : "";
-                return `${unit} hrs${plural} ago`;
+                return `${unit} hr${plural} ago`;
             }
             else {
                 var unit = Math.round(seconds / (60.0 * 60.0 * 24));
                 var plural = unit > 1 ? "s" : "";
-                return `${unit} days${plural} ago`;
+                return `${unit} day${plural} ago`;
             }
         }
 
@@ -906,7 +906,6 @@
             updateSensors();
             //createSensorTable();
             //createChart();
-
             //updateChart(data2);
             eventsSource.addEventListener("sensor", updateSensorValue);
             updateHostName();

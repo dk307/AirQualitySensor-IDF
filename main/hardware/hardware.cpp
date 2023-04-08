@@ -105,7 +105,7 @@ void hardware::sensor_task_ftn()
     }
     catch (const std::exception &ex)
     {
-        ESP_LOGI(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
+        ESP_LOGE(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
         throw;
     }
 

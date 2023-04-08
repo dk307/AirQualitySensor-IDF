@@ -207,10 +207,7 @@ void web_server::handle_sensor_get(esp32::http_request &request)
         obj["level"] = definition.calculate_level(value);
     }
 
-    std::string json;
-    json.reserve(1024);
-    serializeJson(json_document, json);
-    esp32::array_response::send_response(request, json, js_media_type);
+    send_json_response(request, json_document);
 }
 
 void web_server::handle_sensor_stats(esp32::http_request &request)
@@ -235,7 +232,7 @@ void web_server::handle_sensor_stats(esp32::http_request &request)
     const auto id = static_cast<sensor_id_index>(id_arg_num.value());
     const auto &sensor_detail_info = ui_interface_.get_sensor_detail_info(id);
 
-    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(8 * 1024);
 
     auto stats_json = json_document.createNestedObject("stats");
 
@@ -255,10 +252,7 @@ void web_server::handle_sensor_stats(esp32::http_request &request)
 
     json_document["history"].set(sensor_detail_info.history);
 
-    std::string json;
-    json.reserve(1024);
-    serializeJson(json_document, json);
-    esp32::array_response::send_response(request, json, js_media_type);
+    send_json_response(request, json_document);
 }
 
 void web_server::handle_config_get(esp32::http_request &request)
@@ -539,7 +533,7 @@ void web_server::send_sensor_data(sensor_id_index id)
     json_document["id"] = static_cast<uint8_t>(id);
     json_document["level"] = definition.calculate_level(value);
 
-    std::string json;
+    esp32::psram::string json;
     serializeJson(json_document, json);
     events.try_send(json.c_str(), "sensor", esp32::millis(), 0);
 }
@@ -606,11 +600,7 @@ void web_server::handle_dir_list(esp32::http_request &request)
     }
     closedir(dir);
 
-    std::string data_str;
-    data_str.reserve(8196);
-    serializeJson(json_document, data_str);
-
-    esp32::array_response::send_response(request, data_str, js_media_type);
+    send_json_response(request, json_document);
 }
 
 void web_server::handle_fs_download(esp32::http_request &request)
@@ -1098,7 +1088,7 @@ void web_server::handle_homekit_info_get(esp32::http_request &request)
 
 void web_server::send_table_response(esp32::http_request &request, ui_interface::information_type type)
 {
-    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(2048);
     JsonArray arr = json_document.to<JsonArray>();
 
     const auto data = ui_interface_.get_information_table(type);
@@ -1108,9 +1098,19 @@ void web_server::send_table_response(esp32::http_request &request, ui_interface:
         add_key_value_object(arr, key, value);
     }
 
-    std::string data_str;
-    data_str.reserve(1024);
-    serializeJson(json_document, data_str);
+    send_json_response(request, json_document);
+}
 
-    esp32::array_response::send_response(request, data_str, js_media_type);
+void web_server::send_json_response(esp32::http_request &request, const BasicJsonDocument<esp32::psram::json_allocator> &json_document)
+{
+    if (json_document.overflowed())
+    {
+        log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Json document overflowed");
+        return;
+    }
+
+    esp32::psram::string json;
+    json.reserve(json_document.memoryUsage() * 2);
+    serializeJson(json_document, json);
+    esp32::array_response::send_response(request, json, js_media_type);
 }

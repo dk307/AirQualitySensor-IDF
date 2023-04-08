@@ -94,6 +94,8 @@ class web_server final : esp32::http_server, public esp32::singleton<web_server>
 
     void send_table_response(esp32::http_request &request, ui_interface::information_type type);
 
+    void send_json_response(esp32::http_request &request, const BasicJsonDocument<esp32::psram::json_allocator>& document);
+
     esp32::event_source events;
     esp32::event_source logging;
 
