@@ -436,7 +436,6 @@ void web_server::handle_homekit_setting_reset(esp32::http_request &request)
 
     ui_interface_.forget_homekit_pairings();
     send_empty_200(request);
-    operations::instance.reboot();
 }
 
 void web_server::handle_homekit_enable_pairing(esp32::http_request &request)
