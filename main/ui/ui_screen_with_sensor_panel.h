@@ -2,9 +2,8 @@
 
 #include "hardware/sensors/sensor.h"
 #include "ui_screen.h"
-#include <utility>
 #include <array>
-
+#include <utility>
 
 class ui_screen_with_sensor_panel : public ui_screen
 {

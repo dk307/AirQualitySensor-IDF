@@ -24,7 +24,7 @@ class ota_updator final : esp32::noncopyable
     const esp_partition_t *update_partition_{nullptr};
 };
 
-class ota_exception final: public esp_exception
+class ota_exception final : public esp_exception
 {
   public:
     using esp_exception::esp_exception;

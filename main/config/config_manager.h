@@ -11,7 +11,6 @@
 #include <optional>
 #include <vector>
 
-
 class config : public esp32::singleton<config>
 {
   public:

@@ -160,7 +160,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         auto current_static_label = create_a_label(panel, &all_14_font, LV_ALIGN_TOP_MID, 0, 3, text_color);
         lv_label_set_text_static(current_static_label, label_text);
 
-        auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);      
+        auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
         return {panel, value_label};
     }
 
