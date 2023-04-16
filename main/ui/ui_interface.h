@@ -30,7 +30,7 @@ class ui_interface : public esp32::singleton<ui_interface>
 
     void set_screen_brightness(uint8_t value);
     const sensor_value &get_sensor(sensor_id_index index);
-    std::optional<int16_t> get_sensor_value(sensor_id_index index);
+    float get_sensor_value(sensor_id_index index);
     sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index);
     wifi_status get_wifi_status();
     std::string get_sps30_error_register_status();

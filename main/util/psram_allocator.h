@@ -92,6 +92,6 @@ struct json_allocator
     }
 };
 
-using string = std::basic_string<char, std::char_traits<char>, esp32::psram::json_allocator>;
+using string = std::basic_string<char, std::char_traits<char>, esp32::psram::allocator<char>>;
 } // namespace psram
 } // namespace esp32

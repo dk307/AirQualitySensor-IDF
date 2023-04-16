@@ -22,7 +22,7 @@ class hardware final : public esp32::singleton<hardware>
         return sensors[static_cast<uint8_t>(index)];
     }
 
-    std::optional<int16_t> get_sensor_value(sensor_id_index index) const;
+    float get_sensor_value(sensor_id_index index) const;
     sensor_history::sensor_history_snapshot get_sensor_detail_info(sensor_id_index index);
 
     const sensor_history &get_sensor_history(sensor_id_index index) const

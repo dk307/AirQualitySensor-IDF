@@ -25,7 +25,7 @@ void http_server::begin()
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = port_;
     config.task_priority = esp32::task::default_priority;
-    config.max_uri_handlers = 40;
+    config.max_uri_handlers = 45;
     config.ctrl_port = 32760;
     config.core_id = esp32::http_server_core;
     config.stack_size = 6 * 1024;

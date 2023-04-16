@@ -46,6 +46,8 @@ class web_server final : esp32::http_server, public esp32::singleton<web_server>
     void handle_firmware_upload(esp32::http_request &request);
 
     // // ajax
+    void handle_sensor_get(esp32::http_request &request);
+    void handle_sensor_stats(esp32::http_request &request);
     void handle_information_get(esp32::http_request &request);
     void handle_config_get(esp32::http_request &request);
 
@@ -91,6 +93,8 @@ class web_server final : esp32::http_server, public esp32::singleton<web_server>
     void handle_homekit_info_get(esp32::http_request &request);
 
     void send_table_response(esp32::http_request &request, ui_interface::information_type type);
+
+    void send_json_response(esp32::http_request &request, const BasicJsonDocument<esp32::psram::json_allocator> &document);
 
     esp32::event_source events;
     esp32::event_source logging;

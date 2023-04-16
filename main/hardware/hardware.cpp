@@ -25,10 +25,10 @@ template <class T> void hardware::read_sensor_if_time(T &sensor, uint64_t &last_
     }
 }
 
-std::optional<int16_t> hardware::get_sensor_value(sensor_id_index index) const
+float hardware::get_sensor_value(sensor_id_index index) const
 {
     auto &&sensor = get_sensor(index);
-    return sensor.get_value_as<int16_t>();
+    return sensor.get_value();
 }
 
 sensor_history::sensor_history_snapshot hardware::get_sensor_detail_info(sensor_id_index index)
@@ -56,7 +56,7 @@ void hardware::set_sensor_value(sensor_id_index index, float value)
         (*sensors_history)[i].add_value(value);
         changed = sensors[i].set_value(value);
         ESP_LOGI(HARDWARE_TAG, "Updated for sensor:%.*s Value:%g", get_sensor_name(index).size(), get_sensor_name(index).data(),
-                 sensors[i].get_value().value_or(NAN));
+                 sensors[i].get_value());
     }
     else
     {
@@ -105,7 +105,7 @@ void hardware::sensor_task_ftn()
     }
     catch (const std::exception &ex)
     {
-        ESP_LOGI(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
+        ESP_LOGE(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
         throw;
     }
 
@@ -172,7 +172,7 @@ void hardware::set_auto_display_brightness()
     else
     {
         const auto avg_lux = light_sensor_values.get_average();
-        ESP_LOGD(SENSOR_BH1750_TAG, "Average lux:%d", avg_lux.value_or(128));
+        ESP_LOGD(SENSOR_BH1750_TAG, "Average lux:%g", avg_lux.value_or(128));
         required_brightness = lux_to_intensity(avg_lux.value_or(128));
     }
 

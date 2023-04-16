@@ -135,7 +135,7 @@ void ui::init_top_message()
     lv_timer_pause(top_message_timer_);
 }
 
-void ui::set_sensor_value(sensor_id_index index, const std::optional<int16_t> &value)
+void ui::set_sensor_value(sensor_id_index index, float value)
 {
     if (main_screen_.is_active())
     {

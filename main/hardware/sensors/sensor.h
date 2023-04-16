@@ -104,26 +104,9 @@ class sensor_definition
 class sensor_value
 {
   public:
-    std::optional<float> get_value() const
+    float get_value() const
     {
-        const auto value = value_.load();
-        if (std::isnan(value))
-        {
-            return std::nullopt;
-        }
-        return value;
-    }
-
-    template <class T>
-    std::optional<T> get_value_as() const
-        requires std::is_integral_v<T>
-    {
-        const auto value = value_.load();
-        if (std::isnan(value))
-        {
-            return std::nullopt;
-        }
-        return std::lround<T>(value);
+        return value_.load();
     }
 
     bool set_value(float value)
@@ -157,12 +140,12 @@ template <uint16_t countT> class sensor_history_t
   public:
     typedef struct
     {
-        int16_t mean;
-        int16_t min;
-        int16_t max;
+        float mean;
+        float min;
+        float max;
     } stats;
 
-    using vector_history_t = std::vector<int16_t, esp32::psram::allocator<int16_t>>;
+    using vector_history_t = std::vector<float, esp32::psram::allocator<float>>;
 
     typedef struct
     {
@@ -205,7 +188,7 @@ template <uint16_t countT> class sensor_history_t
 
                 if (((i + 1) % group_by_count) == 0)
                 {
-                    return_values.push_back(std::lround<int16_t>(group_sum / (group_by_count)));
+                    return_values.push_back(group_sum / (group_by_count));
                     group_sum = 0;
                 }
             }
@@ -213,13 +196,13 @@ template <uint16_t countT> class sensor_history_t
             // add partial group average
             if (size % group_by_count)
             {
-                return_values.push_back(std::lround<int16_t>(group_sum / (size % group_by_count)));
+                return_values.push_back(group_sum / (size % group_by_count));
             }
 
             stats stats_value;
-            stats_value.max = std::lround<int16_t>(value_max);
-            stats_value.min = std::lround<int16_t>(value_min);
-            stats_value.mean = std::lround<int16_t>(sum / size);
+            stats_value.max = value_max;
+            stats_value.min = value_min;
+            stats_value.mean = sum / size;
             return {stats_value, return_values};
         }
         else
@@ -228,7 +211,7 @@ template <uint16_t countT> class sensor_history_t
         };
     }
 
-    std::optional<int16_t> get_average() const
+    std::optional<float> get_average() const
     {
         std::lock_guard<esp32::semaphore> lock(data_mutex_);
         const auto size = last_x_values_.size();
@@ -239,7 +222,7 @@ template <uint16_t countT> class sensor_history_t
             {
                 sum += last_x_values_[i];
             }
-            return static_cast<int16_t>(sum / size);
+            return sum / size;
         }
         else
         {
@@ -284,8 +267,8 @@ constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
 
 constexpr std::array<sensor_definition, total_sensors> sensor_definitions{
     sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size(), 0, 1000, 1},
-    sensor_definition{"Temperature(F)", "°F", no_level.data(), no_level.size(), -40, 140, 1},
-    sensor_definition{"Temperature(C)", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
+    sensor_definition{"Temperature", "°F", no_level.data(), no_level.size(), -40, 140, 1},
+    sensor_definition{"Temperature", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
     sensor_definition{"Humidity", "⁒", no_level.data(), no_level.size(), 0, 100, 1},
     sensor_definition{"PM 1", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
     sensor_definition{"PM 4", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},

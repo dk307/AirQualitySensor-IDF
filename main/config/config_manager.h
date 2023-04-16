@@ -2,10 +2,10 @@
 
 #include "credentials.h"
 #include "preferences.h"
+#include "util/arduino_json_helper.h"
 #include "util/noncopyable.h"
 #include "util/semaphore_lockable.h"
 #include "util/singleton.h"
-#include <ArduinoJson.h>
 #include <atomic>
 #include <mutex>
 #include <optional>

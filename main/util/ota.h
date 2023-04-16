@@ -8,7 +8,7 @@
 
 namespace esp32
 {
-class ota_updator : esp32::noncopyable
+class ota_updator final : esp32::noncopyable
 {
   public:
     ota_updator(const std::array<uint8_t, 32> &expected_sha256);
@@ -24,7 +24,7 @@ class ota_updator : esp32::noncopyable
     const esp_partition_t *update_partition_{nullptr};
 };
 
-class ota_exception : public esp_exception
+class ota_exception final : public esp_exception
 {
   public:
     using esp_exception::esp_exception;
