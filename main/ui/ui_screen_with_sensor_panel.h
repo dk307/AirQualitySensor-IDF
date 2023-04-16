@@ -30,7 +30,7 @@ class ui_screen_with_sensor_panel : public ui_screen
   protected:
     constexpr static uint8_t no_value_label_ = 0;
 
-    static void __attribute__((noinline)) set_default_value_in_panel(const panel_and_label &pair)
+    void __attribute__((noinline)) set_default_value_in_panel(const panel_and_label &pair)
     {
         if (pair.panel)
         {
@@ -43,7 +43,7 @@ class ui_screen_with_sensor_panel : public ui_screen
         }
     }
 
-    static void __attribute__((noinline)) set_label_panel_color(lv_obj_t *panel, uint8_t level)
+    void __attribute__((noinline)) set_label_panel_color(lv_obj_t *panel, uint8_t level)
     {
         if (level >= panel_colors.size())
         {
@@ -56,7 +56,7 @@ class ui_screen_with_sensor_panel : public ui_screen
         lv_obj_set_style_bg_grad_color(panel, std::get<1>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-    static void __attribute__((noinline)) set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<int16_t> &value)
+    void __attribute__((noinline)) set_value_in_panel(const panel_and_label &pair, sensor_id_index index, float value)
     {
         if (!std::isnan(value))
         {
@@ -71,12 +71,12 @@ class ui_screen_with_sensor_panel : public ui_screen
             {
                 if (!pair.panel)
                 {
-                    lv_label_set_text_fmt(pair.label, "%ld%.*s", std::lround(value), sensor_definition.get_unit().size(),
+                    lv_label_set_text_fmt(pair.label, "%ld%.*s", std::lroundf(value), sensor_definition.get_unit().size(),
                                           sensor_definition.get_unit().data());
                 }
                 else
                 {
-                    lv_label_set_text_fmt(pair.label, "%ld", std::lround(value));
+                    lv_label_set_text_fmt(pair.label, "%ld", std::lroundf(value));
                 }
             }
         }

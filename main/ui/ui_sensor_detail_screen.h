@@ -306,7 +306,7 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
             sensor_detail_screen_chart_series_data.resize(values.size());
             for (auto index = 0; index < sensor_detail_screen_chart_series_data.size(); index++)
             {
-                sensor_detail_screen_chart_series_data[index] = std::lround(values[index] * graph_multiplier);
+                sensor_detail_screen_chart_series_data[index] = std::lroundf(values[index] * graph_multiplier);
             }
 
             lv_chart_set_ext_y_array(sensor_detail_screen_chart, sensor_detail_screen_chart_series, sensor_detail_screen_chart_series_data.data());
