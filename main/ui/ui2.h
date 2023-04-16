@@ -24,7 +24,7 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     void load_boot_screen();
     void init();
     void show_top_level_message(const std::string &message, uint32_t period = top_message_timer_period);
-    void set_sensor_value(sensor_id_index id, const std::optional<int16_t> &value);
+    void set_sensor_value(sensor_id_index id, float value);
     void set_main_screen();
     void wifi_changed();
 

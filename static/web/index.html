@@ -515,7 +515,7 @@
             }
             $("#sensorHistorySelect").attr('disabled', false);
 
-            sensorChart = new Chartist.LineChart('#sensorchart', {labels: [], series:[[]]}, {});
+            sensorChart = new Chartist.LineChart('#sensorchart', { labels: [], series: [[]] }, {});
         }
 
         function updateChart() {
@@ -565,9 +565,12 @@
                 showPoint: series.length == 1,
                 showArea: true,
                 height: 285,
+                high: Math.ceil(sensorHistory.stats.max),
+                low: Math.floor(sensorHistory.stats.min),
+                divisor: Math.max(Math.ceil(sensorHistory.stats.max - sensorHistory.stats.min) / 4, 1),
                 axisY: {
                     onlyInteger: true,
-                    offset: 25
+                    offset: 30
                 },
                 axisX: {
                     offset: 40,

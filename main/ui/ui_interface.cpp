@@ -19,7 +19,7 @@ const sensor_value &ui_interface::get_sensor(sensor_id_index index)
     return hardware_->get_sensor(index);
 }
 
-std::optional<int16_t> ui_interface::get_sensor_value(sensor_id_index index)
+float ui_interface::get_sensor_value(sensor_id_index index)
 {
     configASSERT(hardware_);
     return hardware_->get_sensor_value(index);

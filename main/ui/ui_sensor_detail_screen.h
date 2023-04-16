@@ -32,15 +32,15 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         const auto panel_h = (screen_height - y_pad * 4 - top_y_margin) / 4;
 
         // first label is up by y_pad
-        panel_and_labels[label_and_unit_label_current_index] = create_panel("Current", LV_ALIGN_TOP_RIGHT, -x_pad, top_y_margin, panel_w, panel_h);
+        panel_and_labels_[label_and_unit_label_current_index] = create_panel("Current", LV_ALIGN_TOP_RIGHT, -x_pad, top_y_margin, panel_w, panel_h);
 
-        panel_and_labels[label_and_unit_label_average_index] =
+        panel_and_labels_[label_and_unit_label_average_index] =
             create_panel("Average", LV_ALIGN_TOP_RIGHT, -x_pad, top_y_margin + y_pad + panel_h, panel_w, panel_h);
 
-        panel_and_labels[label_and_unit_label_min_index] =
+        panel_and_labels_[label_and_unit_label_min_index] =
             create_panel("Minimum", LV_ALIGN_TOP_RIGHT, -x_pad, top_y_margin + (y_pad + panel_h) * 2, panel_w, panel_h);
 
-        panel_and_labels[label_and_unit_label_max_index] =
+        panel_and_labels_[label_and_unit_label_max_index] =
             create_panel("Maximum", LV_ALIGN_TOP_RIGHT, -x_pad, top_y_margin + (y_pad + panel_h) * 3, panel_w, panel_h);
 
         {
@@ -69,14 +69,13 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         ESP_LOGD(UI_TAG, "Sensor detail init done");
     }
 
-    void set_sensor_value(sensor_id_index index, const std::optional<int16_t> &value)
+    void set_sensor_value(sensor_id_index index, float value)
     {
         if (is_active())
         {
             if (get_sensor_id_index() == index)
             {
-                ESP_LOGI(UI_TAG, "Updating sensor %.*s to %d in details screen", get_sensor_name(index).size(), get_sensor_name(index).data(),
-                         value.value_or(-1));
+                ESP_LOGI(UI_TAG, "Updating sensor %.*s to %g in details screen", get_sensor_name(index).size(), get_sensor_name(index).data(), value);
                 set_current_values(index, value);
             }
         }
@@ -107,15 +106,17 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
     lv_obj_t *sensor_detail_screen_top_label_units{};
     lv_obj_t *sensor_detail_screen_chart{};
     lv_chart_series_t *sensor_detail_screen_chart_series{};
-    sensor_history::vector_history_t sensor_detail_screen_chart_series_data;
+    std::vector<lv_coord_t> sensor_detail_screen_chart_series_data;
     uint64_t sensor_detail_screen_chart_series_time;
     constexpr static uint8_t chart_total_x_ticks = 4;
 
-    std::array<panel_and_label, 4> panel_and_labels;
+    std::array<panel_and_label, 4> panel_and_labels_;
     const size_t label_and_unit_label_current_index = 0;
     const size_t label_and_unit_label_average_index = 1;
     const size_t label_and_unit_label_min_index = 2;
     const size_t label_and_unit_label_max_index = 3;
+
+    const uint8_t graph_multiplier = 10;
 
     void screen_callback(lv_event_t *e)
     {
@@ -147,21 +148,19 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_size(panel, w, h);
         lv_obj_align(panel, align, x_ofs, y_ofs);
         lv_obj_set_style_border_width(panel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-        lv_obj_set_style_bg_opa(panel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_grad_dir(panel, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_clip_corner(panel, false, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_grad_dir(panel, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_dither_mode(panel, LV_DITHER_ORDERED, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_set_style_radius(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);
+        set_label_panel_color(panel, no_value_label_);
 
         auto current_static_label = create_a_label(panel, &all_14_font, LV_ALIGN_TOP_MID, 0, 3, text_color);
-
         lv_label_set_text_static(current_static_label, label_text);
 
-        auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
-
+        auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);      
         return {panel, value_label};
     }
 
@@ -272,9 +271,13 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
                 strncpy(dsc->text, "-", dsc->text_length);
             }
         }
+        else if (dsc->part == LV_PART_TICKS && dsc->id == LV_CHART_AXIS_PRIMARY_Y && dsc->text)
+        {
+            snprintf(dsc->text, dsc->text_length, "%ld.%ld", dsc->value / 10, dsc->value % 10);
+        }
     }
 
-    void set_current_values(sensor_id_index index, const std::optional<int16_t> &value)
+    void set_current_values(sensor_id_index index, float value)
     {
         sensor_detail_screen_chart_series_time = esp32::millis() / 1000;
 
@@ -287,28 +290,33 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
 
             lv_chart_set_type(sensor_detail_screen_chart, LV_CHART_TYPE_LINE);
 
-            set_value_in_panel(panel_and_labels[label_and_unit_label_average_index], index, stats.mean);
-            set_value_in_panel(panel_and_labels[label_and_unit_label_min_index], index, stats.min);
-            set_value_in_panel(panel_and_labels[label_and_unit_label_max_index], index, stats.max);
+            set_value_in_panel(panel_and_labels_[label_and_unit_label_average_index], index, stats.mean);
+            set_value_in_panel(panel_and_labels_[label_and_unit_label_min_index], index, stats.min);
+            set_value_in_panel(panel_and_labels_[label_and_unit_label_max_index], index, stats.max);
 
             auto &&values = sensor_info.history;
 
-            set_value_in_panel(panel_and_labels[label_and_unit_label_current_index], index, values[values.size() - 1]);
+            set_value_in_panel(panel_and_labels_[label_and_unit_label_current_index], index, values[values.size() - 1]);
 
             lv_chart_set_point_count(sensor_detail_screen_chart, values.size());
-            const auto range = std::max<int16_t>((stats.max - stats.min) * 0.1, 2);
-            lv_chart_set_range(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_Y, stats.min - range / 2, stats.max + range / 2);
+            const auto range = std::max((stats.max - stats.min) * 0.1f, 2.0f);
+            lv_chart_set_range(sensor_detail_screen_chart, LV_CHART_AXIS_PRIMARY_Y, graph_multiplier * std::floor(stats.min - range / 2),
+                               graph_multiplier * std::ceil(stats.max + range / 2));
 
-            sensor_detail_screen_chart_series_data = std::move(values);
+            sensor_detail_screen_chart_series_data.resize(values.size());
+            for (auto index = 0; index < sensor_detail_screen_chart_series_data.size(); index++)
+            {
+                sensor_detail_screen_chart_series_data[index] = std::lround(values[index] * graph_multiplier);
+            }
 
             lv_chart_set_ext_y_array(sensor_detail_screen_chart, sensor_detail_screen_chart_series, sensor_detail_screen_chart_series_data.data());
         }
         else
         {
             ESP_LOGD(UI_TAG, "No stats for %.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
-            set_default_value_in_panel(panel_and_labels[label_and_unit_label_average_index]);
-            set_default_value_in_panel(panel_and_labels[label_and_unit_label_min_index]);
-            set_default_value_in_panel(panel_and_labels[label_and_unit_label_max_index]);
+            set_default_value_in_panel(panel_and_labels_[label_and_unit_label_average_index]);
+            set_default_value_in_panel(panel_and_labels_[label_and_unit_label_min_index]);
+            set_default_value_in_panel(panel_and_labels_[label_and_unit_label_max_index]);
 
             sensor_detail_screen_chart_series_data.clear();
             lv_chart_set_type(sensor_detail_screen_chart, LV_CHART_TYPE_NONE);

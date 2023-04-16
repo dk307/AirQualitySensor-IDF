@@ -166,7 +166,7 @@ void display::gui_task()
                     {
                         const auto id = static_cast<sensor_id_index>(i - 1);
                         const auto &sensor = ui_interface_.get_sensor(id);
-                        const auto value = sensor.get_value_as<int16_t>();
+                        const auto value = sensor.get_value();
                         ui_instance_.set_sensor_value(id, value);
                     }
                 }

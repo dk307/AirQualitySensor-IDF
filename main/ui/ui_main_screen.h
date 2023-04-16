@@ -26,7 +26,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         ESP_LOGD(UI_TAG, "Main screen init done");
     }
 
-    void set_sensor_value(sensor_id_index index, const std::optional<int16_t> &value)
+    void set_sensor_value(sensor_id_index index, float value)
     {
         std::optional<panel_and_label> pair;
 
@@ -45,8 +45,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
         if (pair.has_value())
         {
-            ESP_LOGI(UI_TAG, "Updating sensor %.*s to %d in main screen", get_sensor_name(index).size(), get_sensor_name(index).data(),
-                     value.value_or(-1));
+            ESP_LOGI(UI_TAG, "Updating sensor %.*s to %g in main screen", get_sensor_name(index).size(), get_sensor_name(index).data(), value);
             set_value_in_panel(*pair, index, value);
         }
     }
@@ -104,6 +103,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
         lv_obj_set_style_bg_opa(panel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_clip_corner(panel, false, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_grad_dir(panel, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_dither_mode(panel, LV_DITHER_ERR_DIFF, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_obj_set_style_radius(panel, radius, LV_PART_MAIN | LV_STATE_DEFAULT);
         set_padding_zero(panel);

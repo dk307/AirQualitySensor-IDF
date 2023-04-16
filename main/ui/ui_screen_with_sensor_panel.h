@@ -2,6 +2,9 @@
 
 #include "hardware/sensors/sensor.h"
 #include "ui_screen.h"
+#include <utility>
+#include <array>
+
 
 class ui_screen_with_sensor_panel : public ui_screen
 {
@@ -43,55 +46,25 @@ class ui_screen_with_sensor_panel : public ui_screen
 
     static void __attribute__((noinline)) set_label_panel_color(lv_obj_t *panel, uint8_t level)
     {
-        uint32_t color;
-        uint32_t color_grad;
-
-        switch (level)
+        if (level >= panel_colors.size())
         {
-        case 1:
-            color = 0x9BDE31; // green
-            color_grad = 0x7EB528;
-            break;
-        case 2:
-            color = 0xD8E358; // yellow
-            color_grad = 0xA3AB42;
-            break;
-        case 3:
-            color = 0xF59D06; // orange
-            color_grad = 0xC98105;
-            break;
-        case 4:
-            color = 0xF0262D; // red
-            color_grad = 0x9E191E;
-            break;
-        case 5:
-            color = 0xB202E8; // purple
-            color_grad = 0x9301BF;
-            break;
-        case 6:
-            color = 0x940606; // Maroon
-            color_grad = 0xc30808;
-            break;
-        default:
-        case no_value_label_:
-            color = 0xC0C0C0; // Silver
-            color_grad = 0x696969;
-            break;
+            level = 0;
         }
 
-        lv_obj_set_style_bg_color(panel, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_grad_color(panel, lv_color_hex(color_grad), LV_PART_MAIN | LV_STATE_DEFAULT);
+        auto &&entry = panel_colors[level];
+
+        lv_obj_set_style_bg_color(panel, std::get<0>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_grad_color(panel, std::get<1>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
     static void __attribute__((noinline)) set_value_in_panel(const panel_and_label &pair, sensor_id_index index, const std::optional<int16_t> &value)
     {
-        if (value.has_value())
+        if (!std::isnan(value))
         {
-            const auto final_value = value.value();
             const auto sensor_definition = get_sensor_definition(index);
             if (pair.panel)
             {
-                const auto level = sensor_definition.calculate_level(final_value);
+                const auto level = sensor_definition.calculate_level(value);
                 set_label_panel_color(pair.panel, level);
             }
 
@@ -99,12 +72,12 @@ class ui_screen_with_sensor_panel : public ui_screen
             {
                 if (!pair.panel)
                 {
-                    lv_label_set_text_fmt(pair.label, "%d%.*s", final_value, sensor_definition.get_unit().size(),
+                    lv_label_set_text_fmt(pair.label, "%ld%.*s", std::lround(value), sensor_definition.get_unit().size(),
                                           sensor_definition.get_unit().data());
                 }
                 else
                 {
-                    lv_label_set_text_fmt(pair.label, "%d", final_value);
+                    lv_label_set_text_fmt(pair.label, "%ld", std::lround(value));
                 }
             }
         }
@@ -127,4 +100,23 @@ class ui_screen_with_sensor_panel : public ui_screen
 
         return label;
     }
+
+  private:
+    const lv_color_t level0_color{lv_color_hex(0xC0C0C0)}; // silver
+    const lv_color_t level1_color{lv_color_hex(0x9BDE31)}; // green
+    const lv_color_t level2_color{lv_color_hex(0xD8E358)}; // yellow
+    const lv_color_t level3_color{lv_color_hex(0xF59D06)}; // orange
+    const lv_color_t level4_color{lv_color_hex(0xF0262D)}; // red
+    const lv_color_t level5_color{lv_color_hex(0xB202E8)}; // purple
+    const lv_color_t level6_color{lv_color_hex(0x940606)}; // Maroon
+
+    const std::array<std::pair<lv_color_t, lv_color_t>, 7> panel_colors{
+        std::pair<lv_color_t, lv_color_t>{level0_color, lv_color_darken(level0_color, LV_OPA_50)},
+        std::pair<lv_color_t, lv_color_t>{level1_color, lv_color_darken(level1_color, LV_OPA_50)},
+        std::pair<lv_color_t, lv_color_t>{level2_color, lv_color_darken(level2_color, LV_OPA_50)},
+        std::pair<lv_color_t, lv_color_t>{level3_color, lv_color_darken(level3_color, LV_OPA_50)},
+        std::pair<lv_color_t, lv_color_t>{level4_color, lv_color_darken(level4_color, LV_OPA_50)},
+        std::pair<lv_color_t, lv_color_t>{level5_color, lv_color_darken(level5_color, LV_OPA_50)},
+        std::pair<lv_color_t, lv_color_t>{level6_color, lv_color_darken(level6_color, LV_OPA_50)},
+    };
 };
