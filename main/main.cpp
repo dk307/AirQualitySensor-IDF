@@ -8,6 +8,7 @@
 #include "homekit/homekit_integration.h"
 #include "logging/logger.h"
 #include "logging/logging_tags.h"
+#include "operations/operations.h"
 #include "sdkconfig.h"
 #include "util/exceptions.h"
 #include "web_server/web_server.h"
@@ -16,6 +17,7 @@
 #include <esp_log.h>
 #include <nvs_flash.h>
 #include <stdio.h>
+
 
 ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 

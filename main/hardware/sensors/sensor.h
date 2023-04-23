@@ -243,7 +243,7 @@ template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_min
     static constexpr auto sensor_interval = (60 * 1000 / reads_per_minute);
 };
 
-using sensor_history = sensor_history_minute_t<12, 240>;
+using sensor_history = sensor_history_minute_t<12, 360>;
 
 constexpr std::array<sensor_definition_display, 0> no_level{};
 

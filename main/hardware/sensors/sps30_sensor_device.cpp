@@ -44,14 +44,14 @@ std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
     uint16_t ready = 0;
     auto error = sps30_read_data_ready(&ready);
 
-    sps30_measurement m{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    sps30_measurement measurement{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
     if ((error == NO_ERROR) && ready)
     {
-        error = sps30_read_measurement(&m);
+        error = sps30_read_measurement(&measurement);
         if (error == NO_ERROR)
         {
-            ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", m.mc_2p5, m.mc_1p0, m.mc_4p0,
-                     m.mc_10p0, m.typical_particle_size);
+            ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", measurement.mc_2p5,
+                     measurement.mc_1p0, measurement.mc_4p0, measurement.mc_10p0, measurement.typical_particle_size);
         }
         else
         {
@@ -63,11 +63,12 @@ std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
         ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with data not ready error:0x%x", error);
     }
 
-    return {std::tuple<sensor_id_index, float>{sensor_id_index::pm_10, esp32::round_with_precision(m.mc_10p0, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::pm_1, esp32::round_with_precision(m.mc_1p0, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::pm_2_5, esp32::round_with_precision(m.mc_2p5, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::pm_4, esp32::round_with_precision(m.mc_4p0, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::typical_particle_size, esp32::round_with_precision(m.typical_particle_size, 0.1)}};
+    return {std::tuple<sensor_id_index, float>{sensor_id_index::pm_10, esp32::round_with_precision(measurement.mc_10p0, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::pm_1, esp32::round_with_precision(measurement.mc_1p0, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::pm_2_5, esp32::round_with_precision(measurement.mc_2p5, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::pm_4, esp32::round_with_precision(measurement.mc_4p0, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::typical_particle_size,
+                                               esp32::round_with_precision(measurement.typical_particle_size, 0.1)}};
 }
 
 std::string sps30_sensor_device::get_error_register_status()

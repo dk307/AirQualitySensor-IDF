@@ -1,5 +1,7 @@
 #include "ui2.h"
+#include "logging/logging_tags.h"
 #include "ui_interface.h"
+#include <esp_log.h>
 #include <memory>
 #include <tuple>
 

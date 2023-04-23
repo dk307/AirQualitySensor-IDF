@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hardware/sensors/sensor_id.h"
+#include <string>
 
 class ui_inter_screen_interface
 {

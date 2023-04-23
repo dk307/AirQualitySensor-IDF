@@ -126,6 +126,7 @@ std::optional<uint8_t> config::get_manual_screen_brightness()
     const auto value = nvs_storage.get(screen_brightness_key, static_cast<uint8_t>(0));
     return value == 0 ? std::nullopt : std::optional<uint8_t>(value);
 }
+
 void config::set_manual_screen_brightness(const std::optional<uint8_t> &screen_brightness)
 {
     std::lock_guard<esp32::semaphore> lock(data_mutex_);

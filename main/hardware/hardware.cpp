@@ -11,6 +11,7 @@
 #include "util/helper.h"
 #include "util/misc.h"
 #include <driver/i2c.h>
+#include <esp_log.h>
 
 template <class T> void hardware::read_sensor_if_time(T &sensor, uint64_t &last_read)
 {
