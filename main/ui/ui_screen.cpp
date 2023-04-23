@@ -8,7 +8,6 @@
 #include <esp_log.h>
 #include <lvgl.h>
 
-
 ui_screen::ui_screen(config &config, ui_interface &ui_interface_instance_, ui_inter_screen_interface &ui_inter_screen_interface)
     : config_(config), ui_interface_instance_(ui_interface_instance_), inter_screen_interface_(ui_inter_screen_interface)
 {

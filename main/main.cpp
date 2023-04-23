@@ -18,7 +18,6 @@
 #include <nvs_flash.h>
 #include <stdio.h>
 
-
 ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 
 extern "C" void app_main(void)
