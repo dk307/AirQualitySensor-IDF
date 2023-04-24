@@ -4,7 +4,6 @@
 #include "util/misc.h"
 #include <esp_log.h>
 
-
 void ui_sensor_detail_screen::init()
 {
     ui_screen_with_sensor_panel::init();
@@ -118,8 +117,8 @@ void ui_sensor_detail_screen::screen_callback(lv_event_t *e)
     }
 }
 
-ui_screen_with_sensor_panel::panel_and_label ui_sensor_detail_screen::create_panel(const char *label_text, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w,
-                                                      lv_coord_t h)
+ui_screen_with_sensor_panel::panel_and_label ui_sensor_detail_screen::create_panel(const char *label_text, lv_align_t align, lv_coord_t x_ofs,
+                                                                                   lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
 {
     auto panel = lv_obj_create(screen_);
     lv_obj_set_size(panel, w, h);

@@ -7,7 +7,7 @@ class ui_launcher_screen final : public ui_screen
   public:
     using ui_screen::ui_screen;
     void init() override;
-     void show_screen();
+    void show_screen();
 
   private:
     lv_style_t button_style_default_{};
