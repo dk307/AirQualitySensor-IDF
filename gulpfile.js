@@ -193,6 +193,13 @@ gulp.task('display-fonts-big-font', function() {
       'big_panel_font.c', '--symbols="0,1,2,3,4,5,6,7,8,9,-"');
 });
 
+gulp.task('display-fonts-big-font-dual', function() {
+  return font_create(
+      8, 135,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-300-normal.woff',
+      'big_panel_font_dual.c', '--symbols="0,1,2,3,4,5,6,7,8,9,-"');
+});
+
 gulp.task('display-fonts-temp-hum', function() {
   return font_create(
       4, 72,

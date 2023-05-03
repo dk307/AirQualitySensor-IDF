@@ -3,4 +3,9 @@ menu "Project"
 config SHT3X_SENSOR_ENABLE
 	bool "Enable Sensor SHT 3x for temperature & humidity"
 	default n
+
+config SCD30_SENSOR_ENABLE
+	bool "Enable Sensor SCD30 for CO2, temperature & humidity"
+	default n
+	
 endmenu

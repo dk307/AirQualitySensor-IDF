@@ -14,10 +14,13 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
   private:
     panel_and_label pm_2_5_panel_and_labels_;
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    panel_and_label co2_panel_and_labels_;
+#endif
     panel_and_label temperature_panel_and_labels_;
     panel_and_label humidity_panel_and_labels_;
 
-    panel_and_label create_big_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h);
+    panel_and_label create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h, const lv_font_t *font);
     lv_obj_t *create_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h, lv_coord_t radius);
     panel_and_label create_temperature_panel(lv_coord_t x_ofs, lv_coord_t y_ofs);
     panel_and_label create_humidity_panel(lv_coord_t x_ofs, lv_coord_t y_ofs);

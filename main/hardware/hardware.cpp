@@ -89,6 +89,11 @@ void hardware::sensor_task_ftn()
         initial_delay = std::max<TickType_t>(initial_delay, sht3x_sensor.get_initial_delay());
 #endif
 
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+        scd30_sensor.init();
+        initial_delay = std::max<TickType_t>(initial_delay, scd30_sensor.get_initial_delay());
+#endif
+
         // Wait until all sensors are ready
         vTaskDelay(initial_delay);
 
@@ -96,18 +101,21 @@ void hardware::sensor_task_ftn()
         {
             read_bh1750_sensor();
             set_auto_display_brightness();
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+            read_scd30_sensor();
+#endif
 #ifdef CONFIG_SHT3X_SENSOR_ENABLE
             read_sht3x_sensor();
 #endif
             read_sps30_sensor();
 
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(sensor_history::sensor_interval / 20));
         } while (true);
     }
     catch (const std::exception &ex)
     {
         ESP_LOGE(OPERATIONS_TAG, "Hardware Task Failure:%s", ex.what());
-        throw;
+        // throw;
     }
 
     vTaskDelete(NULL);
@@ -138,6 +146,13 @@ void hardware::read_bh1750_sensor()
 void hardware::read_sht3x_sensor()
 {
     read_sensor_if_time(sht3x_sensor, sht3x_sensor_last_read);
+}
+#endif
+
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+void hardware::read_scd30_sensor()
+{
+    read_sensor_if_time(scd30_sensor, scd30_sensor_last_read);
 }
 #endif
 

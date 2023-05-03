@@ -6,6 +6,7 @@
 #include <lvgl.h>
 
 LV_FONT_DECLARE(big_panel_font);
+LV_FONT_DECLARE(big_panel_font_dual);
 LV_FONT_DECLARE(temp_hum_font);
 LV_FONT_DECLARE(regular_numbers_40_font);
 LV_FONT_DECLARE(all_48_font);

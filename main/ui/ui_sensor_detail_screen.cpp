@@ -131,7 +131,7 @@ ui_screen_with_sensor_panel::panel_and_label ui_sensor_detail_screen::create_pan
 
     lv_obj_set_style_radius(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
     set_padding_zero(panel);
-    set_label_panel_color(panel, no_value_label_);
+    set_label_panel_color(panel, sensor_level::no_level);
 
     auto current_static_label = create_a_label(panel, &all_14_font, LV_ALIGN_TOP_MID, 0, 3, text_color);
     lv_label_set_text_static(current_static_label, label_text);

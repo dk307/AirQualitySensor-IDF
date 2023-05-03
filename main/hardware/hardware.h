@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hardware/sensors/bh1750_sensor_device.h"
+#include "hardware/sensors/scd30_sensor_device.h"
 #include "hardware/sensors/sensor.h"
 #include "hardware/sensors/sht3x_sensor_device.h"
 #include "hardware/sensors/sps30_sensor_device.h"
@@ -50,17 +51,24 @@ class hardware final : public esp32::singleton<hardware>
 
     esp32::task sensor_refresh_task;
 
-    using light_sensor_values_t = sensor_history_t<6>;
+    using light_sensor_values_t = sensor_history_t<12>;
     light_sensor_values_t light_sensor_values;
 
 #ifdef CONFIG_SHT3X_SENSOR_ENABLE
-    // // SHT31
+    // SHT31
     sht3x_sensor_device &sht3x_sensor{sht3x_sensor_device::create_instance()};
     uint64_t sht3x_sensor_last_read = 0;
 #endif
 
-    // // SPS 30
-    sps30_sensor_device &sps30_sensor{sps30_sensor_device::create_instance()};
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    // SCD30
+    scd30_sensor_device &scd30_sensor{
+        scd30_sensor_device::create_instance(static_cast<uint16_t>(sensor_history::sensor_interval / 1000), sensor_history::sensor_interval / 50)};
+    uint64_t scd30_sensor_last_read = 0;
+#endif
+
+    // SPS 30
+    sps30_sensor_device &sps30_sensor{sps30_sensor_device::create_instance(sensor_history::sensor_interval / 50)};
     uint64_t sps30_sensor_last_read = 0;
 
     // BH1750
@@ -72,6 +80,9 @@ class hardware final : public esp32::singleton<hardware>
     void read_bh1750_sensor();
 #ifdef CONFIG_SHT3X_SENSOR_ENABLE
     void read_sht3x_sensor();
+#endif
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    void read_scd30_sensor();
 #endif
     esp_err_t sps30_i2c_init();
     void read_sps30_sensor();

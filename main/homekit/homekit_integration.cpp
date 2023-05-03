@@ -243,12 +243,7 @@ uint8_t homekit_integration::get_air_quality()
         const auto sensor_def = get_sensor_definition(air_quality_sensor_id);
         auto level = sensor_def.calculate_level(value);
 
-        if (level > 5)
-        {
-            level = 5;
-        }
-
-        return level;
+        return static_cast<uint8_t>(level);
     }
 }
 

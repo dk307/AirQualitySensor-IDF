@@ -1,6 +1,5 @@
-
-#include "logging/logging_tags.h"
 #include "ui/ui_information_screen.h"
+#include "logging/logging_tags.h"
 #include <esp_log.h>
 
 void ui_information_screen::init()

@@ -10,7 +10,7 @@ void ui_screen_with_sensor_panel::set_default_value_in_panel(const panel_and_lab
 {
     if (pair.panel)
     {
-        set_label_panel_color(pair.panel, no_value_label_);
+        set_label_panel_color(pair.panel, sensor_level::no_level);
     }
 
     if (pair.label)
@@ -19,8 +19,9 @@ void ui_screen_with_sensor_panel::set_default_value_in_panel(const panel_and_lab
     }
 }
 
-void ui_screen_with_sensor_panel::set_label_panel_color(lv_obj_t *panel, uint8_t level)
+void ui_screen_with_sensor_panel::set_label_panel_color(lv_obj_t *panel, sensor_level level_arg)
 {
+    auto level = static_cast<uint8_t>(level_arg);
     if (level >= panel_colors.size())
     {
         level = 0;

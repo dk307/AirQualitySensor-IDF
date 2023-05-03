@@ -39,15 +39,40 @@ void sps30_sensor_device::init()
     }
 }
 
-std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
+bool sps30_sensor_device::wait_till_data_ready()
 {
     uint16_t ready = 0;
-    auto error = sps30_read_data_ready(&ready);
 
-    sps30_measurement measurement{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
-    if ((error == NO_ERROR) && ready)
+    do
     {
-        error = sps30_read_measurement(&measurement);
+        auto error = sps30_read_data_ready(&ready);
+
+        if ((error == NO_ERROR))
+        {
+            if (ready)
+            {
+                return true;
+            }
+            else
+            {
+                vTaskDelay(pdMS_TO_TICKS(max_wait_ms_));
+            }
+        }
+        else
+        {
+            ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
+            return false;
+        }
+    } while (true);
+}
+
+std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
+{
+    const bool ready = wait_till_data_ready();
+    sps30_measurement measurement{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    if (ready)
+    {
+        const auto error = sps30_read_measurement(&measurement);
         if (error == NO_ERROR)
         {
             ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", measurement.mc_2p5,
@@ -57,10 +82,6 @@ std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
         {
             ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
         }
-    }
-    else
-    {
-        ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with data not ready error:0x%x", error);
     }
 
     return {std::tuple<sensor_id_index, float>{sensor_id_index::pm_10, esp32::round_with_precision(measurement.mc_10p0, 1)},

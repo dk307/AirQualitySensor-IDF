@@ -8,11 +8,28 @@ void ui_main_screen::init()
 
     lv_obj_clear_flag(screen_, LV_OBJ_FLAG_SCROLLABLE);
 
-    constexpr int y_pad = 8;
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    constexpr int x_pad = 10;
+    constexpr int y_pad = 15;
+    constexpr int big_panels_w = (screen_width - 2 * x_pad) / 2;
+    constexpr int big_panel_h = ((screen_height * 2) / 3) - 30;
+
+    pm_2_5_panel_and_labels_ = create_big_panel(sensor_id_index::pm_2_5, x_pad, y_pad, big_panels_w, big_panel_h, &big_panel_font_dual);
+    lv_obj_add_event_cb(pm_2_5_panel_and_labels_.panel,
+                        event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<sensor_id_index::pm_2_5>>, LV_EVENT_SHORT_CLICKED, this);
+
+    co2_panel_and_labels_ = create_big_panel(sensor_id_index::CO2, x_pad * 2 + big_panels_w, y_pad, big_panels_w, big_panel_h, &big_panel_font_dual);
+    lv_obj_add_event_cb(co2_panel_and_labels_.panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<sensor_id_index::CO2>>,
+                        LV_EVENT_SHORT_CLICKED, this);
+#else
+    constexpr int y_pad = 10;
     constexpr int big_panel_w = (screen_width * 3) / 4;
     constexpr int big_panel_h = ((screen_height * 2) / 3) - 15;
-
-    pm_2_5_panel_and_labels_ = create_big_panel((screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h);
+    pm_2_5_panel_and_labels_ =
+        create_big_panel(sensor_id_index::pm_2_5, (screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h, &big_panel_font);
+    lv_obj_add_event_cb(pm_2_5_panel_and_labels_.panel,
+                        event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<sensor_id_index::pm_2_5>>, LV_EVENT_SHORT_CLICKED, this);
+#endif
     temperature_panel_and_labels_ = create_temperature_panel(10, -10);
     humidity_panel_and_labels_ = create_humidity_panel(-10, -10);
 
@@ -28,6 +45,12 @@ void ui_main_screen::set_sensor_value(sensor_id_index index, float value)
     {
         pair = pm_2_5_panel_and_labels_;
     }
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    else if (index == sensor_id_index::CO2)
+    {
+        pair = co2_panel_and_labels_;
+    }
+#endif
     else if (index == sensor_id_index::humidity)
     {
         pair = humidity_panel_and_labels_;
@@ -50,9 +73,9 @@ void ui_main_screen::show_screen()
     lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
 }
 
-ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h)
+ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w,
+                                                                              lv_coord_t h, const lv_font_t *font)
 {
-    constexpr auto index = sensor_id_index::pm_2_5;
     auto panel = create_panel(x_ofs, y_ofs, w, h, 40);
 
     auto label = lv_label_create(panel);
@@ -68,10 +91,8 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(lv
 
     lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
     lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(value_label, &big_panel_font, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(value_label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<index>>, LV_EVENT_SHORT_CLICKED, this);
 
     lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 9);
     lv_obj_align(value_label, LV_ALIGN_BOTTOM_MID, 0, -1);
@@ -177,6 +198,9 @@ void ui_main_screen::screen_callback(lv_event_t *e)
     else if (event_code == LV_EVENT_SCREEN_LOAD_START)
     {
         set_sensor_value(sensor_id_index::pm_2_5, ui_interface_instance_.get_sensor_value(sensor_id_index::pm_2_5));
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+        set_sensor_value(sensor_id_index::CO2, ui_interface_instance_.get_sensor_value(sensor_id_index::CO2));
+#endif
         const auto temperature_index = get_temperature_sensor_id_index();
         set_sensor_value(temperature_index, ui_interface_instance_.get_sensor_value(temperature_index));
         set_sensor_value(sensor_id_index::humidity, ui_interface_instance_.get_sensor_value(sensor_id_index::humidity));

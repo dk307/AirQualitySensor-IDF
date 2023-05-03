@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sdkconfig.h"
 #include <cstddef>
 #include <stdint.h>
 
@@ -10,6 +11,9 @@ enum class sensor_id_index : uint8_t
     temperatureF,
     temperatureC,
     humidity,
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    CO2,
+#endif
     pm_1,
     pm_4,
     pm_10,
@@ -20,4 +24,13 @@ enum class sensor_id_index : uint8_t
 
 constexpr auto total_sensors = static_cast<size_t>(sensor_id_index::last) + 1;
 
-typedef uint8_t sensor_level;
+enum class sensor_level : uint8_t
+{
+    no_level = 0,
+    level_1 = 1,
+    level_2 = 2,
+    level_3 = 3,
+    level_4 = 4,
+    level_5 = 5,
+    level_6 = 6,
+};

@@ -24,10 +24,8 @@ class ui_screen_with_sensor_panel : public ui_screen
     void init() override;
 
   protected:
-    constexpr static uint8_t no_value_label_ = 0;
-
     void set_default_value_in_panel(const panel_and_label &pair);
-    void set_label_panel_color(lv_obj_t *panel, uint8_t level);
+    void set_label_panel_color(lv_obj_t *panel, sensor_level level);
     void set_value_in_panel(const panel_and_label &pair, sensor_id_index index, float value);
     static lv_obj_t *create_sensor_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs,
                                          lv_color_t color);

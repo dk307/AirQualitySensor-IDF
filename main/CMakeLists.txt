@@ -4,6 +4,7 @@ idf_component_register(SRCS "main.cpp"
                             "hardware/display/display.cpp" 
                             "hardware/hardware.cpp" 
                             "hardware/sensors/sht3x_sensor_device.cpp" 
+                            "hardware/sensors/scd30_sensor_device.cpp" 
                             "hardware/sensors/sps30_sensor_device.cpp" 
                             "hardware/sensors/bh1750_sensor_device.cpp" 
                             "hardware/sensors/sps30/sps30.c" 
@@ -39,6 +40,7 @@ idf_component_register(SRCS "main.cpp"
                             "logging/commands.cpp"
                             "homekit/homekit_integration.cpp"
                             "generated/display/src/big_panel_font.c"
+                            "generated/display/src/big_panel_font_dual.c"
                             "generated/display/src/temp_hum_font.c"
                             "generated/display/src/regular_numbers_40_font.c"
                             "generated/display/src/all_48_font.c"
@@ -58,7 +60,7 @@ idf_component_register(SRCS "main.cpp"
                     INCLUDE_DIRS "."
                     REQUIRES fatfs spi_flash LovyanGFX lvgl mbedtls esp_wifi 
                              esp_hw_support app_update esp_http_server esp-tls espcoredump
-                             esp_idf_lib_helpers i2cdev bh1750 sht3x
+                             esp_idf_lib_helpers i2cdev bh1750 sht3x scd30
                              esp_hap_core esp_hap_apple_profiles json_generator)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>)

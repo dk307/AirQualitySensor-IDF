@@ -10,7 +10,6 @@
 #include "util/noncopyable.h"
 #include <esp_log.h>
 #include <i2cdev.h>
-#include <sht3x.h>
 
 void sht3x_sensor_device::init()
 {
