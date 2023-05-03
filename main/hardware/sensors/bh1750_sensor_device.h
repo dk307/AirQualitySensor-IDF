@@ -16,7 +16,7 @@ class bh1750_sensor_device final : public esp32::singleton<bh1750_sensor_device>
     TickType_t get_initial_delay();
 
   private:
-    i2c_dev_t bh1750_sensor{};
+    i2c_dev_t bh1750_sensor_{};
 
     bh1750_sensor_device() = default;
     friend class esp32::singleton<bh1750_sensor_device>;

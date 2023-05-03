@@ -12,13 +12,13 @@
 
 void sps30_sensor_device::init()
 {
-    sps30_sensor.addr = SPS30_I2C_ADDRESS;
-    sps30_sensor.port = I2C_NUM_1;
-    sps30_sensor.cfg.mode = I2C_MODE_MASTER;
-    sps30_sensor.cfg.sda_io_num = SDAWire;
-    sps30_sensor.cfg.scl_io_num = SCLWire;
-    sps30_sensor.cfg.master.clk_speed = 100 * 1000; // 100 Kbits
-    ESP_ERROR_CHECK(i2c_dev_create_mutex(&sps30_sensor));
+    sps30_sensor_.addr = SPS30_I2C_ADDRESS;
+    sps30_sensor_.port = I2C_NUM_1;
+    sps30_sensor_.cfg.mode = I2C_MODE_MASTER;
+    sps30_sensor_.cfg.sda_io_num = SDAWire;
+    sps30_sensor_.cfg.scl_io_num = SCLWire;
+    sps30_sensor_.cfg.master.clk_speed = 100 * 1000; // 100 Kbits
+    ESP_ERROR_CHECK(i2c_dev_create_mutex(&sps30_sensor_));
 
     const auto sps_error = sps30_probe();
     if (sps_error == NO_ERROR)
@@ -143,19 +143,19 @@ bool sps30_sensor_device::clean()
 
 esp_err_t sps30_sensor_device::sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count)
 {
-    sps30_sensor.addr = address;
-    I2C_DEV_TAKE_MUTEX(&sps30_sensor);
-    I2C_DEV_CHECK(&sps30_sensor, i2c_dev_read(&sps30_sensor, NULL, 0, data, count));
-    I2C_DEV_GIVE_MUTEX(&sps30_sensor);
+    sps30_sensor_.addr = address;
+    I2C_DEV_TAKE_MUTEX(&sps30_sensor_);
+    I2C_DEV_CHECK(&sps30_sensor_, i2c_dev_read(&sps30_sensor_, NULL, 0, data, count));
+    I2C_DEV_GIVE_MUTEX(&sps30_sensor_);
     return ESP_OK;
 }
 
 esp_err_t sps30_sensor_device::sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count)
 {
-    sps30_sensor.addr = address;
-    I2C_DEV_TAKE_MUTEX(&sps30_sensor);
-    I2C_DEV_CHECK(&sps30_sensor, i2c_dev_write(&sps30_sensor, NULL, 0, data, count));
-    I2C_DEV_GIVE_MUTEX(&sps30_sensor);
+    sps30_sensor_.addr = address;
+    I2C_DEV_TAKE_MUTEX(&sps30_sensor_);
+    I2C_DEV_CHECK(&sps30_sensor_, i2c_dev_write(&sps30_sensor_, NULL, 0, data, count));
+    I2C_DEV_GIVE_MUTEX(&sps30_sensor_);
     return ESP_OK;
 }
 

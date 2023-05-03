@@ -34,18 +34,18 @@ float hardware::get_sensor_value(sensor_id_index index) const
 
 sensor_history::sensor_history_snapshot hardware::get_sensor_detail_info(sensor_id_index index)
 {
-    return (*sensors_history)[static_cast<size_t>(index)].get_snapshot(sensor_history::reads_per_minute);
+    return (*sensors_history_)[static_cast<size_t>(index)].get_snapshot(sensor_history::reads_per_minute);
 }
 
 bool hardware::clean_sps_30()
 {
-    return sps30_sensor.clean();
+    return sps30_sensor_.clean();
 }
 
 void hardware::begin()
 {
     CHECK_THROW_ESP(i2cdev_init());
-    sensor_refresh_task.spawn_pinned("sensor_task", 4 * 1024, esp32::task::default_priority, esp32::hardware_core);
+    sensor_refresh_task_.spawn_pinned("sensor_task", 4 * 1024, esp32::task::default_priority, esp32::hardware_core);
 }
 
 void hardware::set_sensor_value(sensor_id_index index, float value)
@@ -54,16 +54,16 @@ void hardware::set_sensor_value(sensor_id_index index, float value)
     const auto i = static_cast<size_t>(index);
     if (!std::isnan(value))
     {
-        (*sensors_history)[i].add_value(value);
-        changed = sensors[i].set_value(value);
+        (*sensors_history_)[i].add_value(value);
+        changed = sensors_[i].set_value(value);
         ESP_LOGI(HARDWARE_TAG, "Updated for sensor:%.*s Value:%g", get_sensor_name(index).size(), get_sensor_name(index).data(),
-                 sensors[i].get_value());
+                 sensors_[i].get_value());
     }
     else
     {
         ESP_LOGW(HARDWARE_TAG, "Got an invalid value for sensor:%.*s", get_sensor_name(index).size(), get_sensor_name(index).data());
-        (*sensors_history)[i].clear();
-        changed = sensors[i].set_invalid_value();
+        (*sensors_history_)[i].clear();
+        changed = sensors_[i].set_invalid_value();
     }
 
     if (changed)
@@ -80,21 +80,21 @@ void hardware::sensor_task_ftn()
 
         TickType_t initial_delay = 0;
 
-        sps30_sensor.init();
-        bh1750_sensor.init();
-        initial_delay = std::max(initial_delay, bh1750_sensor.get_initial_delay());
+        sps30_sensor_.init();
+        bh1750_sensor_.init();
+        initial_delay = std::max(initial_delay, bh1750_sensor_.get_initial_delay());
 
 #ifdef CONFIG_SHT3X_SENSOR_ENABLE
-        sht3x_sensor.init();
-        initial_delay = std::max<TickType_t>(initial_delay, sht3x_sensor.get_initial_delay());
+        sht3x_sensor_.init();
+        initial_delay = std::max<TickType_t>(initial_delay, sht3x_sensor_.get_initial_delay());
 #endif
 
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
-        scd30_sensor.init();
-        initial_delay = std::max<TickType_t>(initial_delay, scd30_sensor.get_initial_delay());
+        scd30_sensor_.init();
+        initial_delay = std::max<TickType_t>(initial_delay, scd30_sensor_.get_initial_delay());
 #endif
 
-        // Wait until all sensors are ready
+        // Wait until all sensors_ are ready
         vTaskDelay(initial_delay);
 
         do
@@ -123,42 +123,42 @@ void hardware::sensor_task_ftn()
 
 void hardware::read_bh1750_sensor()
 {
-    const auto values = bh1750_sensor.read();
+    const auto values = bh1750_sensor_.read();
 
     if (!std::isnan(std::get<1>(values[0])))
     {
-        light_sensor_values.add_value(std::get<1>(values[0]));
+        light_sensor_values_.add_value(std::get<1>(values[0]));
     }
 
     const auto now = esp32::millis();
-    if (now - bh1750_sensor_last_read >= sensor_history::sensor_interval)
+    if (now - bh1750_sensor_last_read_ >= sensor_history::sensor_interval)
     {
         for (auto &&value : values)
         {
             set_sensor_value(std::get<0>(value), std::get<1>(value));
         }
 
-        bh1750_sensor_last_read = now;
+        bh1750_sensor_last_read_ = now;
     }
 }
 
 #ifdef CONFIG_SHT3X_SENSOR_ENABLE
 void hardware::read_sht3x_sensor()
 {
-    read_sensor_if_time(sht3x_sensor, sht3x_sensor_last_read);
+    read_sensor_if_time(sht3x_sensor_, sht3x_sensor_last_read_);
 }
 #endif
 
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
 void hardware::read_scd30_sensor()
 {
-    read_sensor_if_time(scd30_sensor, scd30_sensor_last_read);
+    read_sensor_if_time(scd30_sensor_, scd30_sensor_last_read);
 }
 #endif
 
 void hardware::read_sps30_sensor()
 {
-    read_sensor_if_time(sps30_sensor, sps30_sensor_last_read);
+    read_sensor_if_time(sps30_sensor_, sps30_sensor_last_read_);
 }
 
 uint8_t hardware::lux_to_intensity(uint16_t lux)
@@ -187,7 +187,7 @@ void hardware::set_auto_display_brightness()
     }
     else
     {
-        const auto avg_lux = light_sensor_values.get_average();
+        const auto avg_lux = light_sensor_values_.get_average();
         ESP_LOGD(SENSOR_BH1750_TAG, "Average lux:%g", avg_lux.value_or(128));
         required_brightness = lux_to_intensity(avg_lux.value_or(128));
     }
@@ -198,5 +198,5 @@ void hardware::set_auto_display_brightness()
 
 std::string hardware::get_sps30_error_register_status()
 {
-    return sps30_sensor.get_error_register_status();
+    return sps30_sensor_.get_error_register_status();
 }

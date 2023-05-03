@@ -13,9 +13,9 @@
 
 void scd30_sensor_device::init()
 {
-    CHECK_THROW_ESP(scd30_init_desc(&scd30_sensor, I2C_NUM_1, SDAWire, SCLWire));
-    CHECK_THROW_ESP(scd30_set_measurement_interval(&scd30_sensor, sensor_interval_s_));
-    CHECK_THROW_ESP(scd30_set_automatic_self_calibration(&scd30_sensor, true));
+    CHECK_THROW_ESP(scd30_init_desc(&scd30_sensor_, I2C_NUM_1, SDAWire, SCLWire));
+    CHECK_THROW_ESP(scd30_set_measurement_interval(&scd30_sensor_, sensor_interval_s_));
+    CHECK_THROW_ESP(scd30_set_automatic_self_calibration(&scd30_sensor_, true));
 }
 
 std::array<std::tuple<sensor_id_index, float>, 4> scd30_sensor_device::read()
@@ -28,7 +28,7 @@ std::array<std::tuple<sensor_id_index, float>, 4> scd30_sensor_device::read()
 
     if (data_ready)
     {
-        auto err = scd30_read_measurement(&scd30_sensor, &co2, &temperatureC, &humidity);
+        auto err = scd30_read_measurement(&scd30_sensor_, &co2, &temperatureC, &humidity);
         if (err == ESP_OK)
         {
             temperatureF = (temperatureC * 1.8) + 32;
@@ -53,7 +53,7 @@ bool scd30_sensor_device::wait_till_data_ready()
 
     do
     {
-        auto error = scd30_get_data_ready_status(&scd30_sensor, &ready);
+        auto error = scd30_get_data_ready_status(&scd30_sensor_, &ready);
 
         if ((error == ESP_OK))
         {

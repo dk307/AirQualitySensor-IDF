@@ -18,7 +18,7 @@ class scd30_sensor_device final : public esp32::singleton<scd30_sensor_device>
     uint8_t get_initial_delay();
 
   private:
-    i2c_dev_t scd30_sensor{};
+    i2c_dev_t scd30_sensor_{};
 
     const uint16_t sensor_interval_s_;
     const TickType_t max_wait_ticks_;
