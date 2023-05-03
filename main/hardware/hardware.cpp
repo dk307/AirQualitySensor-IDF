@@ -152,7 +152,7 @@ void hardware::read_sht3x_sensor()
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
 void hardware::read_scd30_sensor()
 {
-    read_sensor_if_time(scd30_sensor_, scd30_sensor_last_read);
+    read_sensor_if_time(scd30_sensor_, scd30_sensor_last_read_);
 }
 #endif
 

@@ -14,7 +14,7 @@
 void scd30_sensor_device::init()
 {
     CHECK_THROW_ESP(scd30_init_desc(&scd30_sensor_, I2C_NUM_1, SDAWire, SCLWire));
-    CHECK_THROW_ESP(scd30_set_measurement_interval(&scd30_sensor_, sensor_interval_s_));
+    CHECK_THROW_ESP(scd30_set_measurement_interval(&scd30_sensor_, sensor_interval_s_ - 1));
     CHECK_THROW_ESP(scd30_set_automatic_self_calibration(&scd30_sensor_, true));
 }
 

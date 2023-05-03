@@ -42,6 +42,7 @@ void sps30_sensor_device::init()
 bool sps30_sensor_device::wait_till_data_ready()
 {
     uint16_t ready = 0;
+    uint8_t retries = 0;
 
     do
     {
@@ -55,7 +56,7 @@ bool sps30_sensor_device::wait_till_data_ready()
             }
             else
             {
-                vTaskDelay(pdMS_TO_TICKS(max_wait_ms_));
+                vTaskDelay(max_wait_ticks_ / 5);
             }
         }
         else
@@ -63,7 +64,8 @@ bool sps30_sensor_device::wait_till_data_ready()
             ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
             return false;
         }
-    } while (true);
+    } while (retries < 5);
+    return false;
 }
 
 std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
