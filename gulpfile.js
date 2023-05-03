@@ -240,7 +240,7 @@ gulp.task('display-fonts-14-all', function() {
 gulp.task(
     'display-fonts',
     gulp.series(
-        'display-fonts-big-font', 'display-fonts-temp-hum',
+        'display-fonts-big-font', 'display-fonts-big-font-dual', 'display-fonts-temp-hum',
         'display-fonts-40-regular-number', 'display-fonts-48-all',
         'display-fonts-18-uints', 'display-fonts-14-all'));
 
