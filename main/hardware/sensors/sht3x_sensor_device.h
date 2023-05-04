@@ -18,7 +18,7 @@ class sht3x_sensor_device final : public esp32::singleton<sht3x_sensor_device>
     uint8_t get_initial_delay();
 
   private:
-    sht3x_t sht3x_sensor{};
+    sht3x_t sht3x_sensor_{};
 
     sht3x_sensor_device() = default;
     friend class esp32::singleton<sht3x_sensor_device>;

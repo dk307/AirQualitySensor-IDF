@@ -12,15 +12,15 @@
 
 void bh1750_sensor_device::init()
 {
-    CHECK_THROW_ESP(bh1750_init_desc(&bh1750_sensor, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire));
-    CHECK_THROW_ESP(bh1750_setup(&bh1750_sensor, BH1750_MODE_CONTINUOUS, BH1750_RES_HIGH));
+    CHECK_THROW_ESP(bh1750_init_desc(&bh1750_sensor_, BH1750_ADDR_LO, I2C_NUM_1, SDAWire, SCLWire));
+    CHECK_THROW_ESP(bh1750_setup(&bh1750_sensor_, BH1750_MODE_CONTINUOUS, BH1750_RES_HIGH));
 }
 
 std::array<std::tuple<sensor_id_index, float>, 1> bh1750_sensor_device::read()
 {
     float lux = NAN;
     uint16_t level_lux = 0;
-    const auto err = bh1750_read(&bh1750_sensor, &level_lux);
+    const auto err = bh1750_read(&bh1750_sensor_, &level_lux);
     if (err != ESP_OK)
     {
         ESP_LOGW(SENSOR_BH1750_TAG, "Failed to read sensor with %s", esp_err_to_name(err));

@@ -12,13 +12,13 @@
 
 void sps30_sensor_device::init()
 {
-    sps30_sensor.addr = SPS30_I2C_ADDRESS;
-    sps30_sensor.port = I2C_NUM_1;
-    sps30_sensor.cfg.mode = I2C_MODE_MASTER;
-    sps30_sensor.cfg.sda_io_num = SDAWire;
-    sps30_sensor.cfg.scl_io_num = SCLWire;
-    sps30_sensor.cfg.master.clk_speed = 100 * 1000; // 100 Kbits
-    ESP_ERROR_CHECK(i2c_dev_create_mutex(&sps30_sensor));
+    sps30_sensor_.addr = SPS30_I2C_ADDRESS;
+    sps30_sensor_.port = I2C_NUM_1;
+    sps30_sensor_.cfg.mode = I2C_MODE_MASTER;
+    sps30_sensor_.cfg.sda_io_num = SDAWire;
+    sps30_sensor_.cfg.scl_io_num = SCLWire;
+    sps30_sensor_.cfg.master.clk_speed = 100 * 1000; // 100 Kbits
+    ESP_ERROR_CHECK(i2c_dev_create_mutex(&sps30_sensor_));
 
     const auto sps_error = sps30_probe();
     if (sps_error == NO_ERROR)
@@ -39,35 +39,59 @@ void sps30_sensor_device::init()
     }
 }
 
-std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
+bool sps30_sensor_device::wait_till_data_ready()
 {
     uint16_t ready = 0;
-    auto error = sps30_read_data_ready(&ready);
+    uint8_t retries = 0;
 
-    sps30_measurement m{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
-    if ((error == NO_ERROR) && ready)
+    do
     {
-        error = sps30_read_measurement(&m);
+        auto error = sps30_read_data_ready(&ready);
+
+        if ((error == NO_ERROR))
+        {
+            if (ready)
+            {
+                return true;
+            }
+            else
+            {
+                vTaskDelay(max_wait_ticks_ / 5);
+            }
+        }
+        else
+        {
+            ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
+            return false;
+        }
+    } while (retries < 5);
+    return false;
+}
+
+std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
+{
+    const bool ready = wait_till_data_ready();
+    sps30_measurement measurement{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    if (ready)
+    {
+        const auto error = sps30_read_measurement(&measurement);
         if (error == NO_ERROR)
         {
-            ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", m.mc_2p5, m.mc_1p0, m.mc_4p0,
-                     m.mc_10p0, m.typical_particle_size);
+            ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", measurement.mc_2p5,
+                     measurement.mc_1p0, measurement.mc_4p0, measurement.mc_10p0, measurement.typical_particle_size);
         }
         else
         {
             ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
         }
     }
-    else
-    {
-        ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with data not ready error:0x%x", error);
-    }
 
-    return {std::tuple<sensor_id_index, float>{sensor_id_index::pm_10, esp32::round_with_precision(m.mc_10p0, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::pm_1, esp32::round_with_precision(m.mc_1p0, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::pm_2_5, esp32::round_with_precision(m.mc_2p5, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::pm_4, esp32::round_with_precision(m.mc_4p0, 1)},
-            std::tuple<sensor_id_index, float>{sensor_id_index::typical_particle_size, esp32::round_with_precision(m.typical_particle_size, 0.1)}};
+    return {std::tuple<sensor_id_index, float>{sensor_id_index::pm_10, esp32::round_with_precision(measurement.mc_10p0, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::pm_1, esp32::round_with_precision(measurement.mc_1p0, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::pm_2_5, esp32::round_with_precision(measurement.mc_2p5, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::pm_4, esp32::round_with_precision(measurement.mc_4p0, 1)},
+            std::tuple<sensor_id_index, float>{sensor_id_index::typical_particle_size,
+                                               esp32::round_with_precision(measurement.typical_particle_size, 0.1)}};
 }
 
 std::string sps30_sensor_device::get_error_register_status()
@@ -121,19 +145,19 @@ bool sps30_sensor_device::clean()
 
 esp_err_t sps30_sensor_device::sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count)
 {
-    sps30_sensor.addr = address;
-    I2C_DEV_TAKE_MUTEX(&sps30_sensor);
-    I2C_DEV_CHECK(&sps30_sensor, i2c_dev_read(&sps30_sensor, NULL, 0, data, count));
-    I2C_DEV_GIVE_MUTEX(&sps30_sensor);
+    sps30_sensor_.addr = address;
+    I2C_DEV_TAKE_MUTEX(&sps30_sensor_);
+    I2C_DEV_CHECK(&sps30_sensor_, i2c_dev_read(&sps30_sensor_, NULL, 0, data, count));
+    I2C_DEV_GIVE_MUTEX(&sps30_sensor_);
     return ESP_OK;
 }
 
 esp_err_t sps30_sensor_device::sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count)
 {
-    sps30_sensor.addr = address;
-    I2C_DEV_TAKE_MUTEX(&sps30_sensor);
-    I2C_DEV_CHECK(&sps30_sensor, i2c_dev_write(&sps30_sensor, NULL, 0, data, count));
-    I2C_DEV_GIVE_MUTEX(&sps30_sensor);
+    sps30_sensor_.addr = address;
+    I2C_DEV_TAKE_MUTEX(&sps30_sensor_);
+    I2C_DEV_CHECK(&sps30_sensor_, i2c_dev_write(&sps30_sensor_, NULL, 0, data, count));
+    I2C_DEV_GIVE_MUTEX(&sps30_sensor_);
     return ESP_OK;
 }
 

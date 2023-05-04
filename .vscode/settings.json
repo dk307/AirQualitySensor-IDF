@@ -3,7 +3,7 @@
     "idf.openOcdConfigs": [
         "board/esp32s3-bridge.cfg"
     ],
-    "idf.portWin": "COM3",
+    "idf.portWin": "COM4",
     "idf.flashType": "UART",
     "files.associations": {
         "sdkconfig.h": "c",
@@ -88,7 +88,8 @@
         "esp_httpd_priv.h": "c",
         "esp_system.h": "c",
         "hap.h": "c",
-        "ui.h": "c"
+        "ui.h": "c",
+        "sps30_sensor_device.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

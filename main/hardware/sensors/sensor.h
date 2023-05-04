@@ -61,10 +61,10 @@ class sensor_definition
         {
             if (display_definitions_[i].is_in_range(value_p))
             {
-                return display_definitions_[i].get_level() + 1;
+                return display_definitions_[i].get_level();
             }
         }
-        return 0;
+        return sensor_level::no_level;
     }
 
     constexpr auto &&get_unit() const noexcept
@@ -240,36 +240,51 @@ template <uint8_t reads_per_minuteT, uint16_t minutesT> class sensor_history_min
   public:
     static constexpr auto total_minutes = minutesT;
     static constexpr auto reads_per_minute = reads_per_minuteT;
-    static constexpr auto sensor_interval = (60 * 1000 / reads_per_minute);
+    static constexpr auto sensor_interval = (60u * 1000 / reads_per_minute);
 };
 
-using sensor_history = sensor_history_minute_t<12, 240>;
+using sensor_history = sensor_history_minute_t<12, 360>;
 
 constexpr std::array<sensor_definition_display, 0> no_level{};
 
 constexpr std::array<sensor_definition_display, 6> pm_2_5_definition_display{
-    sensor_definition_display{std::numeric_limits<uint32_t>::min(), 12, 0},
-    sensor_definition_display{12, 35.4, 1},
-    sensor_definition_display{35.4, 55.4, 2},
-    sensor_definition_display{55.4, 150.4, 3},
-    sensor_definition_display{150.4, 250.4, 4},
-    sensor_definition_display{250.4, std::numeric_limits<uint32_t>::max(), 5},
+    sensor_definition_display{0, 12, sensor_level::level_1},
+    sensor_definition_display{12, 35.4, sensor_level::level_2},
+    sensor_definition_display{35.4, 55.4, sensor_level::level_3},
+    sensor_definition_display{55.4, 150.4, sensor_level::level_4},
+    sensor_definition_display{150.4, 250.4, sensor_level::level_5},
+    sensor_definition_display{250.4, std::numeric_limits<uint32_t>::max(), sensor_level::level_6},
 };
 
 constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
-    sensor_definition_display{std::numeric_limits<uint32_t>::min(), 54, 0},
-    sensor_definition_display{55, 154, 1},
-    sensor_definition_display{154, 254, 2},
-    sensor_definition_display{254, 354, 3},
-    sensor_definition_display{354, 424, 4},
-    sensor_definition_display{424, std::numeric_limits<uint32_t>::max(), 5},
+    sensor_definition_display{0, 54, sensor_level::level_1},
+    sensor_definition_display{55, 154, sensor_level::level_2},
+    sensor_definition_display{154, 254, sensor_level::level_3},
+    sensor_definition_display{254, 354, sensor_level::level_4},
+    sensor_definition_display{354, 424, sensor_level::level_5},
+    sensor_definition_display{424, std::numeric_limits<uint32_t>::max(), sensor_level::level_6},
 };
+
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+constexpr std::array<sensor_definition_display, 6> co2_definition_display{
+    sensor_definition_display{0, 600, sensor_level::level_1},
+    sensor_definition_display{601, 800, sensor_level::level_2},
+    sensor_definition_display{801, 1000, sensor_level::level_3},
+    sensor_definition_display{1001, 1500, sensor_level::level_4},
+    sensor_definition_display{1500, 2000, sensor_level::level_5},
+    sensor_definition_display{2000, std::numeric_limits<uint32_t>::max(), sensor_level::level_6},
+};
+
+#endif
 
 constexpr std::array<sensor_definition, total_sensors> sensor_definitions{
     sensor_definition{"PM 2.5", "µg/m³", pm_2_5_definition_display.data(), pm_2_5_definition_display.size(), 0, 1000, 1},
     sensor_definition{"Temperature", "°F", no_level.data(), no_level.size(), -40, 140, 1},
     sensor_definition{"Temperature", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
     sensor_definition{"Humidity", "⁒", no_level.data(), no_level.size(), 0, 100, 1},
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    sensor_definition{"CO2", "ppm", co2_definition_display.data(), co2_definition_display.size(), 0, 2000, 1},
+#endif
     sensor_definition{"PM 1", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
     sensor_definition{"PM 4", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},
     sensor_definition{"PM 10", "µg/m³", pm_10_definition_display.data(), pm_10_definition_display.size(), 0, 1000, 1},

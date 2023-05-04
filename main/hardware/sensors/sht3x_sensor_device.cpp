@@ -10,20 +10,19 @@
 #include "util/noncopyable.h"
 #include <esp_log.h>
 #include <i2cdev.h>
-#include <sht3x.h>
 
 void sht3x_sensor_device::init()
 {
     // sht3x
-    CHECK_THROW_ESP(sht3x_init_desc(&sht3x_sensor, SHT3X_I2C_ADDR_GND, I2C_NUM_1, SDAWire, SCLWire));
-    CHECK_THROW_ESP(sht3x_init(&sht3x_sensor));
+    CHECK_THROW_ESP(sht3x_init_desc(&sht3x_sensor_, SHT3X_I2C_ADDR_GND, I2C_NUM_1, SDAWire, SCLWire));
+    CHECK_THROW_ESP(sht3x_init(&sht3x_sensor_));
 }
 
 std::array<std::tuple<sensor_id_index, float>, 3> sht3x_sensor_device::read()
 {
     float temperatureC = NAN;
     float humidity = NAN;
-    auto err = sht3x_measure(&sht3x_sensor, &temperatureC, &humidity);
+    auto err = sht3x_measure(&sht3x_sensor_, &temperatureC, &humidity);
     float temperatureF = NAN;
     if (err == ESP_OK)
     {

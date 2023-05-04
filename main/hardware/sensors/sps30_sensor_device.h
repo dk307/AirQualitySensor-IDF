@@ -18,7 +18,8 @@ class sps30_sensor_device final : public esp32::singleton<sps30_sensor_device>
     bool clean();
 
   private:
-    i2c_dev_t sps30_sensor{};
+    i2c_dev_t sps30_sensor_{};
+    const uint32_t max_wait_ticks_;
 
     esp_err_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count);
     esp_err_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);
@@ -26,6 +27,8 @@ class sps30_sensor_device final : public esp32::singleton<sps30_sensor_device>
     friend int8_t sensirion_i2c_write(uint8_t address, const uint8_t *data, uint16_t count);
     friend int8_t sensirion_i2c_read(uint8_t address, uint8_t *data, uint16_t count);
 
-    sps30_sensor_device() = default;
+    sps30_sensor_device(uint32_t max_wait_ms): max_wait_ticks_(pdMS_TO_TICKS(max_wait_ms)) {};
+    bool wait_till_data_ready();
+    
     friend class esp32::singleton<sps30_sensor_device>;
 };

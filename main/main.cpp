@@ -8,6 +8,7 @@
 #include "homekit/homekit_integration.h"
 #include "logging/logger.h"
 #include "logging/logging_tags.h"
+#include "operations/operations.h"
 #include "sdkconfig.h"
 #include "util/exceptions.h"
 #include "web_server/web_server.h"
@@ -22,7 +23,7 @@ ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
-    esp_log_level_set("*", ESP_LOG_WARN);
+    esp_log_level_set("*", ESP_LOG_INFO);
 
     try
     {

@@ -189,7 +189,7 @@ void web_server::handle_sensor_get(esp32::http_request &request)
         return;
     }
 
-    BasicJsonDocument<esp32::psram::json_allocator> json_document(1024);
+    BasicJsonDocument<esp32::psram::json_allocator> json_document(2048);
     JsonArray array = json_document.to<JsonArray>();
 
     for (auto i = 0; i < total_sensors; i++)
@@ -204,7 +204,7 @@ void web_server::handle_sensor_get(esp32::http_request &request)
         obj["id"] = static_cast<uint8_t>(id);
         obj["unit"] = definition.get_unit();
         obj["type"] = definition.get_name();
-        obj["level"] = definition.calculate_level(value);
+        obj["level"] = static_cast<uint64_t>(definition.calculate_level(value));
     }
 
     send_json_response(request, json_document);
@@ -530,7 +530,7 @@ void web_server::send_sensor_data(sensor_id_index id)
     auto &&definition = get_sensor_definition(id);
     json_document["value"] = value;
     json_document["id"] = static_cast<uint8_t>(id);
-    json_document["level"] = definition.calculate_level(value);
+    json_document["level"] = static_cast<uint64_t>(definition.calculate_level(value));
 
     esp32::psram::string json;
     serializeJson(json_document, json);
