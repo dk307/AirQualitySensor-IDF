@@ -10,23 +10,24 @@ void ui_main_screen::init()
 
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
     constexpr int x_pad = 10;
-    constexpr int y_pad = 15;
-    constexpr int big_panels_w = (screen_width - 2 * x_pad) / 2;
+    constexpr int y_pad = 25;
+    constexpr int big_panels_w = (screen_width - 3 * x_pad) / 2;
     constexpr int big_panel_h = ((screen_height * 2) / 3) - 30;
 
-    pm_2_5_panel_and_labels_ = create_big_panel(sensor_id_index::pm_2_5, x_pad, y_pad, big_panels_w, big_panel_h, &big_panel_font_dual);
+    pm_2_5_panel_and_labels_ = create_big_panel(sensor_id_index::pm_2_5, x_pad, y_pad, big_panels_w, big_panel_h, &big_panel_font_dual, -15);
     lv_obj_add_event_cb(pm_2_5_panel_and_labels_.panel,
                         event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<sensor_id_index::pm_2_5>>, LV_EVENT_SHORT_CLICKED, this);
 
-    co2_panel_and_labels_ = create_big_panel(sensor_id_index::CO2, x_pad * 2 + big_panels_w, y_pad, big_panels_w, big_panel_h, &big_panel_font_dual);
+    co2_panel_and_labels_ =
+        create_big_panel(sensor_id_index::CO2, x_pad * 2 + big_panels_w, y_pad, big_panels_w, big_panel_h, &big_panel_font_dual, -15);
     lv_obj_add_event_cb(co2_panel_and_labels_.panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<sensor_id_index::CO2>>,
                         LV_EVENT_SHORT_CLICKED, this);
 #else
     constexpr int y_pad = 10;
     constexpr int big_panel_w = (screen_width * 3) / 4;
-    constexpr int big_panel_h = ((screen_height * 2) / 3) - 15;
+    constexpr int big_panel_h = ((screen_height * 2) / 3) - 10;
     pm_2_5_panel_and_labels_ =
-        create_big_panel(sensor_id_index::pm_2_5, (screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h, &big_panel_font);
+        create_big_panel(sensor_id_index::pm_2_5, (screen_width - big_panel_w) / 2, y_pad, big_panel_w, big_panel_h, &big_panel_font, -5);
     lv_obj_add_event_cb(pm_2_5_panel_and_labels_.panel,
                         event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<sensor_id_index::pm_2_5>>, LV_EVENT_SHORT_CLICKED, this);
 #endif
@@ -74,9 +75,9 @@ void ui_main_screen::show_screen()
 }
 
 ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w,
-                                                                              lv_coord_t h, const lv_font_t *font)
+                                                                              lv_coord_t h, const lv_font_t *font, lv_coord_t value_label_bottom_pad)
 {
-    auto panel = create_panel(x_ofs, y_ofs, w, h, 40);
+    auto panel = create_panel(x_ofs, y_ofs, w, h, 60);
 
     auto label = lv_label_create(panel);
     lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -84,7 +85,7 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(se
     lv_label_set_text_static(label, get_sensor_name(index).data());
     lv_obj_set_style_text_color(label, off_black_color, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_32, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     auto value_label = lv_label_create(panel);
     lv_obj_set_size(value_label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -95,7 +96,7 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(se
     lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 9);
-    lv_obj_align(value_label, LV_ALIGN_BOTTOM_MID, 0, -1);
+    lv_obj_align(value_label, LV_ALIGN_BOTTOM_MID, 0, value_label_bottom_pad);
 
     panel_and_label pair{panel, value_label};
     set_default_value_in_panel(pair);

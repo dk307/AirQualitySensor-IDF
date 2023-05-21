@@ -188,15 +188,15 @@ function font_create(bpp, size, font, output, symbols_and_range) {
 
 gulp.task('display-fonts-big-font', function() {
   return font_create(
-      8, 165,
-      './node_modules/@fontsource/montserrat/files/montserrat-all-300-normal.woff',
+      8, 155,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-400-normal.woff',
       'big_panel_font.c', '--symbols="0,1,2,3,4,5,6,7,8,9,-"');
 });
 
 gulp.task('display-fonts-big-font-dual', function() {
   return font_create(
-      8, 130,
-      './node_modules/@fontsource/montserrat/files/montserrat-all-300-normal.woff',
+      8, 118,
+      './node_modules/@fontsource/montserrat/files/montserrat-all-400-normal.woff',
       'big_panel_font_dual.c', '--symbols="0,1,2,3,4,5,6,7,8,9,-"');
 });
 
