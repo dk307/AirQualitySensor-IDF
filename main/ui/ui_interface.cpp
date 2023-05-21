@@ -70,11 +70,18 @@ void ui_interface::reenable_homekit_pairing()
 std::string ui_interface::get_up_time()
 {
     const auto now = esp_timer_get_time() / (1000 * 1000);
-    const uint8_t hour = now / 3600;
+    const auto hour = now / 3600;
     const uint8_t mins = (now % 3600) / 60;
     const uint8_t sec = (now % 3600) % 60;
 
-    return esp32::string::sprintf("%02d hours %02d mins %02d secs", hour, mins, sec);
+    if (hour >= 24)
+    {
+        return esp32::string::sprintf("%lld days %02lld hours %02d mins %02d secs", hour / 24, hour % 24, mins, sec);
+    }
+    else
+    {
+        return esp32::string::sprintf("%02lld hours %02d mins %02d secs", hour, mins, sec);
+    }
 }
 
 std::string ui_interface::get_heap_info_str(uint32_t caps)
@@ -232,7 +239,6 @@ ui_interface::information_table_type ui_interface::get_information_table(informa
             {"Reset Reason", get_reset_reason_string()},
             {"Mac Address", get_default_mac_address()},
             {"SD Card", sd_card_->get_info()},
-            //  {"Screen Brightness", esp32::string::sprintf("%d %%", (display_.get_brightness() * 100) / 256)},
             {"SPS30 sensor status", hardware_->get_sps30_error_register_status()},
         };
 

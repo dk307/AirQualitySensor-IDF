@@ -119,7 +119,7 @@ void wifi_manager::wifi_task_ftn()
                 {
                     ESP_LOGI(WIFI_TAG, "Wifi enrollment done");
 
-                    auto ssid = wifi_enroll_instance->get_ssid();
+                    const auto ssid = wifi_enroll_instance->get_ssid();
                     if (!ssid.empty())
                     {
                         ESP_LOGI(WIFI_TAG, "Updating wifi ssid/password");

@@ -258,7 +258,7 @@ constexpr std::array<sensor_definition_display, 6> pm_2_5_definition_display{
 
 constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
     sensor_definition_display{0, 54, sensor_level::level_1},
-    sensor_definition_display{55, 154, sensor_level::level_2},
+    sensor_definition_display{54, 154, sensor_level::level_2},
     sensor_definition_display{154, 254, sensor_level::level_3},
     sensor_definition_display{254, 354, sensor_level::level_4},
     sensor_definition_display{354, 424, sensor_level::level_5},
@@ -268,9 +268,9 @@ constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
 constexpr std::array<sensor_definition_display, 6> co2_definition_display{
     sensor_definition_display{0, 600, sensor_level::level_1},
-    sensor_definition_display{601, 800, sensor_level::level_2},
-    sensor_definition_display{801, 1000, sensor_level::level_3},
-    sensor_definition_display{1001, 1500, sensor_level::level_4},
+    sensor_definition_display{600, 800, sensor_level::level_2},
+    sensor_definition_display{800, 1000, sensor_level::level_3},
+    sensor_definition_display{1000, 1500, sensor_level::level_4},
     sensor_definition_display{1500, 2000, sensor_level::level_5},
     sensor_definition_display{2000, std::numeric_limits<uint32_t>::max(), sensor_level::level_6},
 };

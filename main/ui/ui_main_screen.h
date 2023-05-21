@@ -20,7 +20,8 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
     panel_and_label temperature_panel_and_labels_;
     panel_and_label humidity_panel_and_labels_;
 
-    panel_and_label create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h, const lv_font_t *font);
+    panel_and_label create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h, const lv_font_t *font,
+                                     lv_coord_t value_label_bottom_pad);
     lv_obj_t *create_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w, lv_coord_t h, lv_coord_t radius);
     panel_and_label create_temperature_panel(lv_coord_t x_ofs, lv_coord_t y_ofs);
     panel_and_label create_humidity_panel(lv_coord_t x_ofs, lv_coord_t y_ofs);

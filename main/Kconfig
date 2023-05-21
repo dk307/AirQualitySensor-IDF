@@ -8,4 +8,9 @@ config SCD30_SENSOR_ENABLE
 	bool "Enable Sensor SCD30 for CO2, temperature & humidity"
 	default n
 	
+config SCD30_SENSOR_TEMPERATURE_OFFSET
+	int "Temperature offset for SCD30 in increment of 0.01C"
+	default 0
+	depends on SCD30_SENSOR_ENABLE
+	
 endmenu
