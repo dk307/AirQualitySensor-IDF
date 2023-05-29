@@ -50,12 +50,12 @@ void ui_screen::create_close_button_to_main_screen(lv_obj_t *parent, lv_align_t 
 
 void ui_screen::set_default_screen_color()
 {
-    lv_obj_set_style_bg_grad_dir(screen_, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(screen_, lv_color_hex(0x0C0D0C), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_color(screen_, lv_color_hex(0x111210), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(screen_, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(screen_, lv_color_hex(0x080402), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_color(screen_, lv_color_hex(0x060606), LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-lv_obj_t *ui_screen::create_a_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_color_t color)
+lv_obj_t *ui_screen::create_a_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs)
 {
     auto *label = lv_label_create(parent);
     lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -63,7 +63,6 @@ lv_obj_t *ui_screen::create_a_label(lv_obj_t *parent, const lv_font_t *font, lv_
     lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(label, color, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return label;
 }
@@ -85,7 +84,7 @@ void ui_screen::update_table(lv_obj_t *table, const ui_interface::information_ta
 
 lv_obj_t *ui_screen::create_screen_title(lv_coord_t y_ofs, const char *title)
 {
-    auto label = create_a_label(screen_, &all_48_font, LV_ALIGN_TOP_MID, 0, y_ofs, text_color);
+    auto label = create_a_label(screen_, &all_48_font, LV_ALIGN_TOP_MID, 0, y_ofs);
     lv_label_set_text_static(label, title);
     return label;
 }

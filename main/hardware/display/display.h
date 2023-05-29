@@ -29,6 +29,7 @@ class display final : public esp32::singleton<display>
     LGFX display_device_;
     esp32::task lvgl_task_;
     ui_interface &ui_interface_;
+    std::optional<uint8_t> current_brightness_;
 
     lv_disp_draw_buf_t draw_buf_{};
     lv_disp_drv_t disp_drv_{};
@@ -39,7 +40,6 @@ class display final : public esp32::singleton<display>
     ui ui_instance_;
     esp32::default_event_subscriber instance_app_common_event_{
         APP_COMMON_EVENT, ESP_EVENT_ANY_ID, [this](esp_event_base_t base, int32_t event, void *data) { app_event_handler(base, event, data); }};
-    uint8_t current_brightness_{0};
 
     static void IRAM_ATTR display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
     static void IRAM_ATTR touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);

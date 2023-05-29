@@ -52,6 +52,7 @@ void ui::load_boot_screen()
 #endif
     lv_disp_t *dispp = lv_disp_get_default();
 
+    // most of ui uses this theme except main & detail sensor screen
     lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_LIME), true, LV_FONT_DEFAULT);
 
     lv_disp_set_theme(dispp, theme);
@@ -79,6 +80,22 @@ void ui::init()
     homekit_screen_.init();
     wifi_enroll_screen_.init();
     ESP_LOGI(UI_TAG, "UI screens initialized");
+}
+
+void ui::set_day_or_night_theme(bool night_mode)
+{
+    if (night_theme_ != night_mode)
+    {
+        ESP_LOGI(UI_TAG, "Setting theme :%d", night_mode);
+        night_theme_ = night_mode;
+        main_screen_.theme_changed();
+        sensor_detail_screen_.theme_changed();
+        settings_screen_.theme_changed();
+        launcher_screen_.theme_changed();
+        hardware_screen_.theme_changed();
+        homekit_screen_.theme_changed();
+        wifi_enroll_screen_.theme_changed();
+    }
 }
 
 void ui::init_no_wifi_image()
@@ -189,6 +206,11 @@ void ui::wifi_changed()
             show_home_screen();
         }
     }
+}
+
+bool ui::is_night_theme_enabled()
+{
+    return night_theme_;
 }
 
 void ui::show_home_screen()

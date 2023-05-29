@@ -15,7 +15,7 @@
 #include "util/noncopyable.h"
 #include <lvgl.h>
 
-class ui : public ui_inter_screen_interface, esp32::noncopyable
+class ui final : public ui_inter_screen_interface, esp32::noncopyable
 {
   public:
     ui(config &config, ui_interface &ui_interface_) : config_(config), ui_interface_instance_(ui_interface_)
@@ -29,6 +29,7 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     void wifi_changed();
 
     // ui_inter_screen_interface
+    bool is_night_theme_enabled() override;
     void show_home_screen() override;
     void show_setting_screen() override;
     void show_sensor_detail_screen(sensor_id_index index) override;
@@ -37,9 +38,12 @@ class ui : public ui_inter_screen_interface, esp32::noncopyable
     void show_homekit_screen() override;
     void show_wifi_enroll_screen() override;
 
+    void set_day_or_night_theme(bool night_mode);
+
   private:
     config &config_;
     ui_interface &ui_interface_instance_;
+    bool night_theme_{false};
 
     constexpr static uint32_t top_message_timer_period = 10000;
 

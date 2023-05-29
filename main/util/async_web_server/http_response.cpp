@@ -15,7 +15,7 @@ namespace esp32
 {
 void http_response::add_common_headers()
 {
-    add_header("Connection", "keep-alive");
+    // add_header("Connection", "keep-alive");
     // add_header("Access-Control-Allow-Origin", "*");
 }
 
@@ -68,7 +68,6 @@ void array_response::send_response()
     }
 
     CHECK_THROW_ESP(httpd_resp_set_status(request_.req_, HTTPD_200));
-    CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "Connection", "keep-alive"));
     if (sha256_.has_value())
     {
         CHECK_THROW_ESP(httpd_resp_set_hdr(request_.req_, "ETag", sha256_.value().data()));

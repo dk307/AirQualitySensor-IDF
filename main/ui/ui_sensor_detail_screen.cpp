@@ -15,7 +15,7 @@ void ui_sensor_detail_screen::init()
 
     sensor_detail_screen_top_label = create_screen_title(y_pad, "");
 
-    sensor_detail_screen_top_label_units = create_a_label(screen_, &uints_18_font, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10, text_color);
+    sensor_detail_screen_top_label_units = create_a_label(screen_, &uints_18_font, LV_ALIGN_TOP_RIGHT, -2 * x_pad, y_pad + 10);
 
     lv_obj_set_style_text_align(sensor_detail_screen_top_label_units, LV_TEXT_ALIGN_AUTO, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -94,6 +94,11 @@ void ui_sensor_detail_screen::show_screen(sensor_id_index index)
     lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
 }
 
+void ui_sensor_detail_screen::theme_changed()
+{
+    set_current_values(get_sensor_id_index(), ui_interface_instance_.get_sensor_value(get_sensor_id_index()));
+}
+
 void ui_sensor_detail_screen::screen_callback(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -131,13 +136,16 @@ ui_screen_with_sensor_panel::panel_and_label ui_sensor_detail_screen::create_pan
 
     lv_obj_set_style_radius(panel, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
     set_padding_zero(panel);
-    set_label_panel_color(panel, sensor_level::no_level);
 
-    auto current_static_label = create_a_label(panel, &all_14_font, LV_ALIGN_TOP_MID, 0, 3, text_color);
+    auto current_static_label = create_a_label(panel, &all_14_font, LV_ALIGN_TOP_MID, 0, 3);
     lv_label_set_text_static(current_static_label, label_text);
 
-    auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3, text_color);
-    return {panel, value_label};
+    auto value_label = create_a_label(panel, &regular_numbers_40_font, LV_ALIGN_BOTTOM_MID, 0, -3);
+
+    panel_and_label pair{panel, value_label};
+    set_panel_label_color(pair, sensor_level::no_level);
+
+    return pair;
 }
 
 void ui_sensor_detail_screen::chart_draw_event_cb(lv_event_t *e)

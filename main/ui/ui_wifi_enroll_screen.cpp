@@ -9,7 +9,7 @@ void ui_wifi_enroll_screen::init()
 
     lv_obj_add_event_cb(screen_, event_callback<ui_wifi_enroll_screen, &ui_wifi_enroll_screen::screen_callback>, LV_EVENT_ALL, this);
 
-    auto message_label = create_message_label(screen_, &lv_font_montserrat_24, LV_ALIGN_CENTER, 0, -20, text_color);
+    auto message_label = create_message_label(screen_, &lv_font_montserrat_24, LV_ALIGN_CENTER, 0, -20);
     lv_label_set_text_static(message_label, "Use ESPTouch app to set Wifi\ncredentials for the device");
 
     auto btn_clean = create_btn("Stop Enrollment", event_callback<ui_wifi_enroll_screen, &ui_wifi_enroll_screen::stop_enrollment>);
@@ -34,8 +34,7 @@ void ui_wifi_enroll_screen::screen_callback(lv_event_t *e)
     }
 }
 
-lv_obj_t *ui_wifi_enroll_screen::create_message_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs,
-                                                      lv_color_t color)
+lv_obj_t *ui_wifi_enroll_screen::create_message_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs)
 {
     auto *label = lv_label_create(parent);
     lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -43,7 +42,6 @@ lv_obj_t *ui_wifi_enroll_screen::create_message_label(lv_obj_t *parent, const lv
     lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(label, color, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return label;
 }

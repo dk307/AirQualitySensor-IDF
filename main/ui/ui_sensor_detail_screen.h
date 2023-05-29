@@ -13,6 +13,8 @@ class ui_sensor_detail_screen final : public ui_screen_with_sensor_panel
     sensor_id_index get_sensor_id_index();
     void show_screen(sensor_id_index index);
 
+    void theme_changed() override;
+
   private:
     lv_obj_t *sensor_detail_screen_top_label{};
     lv_obj_t *sensor_detail_screen_top_label_units{};

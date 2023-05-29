@@ -483,9 +483,6 @@ void web_server::handle_firmware_upload(esp32::http_request &request)
         return;
     }
 
-    // turn off power save in wifi to avoid disconnect
-    wifi_manager::set_wifi_power_mode(WIFI_PS_NONE);
-
     esp32::ota_updator ota(hash_binary);
 
     const auto result = request.read_body([&ota](const std::vector<uint8_t> &data) { return ota.write2(data.data(), data.size()); });

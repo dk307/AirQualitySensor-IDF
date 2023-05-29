@@ -21,11 +21,11 @@ class ui_screen : esp32::noncopyable
     virtual void init();
     bool is_active() const;
 
+    virtual void theme_changed() {}
+
   protected:
     constexpr static int screen_width = 480;
     constexpr static int screen_height = 320;
-    const lv_color_t off_black_color = lv_color_hex(0x1E1E1E);
-    const lv_color_t text_color = lv_color_hex(0xFFFAFA);
 
     config &config_;
     ui_interface &ui_interface_instance_;
@@ -48,7 +48,7 @@ class ui_screen : esp32::noncopyable
     void set_default_screen_color();
     lv_obj_t *create_screen_title(lv_coord_t y_ofs, const char *title);
 
-    static lv_obj_t *create_a_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_color_t color);
+    static lv_obj_t *create_a_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
     static void update_table(lv_obj_t *table, const ui_interface::information_table_type &data, uint8_t col_diff);
     static void set_padding_zero(lv_obj_t *obj);
 

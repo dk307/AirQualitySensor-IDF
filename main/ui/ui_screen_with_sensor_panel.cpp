@@ -10,7 +10,7 @@ void ui_screen_with_sensor_panel::set_default_value_in_panel(const panel_and_lab
 {
     if (pair.panel)
     {
-        set_label_panel_color(pair.panel, sensor_level::no_level);
+        set_panel_label_color(pair, sensor_level::no_level);
     }
 
     if (pair.label)
@@ -19,7 +19,7 @@ void ui_screen_with_sensor_panel::set_default_value_in_panel(const panel_and_lab
     }
 }
 
-void ui_screen_with_sensor_panel::set_label_panel_color(lv_obj_t *panel, sensor_level level_arg)
+void ui_screen_with_sensor_panel::set_panel_label_color(const panel_and_label &pair, sensor_level level_arg)
 {
     auto level = static_cast<uint8_t>(level_arg);
     if (level >= panel_colors.size())
@@ -29,8 +29,18 @@ void ui_screen_with_sensor_panel::set_label_panel_color(lv_obj_t *panel, sensor_
 
     auto &&entry = panel_colors[level];
 
-    lv_obj_set_style_bg_color(panel, std::get<0>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_color(panel, std::get<1>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
+    if (inter_screen_interface_.is_night_theme_enabled())
+    {
+        lv_obj_set_style_bg_color(pair.panel, night_mode_panel_bg_start, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_grad_color(pair.panel, night_mode_panel_bg_end, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(pair.label, entry.first, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+    else
+    {
+        lv_obj_set_style_bg_color(pair.panel, std::get<0>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_grad_color(pair.panel, std::get<1>(entry), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(pair.label, day_mode_labels_text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
 }
 
 void ui_screen_with_sensor_panel::set_value_in_panel(const panel_and_label &pair, sensor_id_index index, float value)
@@ -41,7 +51,7 @@ void ui_screen_with_sensor_panel::set_value_in_panel(const panel_and_label &pair
         if (pair.panel)
         {
             const auto level = sensor_definition.calculate_level(value);
-            set_label_panel_color(pair.panel, level);
+            set_panel_label_color(pair, level);
         }
 
         if (pair.label)

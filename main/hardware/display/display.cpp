@@ -68,8 +68,6 @@ void display::begin()
 
     ESP_LOGI(DISPLAY_TAG, "Display initialized width:%ld height:%ld", screenWidth, screenHeight);
 
-    current_brightness_ = display_device_.getBrightness();
-
     ESP_LOGI(DISPLAY_TAG, "LV initialized");
     const int buffer_size = 80;
 
@@ -210,10 +208,12 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
 }
 void display::set_screen_brightness(uint8_t value)
 {
+    const auto night_brightness = 50;
     if (current_brightness_ != value)
     {
-        ESP_LOGI(DISPLAY_TAG, "Setting display brightness to %d", value);
-        display_device_.setBrightness(std::max<uint8_t>(30, value));
         current_brightness_ = value;
+        ESP_LOGI(DISPLAY_TAG, "Setting display brightness to %d", value);
+        ui_instance_.set_day_or_night_theme(value <= night_brightness);
+        display_device_.setBrightness(std::max<uint8_t>(10, value));
     }
 }

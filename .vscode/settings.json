@@ -89,7 +89,10 @@
         "esp_system.h": "c",
         "hap.h": "c",
         "ui.h": "c",
-        "sps30_sensor_device.h": "c"
+        "sps30_sensor_device.h": "c",
+        "csetjmp": "cpp",
+        "unordered_set": "cpp",
+        "esp_http_server.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
