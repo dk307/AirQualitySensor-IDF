@@ -16,6 +16,7 @@ void wifi_manager::begin()
 
     wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
     CHECK_THROW_ESP(esp_wifi_init(&init));
+    CHECK_THROW_ESP(esp_wifi_set_ps(WIFI_PS_NONE));
 
     esp_netif_create_default_wifi_sta();
 

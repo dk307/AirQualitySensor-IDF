@@ -195,7 +195,7 @@ gulp.task('display-fonts-big-font', function() {
 
 gulp.task('display-fonts-big-font-dual', function() {
   return font_create(
-      8, 118,
+      8, 117,
       './node_modules/@fontsource/montserrat/files/montserrat-all-400-normal.woff',
       'big_panel_font_dual.c', '--symbols="0,1,2,3,4,5,6,7,8,9,-"');
 });

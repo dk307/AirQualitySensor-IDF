@@ -1,5 +1,6 @@
 #pragma once
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
 #include "util/singleton.h"
 #include <sdmmc_cmd.h>
 #include <string>
@@ -26,3 +27,4 @@ class sd_card final : public esp32::singleton<sd_card>
 
     sdmmc_card_t *sd_card_{nullptr};
 };
+#endif

@@ -4,7 +4,6 @@
 #include "freertos/task.h"
 #include "hardware/display/display.h"
 #include "hardware/hardware.h"
-#include "hardware/sd_card.h"
 #include "homekit/homekit_integration.h"
 #include "logging/logger.h"
 #include "logging/logging_tags.h"
@@ -17,6 +16,10 @@
 #include <esp_log.h>
 #include <nvs_flash.h>
 #include <stdio.h>
+
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
+#include "hardware/sd_card.h"
+#endif
 
 ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 
@@ -38,21 +41,32 @@ extern "C" void app_main(void)
         CHECK_THROW_ESP(esp_event_loop_create_default());
 
         auto &config = config::create_instance();
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
         auto &sd_card = sd_card::create_instance();
+#endif
         auto &wifi_manager = wifi_manager::create_instance(config);
         auto &ui_interface = ui_interface::create_instance();
         auto &display = display::create_instance(config, ui_interface);
         auto &hardware = hardware::create_instance(config, display);
         auto &homekit_integration = homekit_integration::create_instance(config, hardware);
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
         auto &logger = logger::create_instance(sd_card);
+#else
+        auto &logger = logger::create_instance();
+#endif
         auto &web_server = web_server::create_instance(config, ui_interface, logger);
 
         // update later to account for circular dependency
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
         ui_interface.update(config, sd_card, hardware, wifi_manager, homekit_integration);
-
+#else
+        ui_interface.update(config, hardware, wifi_manager, homekit_integration);
+#endif
         // order is important
         config.begin();
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
         sd_card.begin();
+#endif
         display.begin();
         wifi_manager.begin();
         hardware.begin();

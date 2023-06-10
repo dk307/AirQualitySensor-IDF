@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
+
 #include "hardware/sd_card.h"
 #include "logger_hook_sink.h"
 #include "logging/logging_tags.h"
@@ -122,3 +124,5 @@ class sd_card_sink final : public logger_hook_sink
     std::vector<char, esp32::psram::allocator<char>> fs_buffer_;
     esp32::task background_log_task_;
 };
+
+#endif

@@ -18,14 +18,11 @@ void ui_launcher_screen::init()
     lv_obj_add_event_cb(screen_, event_callback<ui_launcher_screen, &ui_launcher_screen::screen_callback>, LV_EVENT_ALL, this);
 
     lv_style_init(&button_style_default_);
-    lv_style_set_text_color(&button_style_default_, text_color);
     lv_style_set_img_opa(&button_style_default_, LV_OPA_100);
     lv_style_set_text_font(&button_style_default_, &lv_font_montserrat_18);
 
     lv_style_init(&button_style_pressed_);
     lv_style_set_img_recolor_opa(&button_style_pressed_, LV_OPA_30);
-    lv_style_set_img_recolor(&button_style_pressed_, text_color);
-    lv_style_set_text_color(&button_style_pressed_, lv_color_lighten(text_color, LV_OPA_50));
     lv_style_set_text_font(&button_style_pressed_, &lv_font_montserrat_18);
 
     int pad = 30;

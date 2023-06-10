@@ -13,8 +13,10 @@ class sd_card;
 class logger : public esp32::singleton<logger>
 {
   public:
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     bool enable_sd_logging();
     void disable_sd_logging();
+#endif
     bool enable_web_logging(const std::function<void(std::unique_ptr<std::string>)> &callbackP);
     void disable_web_logging();
 
@@ -31,15 +33,20 @@ class logger : public esp32::singleton<logger>
     }
 
   private:
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     logger(sd_card &sd_card);
-    friend class esp32::singleton<logger>;
-
     sd_card &sd_card_;
+#else
+    logger();
+#endif
+    friend class esp32::singleton<logger>;
 
     static void logging_shutdown_handler();
 
     esp32::semaphore hook_mutex_;
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     std::unique_ptr<sd_card_sink> sd_card_sink_instance_;
+#endif
     std::unique_ptr<web_callback_sink> web_callback_sink_instance_;
     std::unique_ptr<esp32_hook> hook_instance_{nullptr};
     std::vector<std::string> logging_tags;

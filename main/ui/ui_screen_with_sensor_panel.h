@@ -25,10 +25,15 @@ class ui_screen_with_sensor_panel : public ui_screen
 
   protected:
     void set_default_value_in_panel(const panel_and_label &pair);
-    void set_label_panel_color(lv_obj_t *panel, sensor_level level);
+    void set_panel_label_color(const panel_and_label &pair, sensor_level level);
     void set_value_in_panel(const panel_and_label &pair, sensor_id_index index, float value);
     static lv_obj_t *create_sensor_label(lv_obj_t *parent, const lv_font_t *font, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs,
                                          lv_color_t color);
+
+    const lv_color_t night_mode_labels_text_color = lv_color_hex(0x929292);
+    const lv_color_t day_mode_labels_text_color = lv_color_hex(0xEDEADE);
+    const lv_color_t night_mode_panel_bg_start = lv_color_hex(0x080806);
+    const lv_color_t night_mode_panel_bg_end = lv_color_hex(0x0C0404);
 
   private:
     const lv_color_t level0_color{lv_color_hex(0xC0C0C0)}; // silver

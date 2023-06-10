@@ -74,6 +74,20 @@ void ui_main_screen::show_screen()
     lv_scr_load_anim(screen_, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
 }
 
+void ui_main_screen::theme_changed()
+{
+    set_sensor_value(sensor_id_index::pm_2_5, ui_interface_instance_.get_sensor_value(sensor_id_index::pm_2_5));
+#ifdef CONFIG_SCD30_SENSOR_ENABLE
+    set_sensor_value(sensor_id_index::CO2, ui_interface_instance_.get_sensor_value(sensor_id_index::CO2));
+#endif
+    lv_obj_set_style_text_color(temperature_panel_and_labels_.label,
+                                inter_screen_interface_.is_night_theme_enabled() ? night_mode_labels_text_color : day_mode_labels_text_color,
+                                LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(humidity_panel_and_labels_.label,
+                                inter_screen_interface_.is_night_theme_enabled() ? night_mode_labels_text_color : day_mode_labels_text_color,
+                                LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
 ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(sensor_id_index index, lv_coord_t x_ofs, lv_coord_t y_ofs, lv_coord_t w,
                                                                               lv_coord_t h, const lv_font_t *font, lv_coord_t value_label_bottom_pad)
 {
@@ -83,7 +97,6 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(se
     lv_obj_set_size(label, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
 
     lv_label_set_text_static(label, get_sensor_name(index).data());
-    lv_obj_set_style_text_color(label, off_black_color, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_32, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -93,7 +106,6 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_big_panel(se
     lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
     lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(value_label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 9);
     lv_obj_align(value_label, LV_ALIGN_BOTTOM_MID, 0, value_label_bottom_pad);
@@ -109,6 +121,7 @@ lv_obj_t *ui_main_screen::create_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_co
     auto panel = lv_obj_create(screen_);
     lv_obj_set_size(panel, w, h);
     lv_obj_align(panel, LV_ALIGN_TOP_LEFT, x_ofs, y_ofs);
+
     lv_obj_set_style_border_width(panel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_set_style_bg_opa(panel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -118,7 +131,6 @@ lv_obj_t *ui_main_screen::create_panel(lv_coord_t x_ofs, lv_coord_t y_ofs, lv_co
 
     lv_obj_set_style_radius(panel, radius, LV_PART_MAIN | LV_STATE_DEFAULT);
     set_padding_zero(panel);
-
     lv_obj_add_flag(panel, LV_OBJ_FLAG_EVENT_BUBBLE | LV_OBJ_FLAG_GESTURE_BUBBLE);
     return panel;
 }
@@ -148,7 +160,6 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_temperature_
     lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
     lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(value_label, &temp_hum_font, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 
     lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_temperature_callback_event>, LV_EVENT_SHORT_CLICKED, this);
@@ -180,7 +191,6 @@ ui_screen_with_sensor_panel::panel_and_label ui_main_screen::create_humidity_pan
     lv_label_set_long_mode(value_label, LV_LABEL_LONG_SCROLL);
     lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(value_label, &temp_hum_font, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(value_label, text_color, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_label_set_text_fmt(value_label, "- %.*s", get_sensor_unit(index).size(), get_sensor_unit(index).data());
 
     lv_obj_add_event_cb(panel, event_callback<ui_main_screen, &ui_main_screen::panel_callback_event<index>>, LV_EVENT_SHORT_CLICKED, this);

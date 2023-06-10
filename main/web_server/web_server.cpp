@@ -3,14 +3,10 @@
 #include "generated/web/include/ansi_up.js.gz.h"
 #include "generated/web/include/bootstrap.min.css.gz.h"
 #include "generated/web/include/chartist.min.css.gz.h"
-#include "generated/web/include/datatables.min.css.gz.h"
-#include "generated/web/include/datatables.min.js.gz.h"
 #include "generated/web/include/debug.html.gz.h"
-#include "generated/web/include/fs.html.gz.h"
 #include "generated/web/include/index.html.gz.h"
 #include "generated/web/include/login.html.gz.h"
 #include "generated/web/include/logo.png.h"
-#include "generated/web/include/moment.min.js.gz.h"
 #include "generated/web/include/s.js.gz.h"
 #include "hardware/hardware.h"
 #include "hardware/sd_card.h"
@@ -38,6 +34,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
+#include "generated/web/include/datatables.min.css.gz.h"
+#include "generated/web/include/datatables.min.js.gz.h"
+#include "generated/web/include/fs.html.gz.h"
+#include "generated/web/include/moment.min.js.gz.h"
+#endif
+
 static const char json_media_type[] = "application/json";
 static const char js_media_type[] = "text/javascript";
 static const char html_media_type[] = "text/html";
@@ -52,16 +55,18 @@ static constexpr char logo_url[] = "/media/logo.png";
 static constexpr char favicon_url[] = "/media/favicon.png";
 static constexpr char all_js_url[] = "/js/s.js";
 static constexpr char datatables_js_url[] = "/js/extra/datatables.min.js";
-static constexpr char moment_js_url[] = "/js/extra/moment.min.js";
 static constexpr char ansi_up_js_url[] = "/js/extra/ansi_up.js";
 static constexpr char bootstrap_css_url[] = "/css/bootstrap.min.css";
 static constexpr char chartist_css_url[] = "/css/chartist.min.css";
-static constexpr char datatable_css_url[] = "/css/datatables.min.css";
 static constexpr char root_url[] = "/";
 static constexpr char login_url[] = "/login.html";
 static constexpr char index_url[] = "/index.html";
 static constexpr char debug_url[] = "/debug.html";
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
+static constexpr char moment_js_url[] = "/js/extra/moment.min.js";
+static constexpr char datatable_css_url[] = "/css/datatables.min.css";
 static constexpr char fs_url[] = "/fs.html";
+#endif
 
 std::string create_hash(const credentials &cred, const std::string &host)
 {
@@ -99,10 +104,12 @@ void web_server::begin()
     add_array_handler<ansi_up_js_gz, ansi_up_js_gz_len, ansi_up_js_gz_sha256, true, js_media_type>(ansi_up_js_url);
     add_array_handler<chartist_min_css_gz, chartist_min_css_gz_len, chartist_min_css_gz_sha256, true, css_media_type>(chartist_css_url);
     add_array_handler<bootstrap_min_css_gz, bootstrap_min_css_gz_len, bootstrap_min_css_gz_sha256, true, css_media_type>(bootstrap_css_url);
+    add_array_handler<s_js_gz, s_js_gz_len, s_js_gz_sha256, true, js_media_type>(all_js_url);
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     add_array_handler<datatables_min_css_gz, datatables_min_css_gz_len, datatables_min_css_gz_sha256, true, css_media_type>(datatable_css_url);
     add_array_handler<datatables_min_js_gz, datatables_min_js_gz_len, datatables_min_js_gz_sha256, true, js_media_type>(datatables_js_url);
-    add_array_handler<s_js_gz, s_js_gz_len, s_js_gz_sha256, true, js_media_type>(all_js_url);
     add_array_handler<moment_min_js_gz, moment_min_js_gz_len, moment_min_js_gz_sha256, true, js_media_type>(moment_js_url);
+#endif
 
     // static pages from flash with auth
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<index_html_gz, index_html_gz_len, index_html_gz_sha256>>(root_url, HTTP_GET);
@@ -110,7 +117,9 @@ void web_server::begin()
                                                                                                                                   HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<debug_html_gz, debug_html_gz_len, debug_html_gz_sha256>>(debug_url,
                                                                                                                                   HTTP_GET);
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     add_handler_ftn<web_server, &web_server::handle_array_page_with_auth<fs_html_gz, fs_html_gz_len, fs_html_gz_sha256>>(fs_url, HTTP_GET);
+#endif
 
     // non static pages
     add_handler_ftn<web_server, &web_server::handle_login>("/login.handler", HTTP_POST);
@@ -130,6 +139,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_homekit_info_get>("/api/homekit/get", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_homekit_enable_pairing>("/api/homekit/enablepairing", HTTP_POST);
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     // fs ajax
     add_handler_ftn<web_server, &web_server::handle_dir_list>("/fs/list", HTTP_GET);
     add_handler_ftn<web_server, &web_server::handle_dir_create>("/fs/mkdir", HTTP_POST);
@@ -137,6 +147,7 @@ void web_server::begin()
     add_handler_ftn<web_server, &web_server::handle_fs_rename>("/fs/rename", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_fs_delete>("/fs/delete", HTTP_POST);
     add_handler_ftn<web_server, &web_server::handle_file_upload>("/fs/upload", HTTP_POST);
+#endif
 
     // event source
     add_handler_ftn<web_server, &web_server::handle_events>("/events", HTTP_GET);
@@ -483,9 +494,6 @@ void web_server::handle_firmware_upload(esp32::http_request &request)
         return;
     }
 
-    // turn off power save in wifi to avoid disconnect
-    wifi_manager::set_wifi_power_mode(WIFI_PS_NONE);
-
     esp32::ota_updator ota(hash_binary);
 
     const auto result = request.read_body([&ota](const std::vector<uint8_t> &data) { return ota.write2(data.data(), data.size()); });
@@ -537,6 +545,7 @@ void web_server::send_sensor_data(sensor_id_index id)
     events.try_send(json.c_str(), "sensor", esp32::millis(), 0);
 }
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
 void web_server::handle_dir_list(esp32::http_request &request)
 {
     ESP_LOGI(WEBSERVER_TAG, "/fs/list");
@@ -835,6 +844,7 @@ void web_server::handle_file_upload(esp32::http_request &request)
     ESP_LOGI(WEBSERVER_TAG, "File Uploaded: %s", upload_file_name.c_str());
     send_empty_200(request);
 }
+#endif
 
 void web_server::handle_events(esp32::http_request &request)
 {
@@ -909,7 +919,7 @@ void web_server::handle_sd_card_logging_start(esp32::http_request &request)
     {
         return;
     }
-
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     if (logger_.enable_sd_logging())
     {
         send_empty_200(request);
@@ -918,6 +928,9 @@ void web_server::handle_sd_card_logging_start(esp32::http_request &request)
     {
         log_and_send_error(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to enable sd card logging");
     }
+#else
+    log_and_send_error(request, HTTPD_505_VERSION_NOT_SUPPORTED, "Failed to enable sd card logging");
+#endif
 }
 
 void web_server::handle_sd_card_logging_stop(esp32::http_request &request)
@@ -928,9 +941,12 @@ void web_server::handle_sd_card_logging_stop(esp32::http_request &request)
     {
         return;
     }
-
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     logger_.disable_sd_logging();
     send_empty_200(request);
+#else
+    log_and_send_error(request, HTTPD_505_VERSION_NOT_SUPPORTED, "Failed to enable sd card logging");
+#endif
 }
 
 std::string web_server::get_file_sha256(const char *filename)

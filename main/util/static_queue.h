@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util/noncopyable.h"
+#include <array>
 #include <bits/functexcept.h>
 #include <errno.h>
 #include <freertos/FreeRTOS.h>

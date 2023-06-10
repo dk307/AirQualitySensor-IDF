@@ -68,8 +68,6 @@ void display::begin()
 
     ESP_LOGI(DISPLAY_TAG, "Display initialized width:%ld height:%ld", screenWidth, screenHeight);
 
-    current_brightness_ = display_device_.getBrightness();
-
     ESP_LOGI(DISPLAY_TAG, "LV initialized");
     const int buffer_size = 80;
 
@@ -140,6 +138,14 @@ void display::gui_task()
 
             if (result == pdPASS)
             {
+                if (notification_value & update_brightness_device_bit)
+                {
+                    const auto night_brightness = 50;
+                    ESP_LOGI(DISPLAY_TAG, "Setting display brightness to %d", current_brightness_);
+                    ui_instance_.set_day_or_night_theme(current_brightness_ <= night_brightness);
+                    display_device_.setBrightness(std::max<uint8_t>(10, current_brightness_));
+                }
+
                 if (notification_value & task_notify_wifi_changed_bit)
                 {
                     ui_instance_.wifi_changed();
@@ -212,8 +218,7 @@ void display::set_screen_brightness(uint8_t value)
 {
     if (current_brightness_ != value)
     {
-        ESP_LOGI(DISPLAY_TAG, "Setting display brightness to %d", value);
-        display_device_.setBrightness(std::max<uint8_t>(30, value));
         current_brightness_ = value;
+        xTaskNotify(lvgl_task_.handle(), update_brightness_device_bit, eSetBits);
     }
 }
