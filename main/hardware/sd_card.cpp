@@ -1,4 +1,5 @@
 #include "hardware/sd_card.h"
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
 #include "logging/logging_tags.h"
 #include "util/exceptions.h"
 #include "util/helper.h"
@@ -101,3 +102,4 @@ std::string sd_card::get_info()
         return "No card found";
     }
 }
+#endif

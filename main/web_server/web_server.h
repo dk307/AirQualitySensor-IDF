@@ -57,6 +57,7 @@ class web_server final : esp32::http_server, public esp32::singleton<web_server>
     bool check_authenticated(esp32::http_request &request);
     void redirect_to_root(esp32::http_request &request);
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     // fs ajax
     void handle_dir_list(esp32::http_request &request);
     void handle_dir_create(esp32::http_request &request);
@@ -64,6 +65,7 @@ class web_server final : esp32::http_server, public esp32::singleton<web_server>
     void handle_fs_delete(esp32::http_request &request);
     void handle_fs_rename(esp32::http_request &request);
     void handle_file_upload(esp32::http_request &request);
+#endif
 
     // events
     void handle_events(esp32::http_request &request);

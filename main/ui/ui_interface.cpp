@@ -228,7 +228,9 @@ ui_interface::information_table_type ui_interface::get_information_table(informa
     switch (type)
     {
     case information_type::system:
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
         configASSERT(sd_card_);
+#endif
         configASSERT(hardware_);
         return {
             {"Version", get_version()},
@@ -238,7 +240,9 @@ ui_interface::information_table_type ui_interface::get_information_table(informa
             {"Uptime", get_up_time()},
             {"Reset Reason", get_reset_reason_string()},
             {"Mac Address", get_default_mac_address()},
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
             {"SD Card", sd_card_->get_info()},
+#endif
             {"SPS30 sensor status", hardware_->get_sps30_error_register_status()},
         };
 

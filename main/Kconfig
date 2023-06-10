@@ -12,5 +12,9 @@ config SCD30_SENSOR_TEMPERATURE_OFFSET
 	int "Temperature offset for SCD30 in increment of 0.01C"
 	default 0
 	depends on SCD30_SENSOR_ENABLE
-	
+
+config ENABLE_SD_CARD_SUPPORT
+	bool "Enable SD Card Support"
+	default n
+			
 endmenu

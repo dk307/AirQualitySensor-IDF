@@ -96,7 +96,11 @@ class esp32_hook
     std::vector<logger_hook_sink *> sinks_;
 };
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
 logger::logger(sd_card &sd_card) : sd_card_(sd_card)
+#else
+logger::logger()
+#endif
 {
     esp_register_shutdown_handler(logging_shutdown_handler);
 }
@@ -106,12 +110,15 @@ void logger::logging_shutdown_handler()
     std::lock_guard<esp32::semaphore> lock(logger::get_instance().hook_mutex_);
     ESP_LOGI(LOGGING_TAG, "Flushing custom loggers");
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     if (logger::get_instance().sd_card_sink_instance_)
     {
         logger::get_instance().sd_card_sink_instance_->flush();
     }
+#endif
 }
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
 bool logger::enable_sd_logging()
 {
     std::lock_guard<esp32::semaphore> lock(hook_mutex_);
@@ -136,6 +143,7 @@ bool logger::enable_sd_logging()
 
     return true;
 }
+#endif
 
 bool logger::enable_web_logging(const std::function<void(std::unique_ptr<std::string>)> &callbackP)
 {
@@ -174,11 +182,13 @@ template <class T> void logger::remove_sink(std::unique_ptr<T> &p)
     }
 }
 
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
 void logger::disable_sd_logging()
 {
     remove_sink(sd_card_sink_instance_);
     ESP_LOGI(LOGGING_TAG, "Disabled sd card logging");
 }
+#endif
 
 void logger::disable_web_logging()
 {

@@ -50,10 +50,16 @@ class ui_interface : public esp32::singleton<ui_interface>
     static std::string get_heap_info_str(uint32_t caps);
     static std::string get_up_time();
 
-    void update(config &config, sd_card &sd_card, hardware &hardware, wifi_manager &wifi_manager, homekit_integration &homekit_integration)
+    void update(config &config,
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
+                sd_card &sd_card,
+#endif
+                hardware &hardware, wifi_manager &wifi_manager, homekit_integration &homekit_integration)
     {
         config_ = &config;
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
         sd_card_ = &sd_card;
+#endif
         hardware_ = &hardware;
         wifi_manager_ = &wifi_manager;
         homekit_integration_ = &homekit_integration;
@@ -65,7 +71,9 @@ class ui_interface : public esp32::singleton<ui_interface>
     friend class esp32::singleton<ui_interface>;
 
     config *config_{};
+#ifdef CONFIG_ENABLE_SD_CARD_SUPPORT
     sd_card *sd_card_{};
+#endif
     hardware *hardware_{};
     wifi_manager *wifi_manager_{};
     homekit_integration *homekit_integration_{};

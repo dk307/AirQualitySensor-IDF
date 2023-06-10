@@ -29,7 +29,7 @@ class display final : public esp32::singleton<display>
     LGFX display_device_;
     esp32::task lvgl_task_;
     ui_interface &ui_interface_;
-    std::optional<uint8_t> current_brightness_;
+    uint8_t current_brightness_{128};
 
     lv_disp_draw_buf_t draw_buf_{};
     lv_disp_drv_t disp_drv_{};
@@ -51,4 +51,5 @@ class display final : public esp32::singleton<display>
     constexpr static uint32_t task_notify_restarting_bit = BIT(total_sensors + 3);
     constexpr static uint32_t config_changed_bit = BIT(total_sensors + 4);
     constexpr static uint32_t idenitfy_device_bit = BIT(total_sensors + 5);
+    constexpr static uint32_t update_brightness_device_bit = BIT(total_sensors + 6);
 };
