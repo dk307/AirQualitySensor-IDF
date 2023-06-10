@@ -21,7 +21,9 @@ class ui_screen : esp32::noncopyable
     virtual void init();
     bool is_active() const;
 
-    virtual void theme_changed() {}
+    virtual void theme_changed()
+    {
+    }
 
   protected:
     constexpr static int screen_width = 480;

@@ -32,8 +32,8 @@ class ui_screen_with_sensor_panel : public ui_screen
 
     const lv_color_t night_mode_labels_text_color = lv_color_hex(0x929292);
     const lv_color_t day_mode_labels_text_color = lv_color_hex(0xEDEADE);
-    const lv_color_t night_mode_panel_bg_start = lv_color_hex(0x080806); 
-    const lv_color_t night_mode_panel_bg_end = lv_color_hex(0x0C0404); 
+    const lv_color_t night_mode_panel_bg_start = lv_color_hex(0x080806);
+    const lv_color_t night_mode_panel_bg_end = lv_color_hex(0x0C0404);
 
   private:
     const lv_color_t level0_color{lv_color_hex(0xC0C0C0)}; // silver

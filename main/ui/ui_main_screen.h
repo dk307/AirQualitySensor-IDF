@@ -13,7 +13,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
     void show_screen();
 
     void theme_changed() override;
-    
+
   private:
     panel_and_label pm_2_5_panel_and_labels_;
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
