@@ -8,7 +8,7 @@ void ui_main_screen::init()
 
     lv_obj_clear_flag(screen_, LV_OBJ_FLAG_SCROLLABLE);
 
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     constexpr int x_pad = 10;
     constexpr int y_pad = 25;
     constexpr int big_panels_w = (screen_width - 3 * x_pad) / 2;
@@ -46,7 +46,7 @@ void ui_main_screen::set_sensor_value(sensor_id_index index, float value)
     {
         pair = pm_2_5_panel_and_labels_;
     }
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     else if (index == sensor_id_index::CO2)
     {
         pair = co2_panel_and_labels_;
@@ -77,7 +77,7 @@ void ui_main_screen::show_screen()
 void ui_main_screen::theme_changed()
 {
     set_sensor_value(sensor_id_index::pm_2_5, ui_interface_instance_.get_sensor_value(sensor_id_index::pm_2_5));
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     set_sensor_value(sensor_id_index::CO2, ui_interface_instance_.get_sensor_value(sensor_id_index::CO2));
 #endif
     lv_obj_set_style_text_color(temperature_panel_and_labels_.label,
@@ -209,7 +209,7 @@ void ui_main_screen::screen_callback(lv_event_t *e)
     else if (event_code == LV_EVENT_SCREEN_LOAD_START)
     {
         set_sensor_value(sensor_id_index::pm_2_5, ui_interface_instance_.get_sensor_value(sensor_id_index::pm_2_5));
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
         set_sensor_value(sensor_id_index::CO2, ui_interface_instance_.get_sensor_value(sensor_id_index::CO2));
 #endif
         const auto temperature_index = get_temperature_sensor_id_index();

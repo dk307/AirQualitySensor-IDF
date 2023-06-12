@@ -26,7 +26,7 @@ ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
-    esp_log_level_set("*", ESP_LOG_NONE);
+    esp_log_level_set("*", ESP_LOG_INFO);
 
     try
     {

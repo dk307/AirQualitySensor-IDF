@@ -47,7 +47,7 @@ constexpr auto homekit_definitions = std::to_array<homekit_definition>({
     homekit_definition{sensor_id_index::humidity, HAP_SERV_UUID_HUMIDITY_SENSOR, HAP_CHAR_UUID_CURRENT_RELATIVE_HUMIDITY, HAP_CHAR_UNIT_PERCENTAGE},
     homekit_definition{sensor_id_index::pm_10, HAP_SERV_UUID_AIR_QUALITY_SENSOR, HAP_CHAR_UUID_PM_10_DENSITY, std::string_view()},
     homekit_definition{sensor_id_index::light_intensity, HAP_SERV_UUID_LIGHT_SENSOR, HAP_CHAR_UUID_CURRENT_AMBIENT_LIGHT_LEVEL, HAP_CHAR_UNIT_LUX},
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     homekit_definition{sensor_id_index::CO2, HAP_SERV_UUID_AIR_QUALITY_SENSOR, HAP_CHAR_UUID_CARBON_DIOXIDE_LEVEL, std::string_view()},
 #endif
 });

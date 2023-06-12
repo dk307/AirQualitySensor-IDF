@@ -92,7 +92,9 @@
         "sps30_sensor_device.h": "c",
         "csetjmp": "cpp",
         "unordered_set": "cpp",
-        "esp_http_server.h": "c"
+        "esp_http_server.h": "c",
+        "sht3x_sensor_device.h": "c",
+        "scd4x_sensor_device.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

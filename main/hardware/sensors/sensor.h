@@ -265,7 +265,7 @@ constexpr std::array<sensor_definition_display, 6> pm_10_definition_display{
     sensor_definition_display{424, std::numeric_limits<uint32_t>::max(), sensor_level::level_6},
 };
 
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
 constexpr std::array<sensor_definition_display, 6> co2_definition_display{
     sensor_definition_display{0, 600, sensor_level::level_1},
     sensor_definition_display{600, 800, sensor_level::level_2},
@@ -282,7 +282,7 @@ constexpr std::array<sensor_definition, total_sensors> sensor_definitions{
     sensor_definition{"Temperature", "°F", no_level.data(), no_level.size(), -40, 140, 1},
     sensor_definition{"Temperature", "°C", no_level.data(), no_level.size(), -40, 70, 0.1},
     sensor_definition{"Humidity", "⁒", no_level.data(), no_level.size(), 0, 100, 1},
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     sensor_definition{"CO2", "ppm", co2_definition_display.data(), co2_definition_display.size(), 0, 2000, 1},
 #endif
     sensor_definition{"PM 1", "µg/m³", no_level.data(), no_level.size(), 0, 1000, 1},

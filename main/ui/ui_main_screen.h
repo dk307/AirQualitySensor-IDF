@@ -16,7 +16,7 @@ class ui_main_screen final : public ui_screen_with_sensor_panel
 
   private:
     panel_and_label pm_2_5_panel_and_labels_;
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     panel_and_label co2_panel_and_labels_;
 #endif
     panel_and_label temperature_panel_and_labels_;

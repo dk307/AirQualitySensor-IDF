@@ -2,6 +2,7 @@
 
 #include "hardware/sensors/bh1750_sensor_device.h"
 #include "hardware/sensors/scd30_sensor_device.h"
+#include "hardware/sensors/scd4x_sensor_device.h"
 #include "hardware/sensors/sensor.h"
 #include "hardware/sensors/sht3x_sensor_device.h"
 #include "hardware/sensors/sps30_sensor_device.h"
@@ -9,6 +10,7 @@
 #include "util/psram_allocator.h"
 #include "util/singleton.h"
 #include <i2cdev.h>
+
 
 class display;
 class config;
@@ -67,6 +69,13 @@ class hardware final : public esp32::singleton<hardware>
     uint64_t scd30_sensor_last_read_ = 0;
 #endif
 
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+    // SCD4x
+    scd4x_sensor_device &scd4x_sensor_{
+        scd4x_sensor_device::create_instance(static_cast<uint16_t>(sensor_history::sensor_interval / 1000), sensor_history::sensor_interval / 30)};
+    uint64_t scd4x_sensor_last_read_ = 0;
+#endif
+
     // SPS 30
     sps30_sensor_device &sps30_sensor_{sps30_sensor_device::create_instance(sensor_history::sensor_interval / 30)};
     uint64_t sps30_sensor_last_read_ = 0;
@@ -83,6 +92,9 @@ class hardware final : public esp32::singleton<hardware>
 #endif
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
     void read_scd30_sensor();
+#endif
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+    void read_scd4x_sensor();
 #endif
     esp_err_t sps30_i2c_init();
     void read_sps30_sensor();

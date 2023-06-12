@@ -13,6 +13,7 @@ set(EXTRA_COMPONENT_DIRS ${ESP_IDF_LIB_PATH}/esp_idf_lib_helpers
                          ${ESP_IDF_LIB_PATH}/bh1750 
                          ${ESP_IDF_LIB_PATH}/sht3x 
                          ${ESP_IDF_LIB_PATH}/scd30 
+                         ${ESP_IDF_LIB_PATH}/scd4x
                          ${HOMEKIT_LIB_PATH}/esp_hap_apple_profiles
                          ${HOMEKIT_LIB_PATH}/esp_hap_platform
                          ${HOMEKIT_LIB_PATH}/json_parser

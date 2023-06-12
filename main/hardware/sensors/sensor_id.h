@@ -11,7 +11,7 @@ enum class sensor_id_index : uint8_t
     temperatureF,
     temperatureC,
     humidity,
-#ifdef CONFIG_SCD30_SENSOR_ENABLE
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
     CO2,
 #endif
     pm_1,

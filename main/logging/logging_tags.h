@@ -6,6 +6,7 @@ constexpr static char SENSOR_SPS30_TAG[] = "sensor_sps30";
 constexpr static char SENSOR_BH1750_TAG[] = "sensor_bh1750";
 constexpr static char SENSOR_SHT31_TAG[] = "sensor_sht31";
 constexpr static char SENSOR_SCD30_TAG[] = "sensor_scd30";
+constexpr static char SENSOR_SCD4x_TAG[] = "sensor_scd4x";
 constexpr static char WIFI_TAG[] = "wifi";
 constexpr static char WIFI_EVENT_TAG[] = "wifi-event";
 constexpr static char UI_TAG[] = "ui";
