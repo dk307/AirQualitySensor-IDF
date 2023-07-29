@@ -5,7 +5,6 @@
 #include "logging/logging_tags.h"
 #include "sps30/sps30.h"
 #include "util/exceptions.h"
-#include "util/misc.h"
 #include "util/noncopyable.h"
 #include <esp_log.h>
 #include <i2cdev.h>
@@ -39,51 +38,36 @@ void sps30_sensor_device::init()
     }
 }
 
-bool sps30_sensor_device::wait_till_data_ready()
+std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
 {
-    uint16_t ready = 0;
-    uint8_t retries = 0;
-
-    do
+    uint16_t ready{0};
+    sps30_measurement measurement{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
+    auto error = sps30_read_data_ready(&ready);
+    if (error == NO_ERROR)
     {
-        auto error = sps30_read_data_ready(&ready);
-
-        if ((error == NO_ERROR))
+        if (ready)
         {
-            if (ready)
+            const auto error = sps30_read_measurement(&measurement);
+            if (error == NO_ERROR)
             {
-                return true;
+                ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", measurement.mc_2p5,
+                         measurement.mc_1p0, measurement.mc_4p0, measurement.mc_10p0, measurement.typical_particle_size);
             }
             else
             {
-                vTaskDelay(max_wait_ticks_ / 5);
+                ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
             }
+            last_measurement_value_.store(measurement);
         }
         else
         {
-            ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
-            return false;
+            ESP_LOGI(SENSOR_SPS30_TAG, "Returning last stored values");
+            last_measurement_value_.update(measurement);
         }
-    } while (retries < 5);
-    return false;
-}
-
-std::array<std::tuple<sensor_id_index, float>, 5> sps30_sensor_device::read()
-{
-    const bool ready = wait_till_data_ready();
-    sps30_measurement measurement{NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN};
-    if (ready)
+    }
+    else
     {
-        const auto error = sps30_read_measurement(&measurement);
-        if (error == NO_ERROR)
-        {
-            ESP_LOGI(SENSOR_SPS30_TAG, "Read SPS30 sensor values PM2.5:%g, PM1:%g, PM4:%g, PM10:%g, Particle Size:%g", measurement.mc_2p5,
-                     measurement.mc_1p0, measurement.mc_4p0, measurement.mc_10p0, measurement.typical_particle_size);
-        }
-        else
-        {
-            ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
-        }
+        ESP_LOGE(SENSOR_SPS30_TAG, "Failed to read from SPS30 sensor with failed to read measurement error:0x%x", error);
     }
 
     return {std::tuple<sensor_id_index, float>{sensor_id_index::pm_10, esp32::round_with_precision(measurement.mc_10p0, 1)},
