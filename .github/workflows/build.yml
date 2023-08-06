@@ -23,7 +23,7 @@ jobs:
     - run: gulp default
 
     - name: esp-idf build
-      uses: espressif/esp-idf-ci-action@v1.1
+      uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: v5.0
         target: esp32s3
