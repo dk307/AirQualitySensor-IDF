@@ -2,6 +2,7 @@
 #include "sdkconfig.h"
 
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
+#include "hardware/sensors/last_measurement_helper.h"
 #include "hardware/sensors/sensor_id.h"
 #include "util/singleton.h"
 #include <array>
@@ -19,15 +20,9 @@ class scd30_sensor_device final : public esp32::singleton<scd30_sensor_device>
 
   private:
     i2c_dev_t scd30_sensor_{};
+    last_measurement_helper<std::tuple<float, float, float, float>, 20000> last_measurement_value_;
 
-    const uint16_t sensor_interval_s_;
-    const TickType_t max_wait_ticks_;
-
-    scd30_sensor_device(uint16_t sensor_interval_s, uint32_t max_wait_ms)
-        : sensor_interval_s_(sensor_interval_s), max_wait_ticks_(pdMS_TO_TICKS(max_wait_ms))
-    {
-    }
-    bool wait_till_data_ready();
+    scd30_sensor_device() = default;
     friend class esp32::singleton<scd30_sensor_device>;
 };
 #endif

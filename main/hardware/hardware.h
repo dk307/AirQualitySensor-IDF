@@ -64,8 +64,7 @@ class hardware final : public esp32::singleton<hardware>
 
 #ifdef CONFIG_SCD30_SENSOR_ENABLE
     // SCD30
-    scd30_sensor_device &scd30_sensor_{
-        scd30_sensor_device::create_instance(static_cast<uint16_t>(sensor_history::sensor_interval / 1000), sensor_history::sensor_interval / 30)};
+    scd30_sensor_device &scd30_sensor_{scd30_sensor_device::create_instance()};
     uint64_t scd30_sensor_last_read_ = 0;
 #endif
 
@@ -77,7 +76,7 @@ class hardware final : public esp32::singleton<hardware>
 #endif
 
     // SPS 30
-    sps30_sensor_device &sps30_sensor_{sps30_sensor_device::create_instance(sensor_history::sensor_interval / 30)};
+    sps30_sensor_device &sps30_sensor_{sps30_sensor_device::create_instance()};
     uint64_t sps30_sensor_last_read_ = 0;
 
     // BH1750

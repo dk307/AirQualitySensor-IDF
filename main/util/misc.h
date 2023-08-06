@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <esp_timer.h>
 
 namespace esp32

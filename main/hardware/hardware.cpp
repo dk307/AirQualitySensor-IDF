@@ -164,7 +164,7 @@ void hardware::sensor_task_ftn()
 #endif
             read_sps30_sensor();
 
-            vTaskDelay(pdMS_TO_TICKS(sensor_history::sensor_interval / 20));
+            vTaskDelay(pdMS_TO_TICKS(sensor_history::sensor_interval / 10));
         } while (true);
     }
     catch (const std::exception &ex)
