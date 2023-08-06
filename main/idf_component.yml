@@ -1,6 +1,6 @@
 ## IDF Component Manager Manifest File
 dependencies:
-  bblanchon/arduinojson: "^6.20.0-1"
+  bblanchon/arduinojson: "^6.21.3"
   ## Required IDF version
   idf:
     version: ">=4.1.0"
