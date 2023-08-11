@@ -42,54 +42,11 @@ bool hardware::clean_sps_30()
     return sps30_sensor_.clean();
 }
 
-void task()
-{
-    i2c_config_t conf;
-    conf.mode = I2C_MODE_MASTER;
-    conf.sda_io_num = SDAWire;
-    conf.scl_io_num = SCLWire;
-    conf.sda_pullup_en = GPIO_PULLUP_DISABLE;
-    conf.scl_pullup_en = GPIO_PULLUP_DISABLE;
-    conf.master.clk_speed = 100000;
-    i2c_param_config(I2C_NUM_1, &conf);
-
-    i2c_driver_install(I2C_NUM_1, I2C_MODE_MASTER, 0, 0, 0);
-
-    while (1)
-    {
-        esp_err_t res;
-        printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
-        printf("00:         ");
-        for (uint8_t i = 3; i < 0x78; i++)
-        {
-            i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-            i2c_master_start(cmd);
-            i2c_master_write_byte(cmd, (i << 1) | I2C_MASTER_WRITE, 1 /* expect ack */);
-            i2c_master_stop(cmd);
-    
-            res = i2c_master_cmd_begin(I2C_NUM_1, cmd, 10 / portTICK_PERIOD_MS);
-            if (i % 16 == 0)
-                printf("\n%.2x:", i);
-            if (res == 0)
-                printf(" %.2x", i);
-            else
-                printf(" --");
-            i2c_cmd_link_delete(cmd);
-        }
-        printf("\n\n");
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-}
-
-
 void hardware::begin()
 {
     CHECK_THROW_ESP(i2cdev_init());
     sensor_refresh_task_.spawn_pinned("sensor_task", 4 * 1024, esp32::task::default_priority, esp32::hardware_core);
 }
-
-
-
 
 void hardware::set_sensor_value(sensor_id_index index, float value)
 {
@@ -120,8 +77,6 @@ void hardware::sensor_task_ftn()
     try
     {
         ESP_LOGI(HARDWARE_TAG, "Sensor task started on core:%d", xPortGetCoreID());
-
-        task();
 
         TickType_t initial_delay = 0;
 

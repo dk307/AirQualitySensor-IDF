@@ -19,7 +19,7 @@ config SCD4x_SENSOR_ENABLE
 	
 config SCD4x_SENSOR_TEMPERATURE_OFFSET
 	int "Temperature offset for SCD4x in increment of 0.01C"
-	default 0
+	default 400
 	depends on SCD4x_SENSOR_ENABLE
 
 config ENABLE_SD_CARD_SUPPORT

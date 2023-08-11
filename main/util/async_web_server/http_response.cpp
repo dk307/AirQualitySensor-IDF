@@ -15,6 +15,7 @@ namespace esp32
 {
 void http_response::add_common_headers()
 {
+    add_header("Connection", "close");
     // add_header("Connection", "keep-alive");
     // add_header("Access-Control-Allow-Origin", "*");
 }

@@ -11,7 +11,6 @@
 #include "util/singleton.h"
 #include <i2cdev.h>
 
-
 class display;
 class config;
 
@@ -70,8 +69,7 @@ class hardware final : public esp32::singleton<hardware>
 
 #ifdef CONFIG_SCD4x_SENSOR_ENABLE
     // SCD4x
-    scd4x_sensor_device &scd4x_sensor_{
-        scd4x_sensor_device::create_instance(static_cast<uint16_t>(sensor_history::sensor_interval / 1000), sensor_history::sensor_interval / 30)};
+    scd4x_sensor_device &scd4x_sensor_{scd4x_sensor_device::create_instance()};
     uint64_t scd4x_sensor_last_read_ = 0;
 #endif
 
