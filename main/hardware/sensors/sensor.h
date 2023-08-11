@@ -12,7 +12,6 @@
 #include <type_traits>
 #include <vector>
 
-
 class sensor_definition_display
 {
   public:
