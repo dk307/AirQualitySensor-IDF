@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <memory>
@@ -8,6 +9,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+
 
 // copied from https://github.com/esphome/esphome/tree/dev/esphome/core
 
