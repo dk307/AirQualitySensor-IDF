@@ -46,7 +46,6 @@ void ui::no_wifi_img_animation_cb(void *var, int32_t v)
 
 void ui::load_boot_screen()
 {
-
 #if LV_USE_LOG
     lv_log_register_print_cb(&lv_logger);
 #endif

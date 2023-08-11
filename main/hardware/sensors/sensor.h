@@ -4,6 +4,7 @@
 #include "util/circular_buffer.h"
 #include "util/psram_allocator.h"
 #include "util/semaphore_lockable.h"
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <mutex>

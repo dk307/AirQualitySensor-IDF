@@ -10,6 +10,7 @@ Air quality sensor on ESP32-S3 using ESP-IDF framework
 * BH1750 - Light Sensor
 * SPS30 Sensirion - Particle sensor
 * SCD30 Sensirion - CO2 Sensor (Optional)
+* SCD4x Sensirion - CO2 Sensor (Optional)
 
 ## Features
 * LVGL based display UI
