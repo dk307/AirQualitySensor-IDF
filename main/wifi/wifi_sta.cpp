@@ -40,6 +40,7 @@ void wifi_sta::connect_to_ap()
     copy_min_to_buffer(credentials_.get_password().begin(), credentials_.get_password().length(), config.sta.password);
     config.sta.threshold.authmode = credentials_.get_password().empty() ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
     config.sta.pmf_cfg.capable = true;
+    config.sta.pmf_cfg.required = false;
 
     CHECK_THROW_ESP(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     CHECK_THROW_ESP(esp_wifi_set_config(WIFI_IF_STA, &config));
@@ -50,6 +51,7 @@ void wifi_sta::connect_to_ap()
 void wifi_sta::connect() const
 {
     CHECK_THROW_ESP(esp_wifi_start());
+    CHECK_THROW_ESP(esp_wifi_set_dynamic_cs(true));
     CHECK_THROW_ESP(esp_wifi_connect());
 }
 
