@@ -1,5 +1,18 @@
 cmake_minimum_required(VERSION 3.5)
 
+set(SDKCONFIG "${CMAKE_BINARY_DIR}/sdkconfig")
+
+# Sensor 1
+#set(BUILD_DIR build-sensor1)
+set(SDKCONFIG_DEFAULTS "sdkconfig.defaults;sdkconfig.sensor1")
+
+# Sensor 2
+#set(BUILD_DIR build-sensor2)
+#set(CMAKE_BINARY_DIR build-sensor2)
+#set(SDKCONFIG_DEFAULTS "sdkconfig.defaults;sdkconfig.sensor2")
+
+#idf_build_set_property(BUILD_DIR "build-sensor2")
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 #LVGL custom config file setup

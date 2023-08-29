@@ -1,5 +1,6 @@
 build/
-sdkconfig.old
+build_sensor1/
+build_sensor2/
 managed_components/
 
 .vscode/.browse.c_cpp.db*

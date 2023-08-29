@@ -4,6 +4,7 @@
 #include <esp_log.h>
 #include <mutex>
 #include <string>
+#include <sys/socket.h>
 
 namespace esp32
 {
