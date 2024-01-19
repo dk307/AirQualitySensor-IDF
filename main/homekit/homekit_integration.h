@@ -7,6 +7,7 @@
 #include "util/task_wrapper.h"
 #include <hap.h>
 #include <map>
+#include <optional>
 
 class config;
 class hardware;
@@ -58,7 +59,7 @@ class homekit_integration : public esp32::singleton<homekit_integration>
     void generate_password();
     static int sensor_read(hap_char_t *hc, hap_status_t *status_code, void *serv_priv, void *read_priv);
     float get_sensor_value(sensor_id_index index);
-    static uint8_t get_air_quality();
+    static std::optional<uint8_t> get_air_quality();
 
     constexpr static uint32_t task_notify_restarting_bit = BIT(total_sensors + 1);
 };

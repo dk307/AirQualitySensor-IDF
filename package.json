@@ -5,7 +5,6 @@
   "devDependencies": {
     "browser-sync": "^2.27.9",
     "fancy-log": "^2.0.0",
-    "gulp": "^4.0.2",
     "gulp-concat": "^2.6.1",
     "gulp-csslint": "^1.0.0",
     "gulp-gzip": "^1.4.0",
@@ -21,6 +20,7 @@
     "@fontsource/montserrat": "^4.5.14",
     "cli": "^1.0.1",
     "eslint": "^8.36.0",
+    "gulp": "^4.0.2",
     "gulp-html": "^5.0.0",
     "gulp-html-minifier": "^0.1.8",
     "gulp-html-minifier-terser": "^7.1.0",
