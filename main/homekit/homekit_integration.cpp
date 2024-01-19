@@ -211,9 +211,8 @@ void homekit_integration::create_sensor_services_and_chars()
         }
 
         const auto sensor_value = get_sensor_value(definition.get_sensor());
-        auto sensor_char = hap_char_float_create(const_cast<char *>(definition.get_cha_type_uuid().data()), 
-                                                 HAP_CHAR_PERM_PR | HAP_CHAR_PERM_EV,
-                                                 sensor_value);
+        auto sensor_char =
+            hap_char_float_create(const_cast<char *>(definition.get_cha_type_uuid().data()), HAP_CHAR_PERM_PR | HAP_CHAR_PERM_EV, sensor_value);
         CHECK_NULL_RESULT(service);
 
         const auto sensor_def = get_sensor_definition(definition.get_sensor());
