@@ -133,16 +133,24 @@ void homekit_integration::homekit_task_ftn()
                         auto iter = chars1_.find(id);
                         if (iter != chars1_.end())
                         {
-                            hap_val_t h_value{};
-                            h_value.f = get_sensor_value(id);
-                            hap_char_update_val(iter->second, &h_value);
+                            const auto value = get_sensor_value(id);
+                            if (!std::isnan(value))
+                            {
+                                hap_val_t h_value{};
+                                h_value.f = get_sensor_value(id);
+                                hap_char_update_val(iter->second, &h_value);
+                            }
                         }
 
                         if (id == air_quality_sensor_id)
                         {
-                            hap_val_t h_value{};
-                            h_value.u = get_air_quality();
-                            hap_char_update_val(air_quality_char, &h_value);
+                            const auto value = get_air_quality();
+                            if (value.has_value())
+                            {
+                                hap_val_t h_value{};
+                                h_value.u = value.value();
+                                hap_char_update_val(air_quality_char, &h_value);
+                            }
                         }
                     }
                 }
@@ -202,8 +210,10 @@ void homekit_integration::create_sensor_services_and_chars()
             service = iter->second;
         }
 
-        auto sensor_char = hap_char_float_create(const_cast<char *>(definition.get_cha_type_uuid().data()), HAP_CHAR_PERM_PR | HAP_CHAR_PERM_EV,
-                                                 get_sensor_value(definition.get_sensor()));
+        const auto sensor_value = get_sensor_value(definition.get_sensor());
+        auto sensor_char = hap_char_float_create(const_cast<char *>(definition.get_cha_type_uuid().data()), 
+                                                 HAP_CHAR_PERM_PR | HAP_CHAR_PERM_EV,
+                                                 sensor_value);
         CHECK_NULL_RESULT(service);
 
         const auto sensor_def = get_sensor_definition(definition.get_sensor());
@@ -219,7 +229,7 @@ void homekit_integration::create_sensor_services_and_chars()
         CHECK_HAP_RESULT(hap_serv_add_char(service, sensor_char));
     }
 
-    air_quality_char = hap_char_air_quality_create(get_air_quality());
+    air_quality_char = hap_char_air_quality_create(get_air_quality().value_or(0));
     CHECK_NULL_RESULT(air_quality_char);
     static_assert(homekit_definitions[0].get_sensor() == air_quality_sensor_id);
     CHECK_HAP_RESULT(hap_serv_add_char(services_[homekit_definitions[0].get_service_type_uuid()], air_quality_char));
@@ -230,19 +240,18 @@ void homekit_integration::create_sensor_services_and_chars()
     }
 }
 
-uint8_t homekit_integration::get_air_quality()
+std::optional<uint8_t> homekit_integration::get_air_quality()
 {
     const auto value = homekit_integration::get_instance().hardware_.get_sensor(air_quality_sensor_id).get_value();
 
-    if (!std::isnan(value))
+    if (std::isnan(value))
     {
-        return 0; // unknown
+        return std::nullopt;
     }
     else
     {
         const auto sensor_def = get_sensor_definition(air_quality_sensor_id);
         auto level = sensor_def.calculate_level(value);
-
         return static_cast<uint8_t>(level);
     }
 }
