@@ -108,7 +108,8 @@ esp_err_t http_request::read_body(const std::function<esp_err_t(const std::vecto
         {
             if (len == HTTPD_SOCK_ERR_TIMEOUT)
             {
-                ESP_LOGE(WEBSERVER_TAG, "HTTP receive timeout");
+                ESP_LOGW(WEBSERVER_TAG, "HTTP receive timeout. Retrying.");
+                continue;
             }
             return ESP_FAIL;
         }

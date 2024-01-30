@@ -382,12 +382,11 @@ void web_server::handle_other_settings_update(esp32::http_request &request)
         return;
     }
 
-    const auto arguments = request.get_form_url_encoded_arguments(
-        {"hostName", "ntpServer", "ntpServerRefreshInterval", "timezone", "autoScreenBrightness", "screenBrightness", "useFahrenheit"});
+    const auto arguments = request.get_form_url_encoded_arguments({"hostName", "autoScreenBrightness", "screenBrightness", "useFahrenheit"});
     auto &&host_name = arguments[0];
-    auto &&auto_screen_brightness = arguments[4];
-    auto &&screen_brightness = arguments[5];
-    auto &&use_fahrenheit = arguments[6];
+    auto &&auto_screen_brightness = arguments[1];
+    auto &&screen_brightness = arguments[2];
+    auto &&use_fahrenheit = arguments[3];
 
     if (host_name.has_value())
     {

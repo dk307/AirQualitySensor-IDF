@@ -66,6 +66,24 @@ void ui_main_screen::set_sensor_value(sensor_id_index index, float value)
         ESP_LOGI(UI_TAG, "Updating sensor %.*s to %g in main screen", get_sensor_name(index).size(), get_sensor_name(index).data(), value);
         set_value_in_panel(*pair, index, value);
     }
+
+#if defined CONFIG_SCD30_SENSOR_ENABLE || defined CONFIG_SCD4x_SENSOR_ENABLE
+    // if dual panel
+    if ((index == sensor_id_index::pm_2_5) || (index == sensor_id_index::CO2))
+    {
+        if (pair.has_value() && pair->label)
+        {
+            // get number of digits
+            const auto label_text = lv_label_get_text(pair->label);
+            if (label_text)
+            {
+                const auto len = strlen(label_text);
+                const auto font = len <= 3 ? &big_panel_font_dual : &big_panel_font_dual_4_digits;
+                lv_obj_set_style_text_font(pair->label, font, LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+    }
+#endif
 }
 
 void ui_main_screen::show_screen()
