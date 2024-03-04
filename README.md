@@ -19,11 +19,18 @@ Air quality sensor on ESP32-S3 using ESP-IDF framework
   * Wifi enroll using ESP Smart Config
   * Display brightness changes based on ambient light
   * Day & Night mode for display
+    
 * Web server
-  * Responsive UI based on Bootstrap framework
+  * Responsive UI based on Bootstrap framework   
   * Real time sensor values using event streem
   * Graph showing last 6 hours of values
   * Firmware upgrade
   * SD card file manager
   * Debug page for remote debugging
 * Homekit enabled
+
+## Screenshots
+![Login](./asserts/Login.gif)
+
+![Features](./asserts/Features.gif)
+
