@@ -18,6 +18,7 @@ Air quality sensor on ESP32-S3 using ESP-IDF framework
   * Graph showing last 6 hours of values
   * Wifi enroll using ESP Smart Config
   * Display brightness changes based on ambient light
+  * Day & Night mode for display
 * Web server
   * Responsive UI based on Bootstrap framework
   * Real time sensor values using event streem
