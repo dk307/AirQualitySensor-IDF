@@ -24,7 +24,7 @@
     "gulp-html": "^5.0.0",
     "gulp-html-minifier": "^0.1.8",
     "gulp-html-minifier-terser": "^7.1.0",
-    "gulp-imagemin": "^7.1.0",
+    "gulp-imagemin": "^8.0.0",
     "gulp-run": "^1.7.1",
     "image-size": "^1.0.2",
     "lv_font_conv": "^1.5.2",
