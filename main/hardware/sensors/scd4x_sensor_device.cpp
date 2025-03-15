@@ -88,4 +88,21 @@ uint8_t scd4x_sensor_device::get_initial_delay()
 {
     return 0;
 }
+
+bool scd4x_sensor_device::factory_reset()
+{
+    ESP_LOGI(SENSOR_SCD4x_TAG, "Performing factory reset on SCD4x sensor");
+    try
+    {
+        CHECK_THROW_ESP(scd4x_stop_periodic_measurement(&scd4x_sensor_));
+        CHECK_THROW_ESP(scd4x_perform_factory_reset(&scd4x_sensor_));
+        ESP_LOGI(SENSOR_SCD4x_TAG, "Factory reset performed on SCD4x sensor");
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        ESP_LOGE(SENSOR_SCD4x_TAG, "Failed to perform factory reset on SCD4x sensor with error:%s", e.what());
+        return false;
+    }
+}
 #endif

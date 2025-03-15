@@ -42,6 +42,13 @@ bool hardware::clean_sps_30()
     return sps30_sensor_.clean();
 }
 
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+bool hardware::factory_reset_scd4x()
+{
+    return scd4x_sensor_.factory_reset();
+}
+#endif
+
 void hardware::begin()
 {
     CHECK_THROW_ESP(i2cdev_init());

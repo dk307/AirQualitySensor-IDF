@@ -98,5 +98,8 @@
     },
     "C_Cpp.errorSquiggles": "disabled",
     "editor.formatOnSave": true,
-    "idf.port": "/dev/ttyACM0"
+    "idf.port": "/dev/ttyACM0",
+    "idf.customExtraVars": {
+        "IDF_TARGET": "esp32s3"
+    }
 }

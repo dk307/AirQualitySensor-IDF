@@ -1,27 +1,40 @@
 dependencies:
   bblanchon/arduinojson:
     component_hash: c111ebf785c5e3cb5a3f8902584b03e25d929a3651976b5a57054bfa941ffc74
+    dependencies: []
     source:
-      service_url: https://api.components.espressif.com/
+      registry_url: https://components.espressif.com/
       type: service
     version: 6.21.3
   espressif/libsodium:
     component_hash: 36e9832f40c909c0a9135a3e775fcbdd7a2a13d47a1c052ee5b21499eb3eddb5
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.2'
     source:
-      service_url: https://api.components.espressif.com/
+      registry_url: https://components.espressif.com/
       type: service
     version: 1.0.20
   espressif/mdns:
     component_hash: 53b22a3b01d0b61180369a5dab00e271f1e725164b6affbc73af85e80b043658
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
     source:
-      service_url: https://api.components.espressif.com/
+      registry_url: https://components.espressif.com/
       type: service
     version: 1.2.0
   idf:
-    component_hash: null
     source:
       type: idf
-    version: 5.1.1
-manifest_hash: 9275a596616c0a70cfe5b167d7bb0650aa90eb700c5b2ebe12470c3274692aa7
+    version: 5.1.6
+direct_dependencies:
+- bblanchon/arduinojson
+- espressif/libsodium
+- espressif/mdns
+- idf
+manifest_hash: dfded1dd19fea724069aaac4a789898b4f422c5dcf359824b719ce17f97737e5
 target: esp32s3
-version: 1.0.0
+version: 2.0.0

@@ -43,6 +43,10 @@ class ui_interface : public esp32::singleton<ui_interface>
 
     bool clean_sps_30();
 
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+    bool factory_reset_scd4x();
+#endif
+
     static std::string get_default_mac_address();
     static std::string get_version();
     static std::string get_reset_reason_string();

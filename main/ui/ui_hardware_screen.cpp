@@ -1,5 +1,6 @@
 #include "ui/ui_hardware_screen.h"
 #include "logging/logging_tags.h"
+#include "operations/operations.h"
 #include <esp_log.h>
 
 void ui_hardware_screen::init()
@@ -13,8 +14,12 @@ void ui_hardware_screen::init()
 
     // baseline
     auto btn_clean = create_btn("Clean SPS 30", event_callback<ui_hardware_screen, &ui_hardware_screen::clean_sps_30>);
-
     lv_obj_align(btn_clean, LV_ALIGN_TOP_MID, 0, 105);
+
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+    auto reset_scd4x = create_btn("Factory Reset SCD 4x", event_callback<ui_hardware_screen, &ui_hardware_screen::factory_reset_scd4x>);
+    lv_obj_align_to(reset_scd4x, btn_clean, LV_ALIGN_OUT_BOTTOM_MID, 0, 50);
+#endif
 
     init_status_win();
     create_close_button_to_main_screen(screen_, LV_ALIGN_TOP_LEFT, 15, 15);
@@ -75,6 +80,11 @@ void ui_hardware_screen::init_status_win()
 void ui_hardware_screen::close_win_confirm(lv_event_t *e)
 {
     ESP_LOGI(UI_TAG, "Close clicked");
+    if (confirm_close_action)
+    {
+        confirm_close_action();
+        confirm_close_action = nullptr;
+    }
     lv_obj_add_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -89,3 +99,18 @@ void ui_hardware_screen::clean_sps_30(lv_event_t *e)
         lv_obj_clear_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
     }
 }
+
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+void ui_hardware_screen::factory_reset_scd4x(lv_event_t *e)
+{
+    const auto code = lv_event_get_code(e);
+
+    if (code == LV_EVENT_PRESSED)
+    {
+        const bool success = ui_interface_instance_.factory_reset_scd4x();
+        lv_label_set_text_static(win_status_label_, success ? "Factory Reset Done.\nRestart Required" : "Failed to Reset.\nRestart Required");
+        confirm_close_action = [this] { operations::instance.reboot(); };
+        lv_obj_clear_flag(win_status_, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+#endif
