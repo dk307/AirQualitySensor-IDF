@@ -15,7 +15,7 @@ dependencies:
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 1.0.20
+    version: 1.0.20~2
   espressif/mdns:
     component_hash: 7fd79958fd0b9a4917ee4f50141fe29c902c02d1a1feb1d6751276049b186d6b
     dependencies:
