@@ -18,4 +18,8 @@ class ui_hardware_screen final : public ui_screen
     void init_status_win();
     void close_win_confirm(lv_event_t *e);
     void clean_sps_30(lv_event_t *e);
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+    void factory_reset_scd4x(lv_event_t *e);
+#endif
+    std::function<void(void)> confirm_close_action;
 };

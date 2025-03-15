@@ -52,7 +52,7 @@ LGFX::LGFX()
         panel_instance_.config(cfg);
     }
 
-    {                                        // Set backlight control. (delete if not necessary)
+    {                                        // Set backlight control.
         auto cfg = light_instance_.config(); // Get the structure for backlight configuration.
 
         cfg.pin_bl = 45;     // pin number to which the backlight is connected
