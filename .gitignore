@@ -7,6 +7,7 @@ managed_components/
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+.cache/
 node_modules
 sdcard/
 main/generated/
