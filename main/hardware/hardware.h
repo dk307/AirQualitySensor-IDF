@@ -35,6 +35,10 @@ class hardware final : public esp32::singleton<hardware>
     std::string get_sps30_error_register_status();
     bool clean_sps_30();
 
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+    bool factory_reset_scd4x();
+#endif
+
   private:
     hardware(config &config, display &display) : config_(config), display_(display), sensor_refresh_task_([this] { sensor_task_ftn(); })
     {

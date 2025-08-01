@@ -43,6 +43,14 @@ bool ui_interface::clean_sps_30()
     return hardware_->clean_sps_30();
 }
 
+#ifdef CONFIG_SCD4x_SENSOR_ENABLE
+bool ui_interface::factory_reset_scd4x()
+{
+    configASSERT(hardware_);
+    return hardware_->factory_reset_scd4x();
+}
+#endif
+
 void ui_interface::start_wifi_enrollment()
 {
     configASSERT(hardware_);
