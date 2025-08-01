@@ -98,5 +98,11 @@
     },
     "C_Cpp.errorSquiggles": "disabled",
     "editor.formatOnSave": true,
-    "idf.port": "/dev/ttyACM0"
+    "idf.port": "/dev/ttyACM0",
+    "idf.espIdfPath": "/home/deepak/esp/v5.1.6/esp-idf",
+    "idf.toolsPath": "/home/deepak/.espressif",
+    "idf.pythonInstallPath": "/usr/bin/python3",
+    "idf.customExtraVars": {
+        "IDF_TARGET": "esp32s3"
+    }
 }
