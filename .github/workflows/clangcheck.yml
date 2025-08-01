@@ -13,8 +13,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run clang-format style check
-      uses: jidicula/clang-format-action@v4.10.2
+      uses: jidicula/clang-format-action@v4.15.0
       with:
-        clang-format-version: '15'
+        clang-format-version: '18'
         check-path: 'main'
         exclude-regex: '(main/lv_conf.h|main/hardware/sensors/sps30/*)'
